@@ -6,6 +6,12 @@ export type AuthData = {
 } & User;
 
 export const useAuthStore = defineStore("auth", () => {
+  const { data } = useFetch<{ initialized: boolean }>("/api/v1/setup", {
+    method: "GET",
+  });
+
+  const initialized = computed(() => data.value?.initialized ?? null);
+
   const { apiFetch } = useClientApi();
 
   const accessToken = ref(import.meta.client ? localStorage.getItem("accessToken") || "" : "");
@@ -16,12 +22,14 @@ export const useAuthStore = defineStore("auth", () => {
   };
 
   const logout = async () => {
-    await apiFetch("/auth/logout", {
-      method: "POST",
-    });
-    accessToken.value = "";
-    localStorage.removeItem("accessToken");
-    navigateTo("/auth/login");
+    try {
+      await apiFetch("/auth/logout", {
+        method: "POST",
+      });
+    } finally {
+      accessToken.value = "";
+      localStorage.removeItem("accessToken");
+    }
   };
 
   const login = async (email: string, password: string) => {
@@ -51,6 +59,7 @@ export const useAuthStore = defineStore("auth", () => {
   }
 
   return {
+    initialized,
     accessToken,
     setAccessToken,
     refresh,

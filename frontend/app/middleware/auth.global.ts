@@ -3,16 +3,20 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return;
   }
 
-  if (!to.path.startsWith("/admin")) return;
-
   const auth = useAuthStore();
+
+  if (to.meta.requiresInitialization && !auth.initialized) {
+    return navigateTo("/setup");
+  }
+
+  if (!to.path.startsWith("/admin")) return;
 
   if (auth.accessToken) return;
 
   try {
     await auth.refresh();
   } catch {
-    auth.logout();
+    await auth.logout();
 
     return navigateTo("/auth/login");
   }
