@@ -1,0 +1,52 @@
+import type { Component } from "vue";
+import type { MessageApi } from "~/types/ui/message";
+
+export interface ToolbarItemBase {
+  id: string;
+  label: string;
+  icon: string;
+  priority?: number;
+  visible?: boolean;
+}
+
+export interface ToolbarAction extends ToolbarItemBase {
+  type: "action";
+  handler: (context: { message: MessageApi }) => void | Promise<void>;
+}
+
+export interface ToolbarPanel extends ToolbarItemBase {
+  type: "panel";
+  component: Component;
+  props?: Record<string, unknown>;
+  width?: number;
+}
+
+export type ToolbarItem = ToolbarAction | ToolbarPanel;
+
+export interface ToolbarConfig {
+  /** 工具栏最大宽度 */
+  maxWidth?: number;
+
+  /** 菜单项之间的间距 */
+  gap?: number;
+}
+
+export interface ToolbarManager {
+  /** 所有已注册的菜单项 */
+  registry: ComputedRef<ToolbarItem[]>;
+
+  /** 当前页面实际显示的菜单项 */
+  items: ComputedRef<ToolbarItem[]>;
+
+  /** 当前布局配置 */
+  config: ComputedRef<ToolbarConfig>;
+
+  /** 注册菜单项，返回注销函数 */
+  register(items: ToolbarItem | ToolbarItem[]): () => void;
+
+  /** 设置当前页面显示的菜单 ID 列表 */
+  setItems(ids: string[]): void;
+
+  /** 覆盖当前布局配置 */
+  setConfig(config: ToolbarConfig): void;
+}

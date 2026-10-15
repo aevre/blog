@@ -2,6 +2,22 @@
 import type { Post } from "~/types/post";
 import type { ApiResponse } from "~/types/api";
 
+const { isMobile } = useResponsive();
+
+watch(
+  isMobile,
+  () => {
+    if (isMobile.value) {
+      console.log(1);
+      useToolbar().setItems(["rss"]);
+    } else {
+      console.log(2);
+      useToolbar().setItems(["rss", "back-top"]);
+    }
+  },
+  { immediate: true },
+);
+
 const route = useRoute();
 
 const params = computed(() => route.params);

@@ -9,6 +9,7 @@ const { isVisible } = useLoadingBar();
     <MessageProvider :max="5">
       <NuxtLayout>
         <NuxtPage />
+        <ToolbarManager />
       </NuxtLayout>
     </MessageProvider>
   </div>

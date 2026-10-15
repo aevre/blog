@@ -17,7 +17,7 @@ export default defineNuxtConfig({
   // 应用信息配置
   app: {
     head: {
-      title: "Immortal's Blog",
+      title: "Aevre's Blog",
       htmlAttrs: { lang: "en" },
       charset: "utf-8",
       viewport: "width=device-width, initial-scale=1, maximum-scale=1",
@@ -31,7 +31,7 @@ export default defineNuxtConfig({
   // 站点基本信息
   site: {
     url: "https://blog.immortel.top",
-    name: "Immortal's Blog",
+    name: "Aevre's Blog",
   },
 
   // Sitemap 配置
@@ -108,6 +108,9 @@ export default defineNuxtConfig({
   },
 
   icon: {
+    clientBundle: {
+      scan: true,
+    },
     serverBundle: {
       collections: [
         "codicon",
