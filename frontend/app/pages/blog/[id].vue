@@ -70,11 +70,11 @@ const { onBeforeEnter, onEnter, onAfterEnter, onBeforeLeave, onLeave, onAfterLea
   <ContentPanel :spacer="false">
     <ArticleCover :src="post.cover" :title="post.title" />
     <article class="article">
-      <main class="content">
+      <main class="article-content">
         <MarkdownRenderer :content="content" />
       </main>
-      <div class="toc-container">
-        <div class="title-container" @click="tocShow = !tocShow">
+      <div class="article-toc">
+        <div class="article-toc-header" @click="tocShow = !tocShow">
           <span class="title">目录</span>
           <Icon
             class="icon"
@@ -112,7 +112,7 @@ const { onBeforeEnter, onEnter, onAfterEnter, onBeforeLeave, onLeave, onAfterLea
   padding-top: 30px;
 }
 
-.content {
+.article-content {
   width: 100%;
   max-width: 800px;
   background-color: var(--bg-card-base);
@@ -126,7 +126,7 @@ const { onBeforeEnter, onEnter, onAfterEnter, onBeforeLeave, onLeave, onAfterLea
   overflow: hidden;
 }
 
-.toc-container {
+.article-toc {
   position: sticky;
   top: 80px;
   width: 240px;
@@ -147,7 +147,7 @@ const { onBeforeEnter, onEnter, onAfterEnter, onBeforeLeave, onLeave, onAfterLea
     transform: translateY(-2px);
   }
 
-  .title-container {
+  .article-toc-header {
     display: flex;
     cursor: pointer;
 
@@ -180,7 +180,7 @@ const { onBeforeEnter, onEnter, onAfterEnter, onBeforeLeave, onLeave, onAfterLea
 }
 
 @media (width <= 1200px) {
-  .toc-container {
+  .article-toc {
     display: none;
   }
 
@@ -188,7 +188,7 @@ const { onBeforeEnter, onEnter, onAfterEnter, onBeforeLeave, onLeave, onAfterLea
     padding: 0;
   }
 
-  .content {
+  .article-content {
     padding: 0 16px;
     margin-top: 0;
   }

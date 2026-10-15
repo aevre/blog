@@ -19,7 +19,7 @@ const handleDownArrowClick = () => {
 
 <template>
   <div class="welcome">
-    <div class="content">
+    <div class="welcome-content">
       <div class="introduction">
         <div class="avatar">
           <NuxtImg
@@ -94,7 +94,7 @@ const handleDownArrowClick = () => {
   overflow: hidden;
 }
 
-.contect {
+.contact-list {
   display: flex;
   max-width: 210px;
   list-style: none;

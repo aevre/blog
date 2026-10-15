@@ -20,12 +20,12 @@ const handleShow = () => {
 
 const linkCards = useTemplateRef("linkCards");
 
-useAddClassOnIntersect(linkCards, "show");
+useAddClassOnIntersect(linkCards, "is-visible");
 </script>
 
 <template>
   <ContentPanel style="min-height: 100vh">
-    <article class="content">
+    <article class="links-page">
       <h1 class="title">{{ $ts("friendLink.title") }}</h1>
       <div class="submit-link-tips">
         申请友链需要满足以下条件:
@@ -40,7 +40,7 @@ useAddClassOnIntersect(linkCards, "show");
       </div>
       <li class="links">
         <ul v-for="link in links" :key="link.id" ref="linkCards">
-          <BaseCard class="item">
+          <BaseCard class="link-card">
             <a :href="link.url" target="_blank">
               <div class="avatar">
                 <img :src="link.avatar" />
@@ -59,7 +59,7 @@ useAddClassOnIntersect(linkCards, "show");
 </template>
 
 <style lang="less" scoped>
-.content {
+.links-page {
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
@@ -117,7 +117,7 @@ useAddClassOnIntersect(linkCards, "show");
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 }
 
-.item {
+.link-card {
   a {
     display: block;
     height: 100%;
@@ -126,7 +126,7 @@ useAddClassOnIntersect(linkCards, "show");
   }
 }
 
-.show {
+.is-visible {
   animation: fade-in-up 1s ease-in-out;
 }
 

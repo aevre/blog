@@ -51,7 +51,7 @@ watch(page, () => {
               :disabled="item.disabled"
               :class="{
                 active: item.active,
-                item: true,
+                'pagination-item': true,
               }"
               @click="select(item)"
             >
@@ -101,7 +101,7 @@ watch(page, () => {
   width: max-content;
 }
 
-.item {
+.pagination-item {
   margin: 0 8px;
   background: var(--bg-card-base);
   min-width: 32px;

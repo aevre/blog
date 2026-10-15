@@ -47,7 +47,7 @@ const actions: FloatActionItem[] = [
     id: "contact",
     type: "panel",
     icon: "ion:mail",
-    label: "tooltip.contect",
+    label: "tooltip.contact",
     component: markRaw(ContectGroup),
   },
   {

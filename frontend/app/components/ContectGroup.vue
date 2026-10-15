@@ -1,5 +1,5 @@
 <script setup lang="ts">
-interface ContectItem {
+interface ContactItem {
   url: string;
   icon: string;
   title: string;
@@ -9,11 +9,11 @@ const show = defineModel<boolean>("show", { default: false, required: true });
 
 const { $ts } = useI18n();
 
-const contectItems = computed<ContectItem[]>(() =>
+const contactItems = computed<ContactItem[]>(() =>
   show.value
     ? [
         {
-          url: "https://github.com/immortal521",
+          url: "https://github.com/aevre",
           icon: "codicon:github",
           title: $ts("tooltip.github"),
         },
@@ -28,12 +28,12 @@ const contectItems = computed<ContectItem[]>(() =>
 </script>
 
 <template>
-  <TransitionGroup name="contect" tag="ul" class="contect">
+  <TransitionGroup name="contact-list" tag="ul" class="contact-list">
     <li
-      v-for="(item, index) in contectItems"
+      v-for="(item, index) in contactItems"
       :key="item.url"
       :title="item.title"
-      class="contect-item"
+      class="contact-item"
       :style="{
         transitionDelay: `${index * 50}ms`,
       }"
@@ -46,7 +46,7 @@ const contectItems = computed<ContectItem[]>(() =>
 </template>
 
 <style lang="less" scoped>
-.contect {
+.contact-list {
   display: flex;
   max-width: 210px;
   list-style: none;
@@ -59,19 +59,19 @@ const contectItems = computed<ContectItem[]>(() =>
   flex-wrap: wrap;
 }
 
-.contect-enter-active,
-.contect-leave-active {
+.contact-list-enter-active,
+.contact-list-leave-active {
   transition: all 0.3s ease;
 }
 
-.contect-enter-from,
-.contect-leave-to {
+.contact-list-enter-from,
+.contact-list-leave-to {
   opacity: 0;
   transform-origin: right center;
   transform: translateX(10px) scale(0.9);
 }
 
-.contect-item {
+.contact-item {
   position: relative;
   width: 35px;
   height: 35px;
