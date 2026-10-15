@@ -1,1 +1,1 @@
-export { default } from "./FloatActionBar.vue";
+export { default } from "./FloatActionGroup.vue";

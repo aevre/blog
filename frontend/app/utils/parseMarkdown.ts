@@ -3,7 +3,8 @@ import { mark } from "@mdit/plugin-mark";
 import { sub } from "@mdit/plugin-sub";
 import { sup } from "@mdit/plugin-sup";
 import type { Component, VNodeChild } from "vue";
-import { CodeWrapper, NuxtImg } from "#components";
+import { NuxtImg } from "#components";
+import CodeWrapper from "~/components/CodeWrapper";
 import type { BundledLanguage, SpecialLanguage } from "shiki";
 import { tasklist } from "@mdit/plugin-tasklist";
 

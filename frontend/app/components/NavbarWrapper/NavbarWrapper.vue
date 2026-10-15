@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { DesktopNav, MobileNav } from "./index";
+import DesktopNav from "./DesktopNav.vue";
+import MobileNav from "./MobileNav.vue";
 
 const { isMobile } = useResponsive();
 </script>

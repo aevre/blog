@@ -87,6 +87,9 @@ export default defineNuxtConfig({
     },
   },
 
+  // 只将 Vue 单文件组件纳入自动导入，保留组件目录内的类型和实现文件。
+  components: [{ path: "~/components", extensions: [".vue"] }],
+
   // 全局样式
   css: ["~/assets/styles/main.less"],
 
