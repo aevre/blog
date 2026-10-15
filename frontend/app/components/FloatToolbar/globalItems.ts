@@ -1,5 +1,5 @@
 import { markRaw } from "vue";
-import { ContectGroup, ThemeControlCard } from "#components";
+import { ContactGroup, ThemeControlCard } from "#components";
 import type { ToolbarItem } from "./types";
 
 export const globalItems = [
@@ -30,7 +30,7 @@ export const globalItems = [
     type: "panel",
     icon: "ion:mail",
     label: "tooltip.contact",
-    component: markRaw(ContectGroup),
+    component: markRaw(ContactGroup),
   },
   {
     id: "theme",

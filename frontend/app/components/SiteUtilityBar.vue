@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ContectGroup, ThemeControlCard } from "#components";
+import { ContactGroup, ThemeControlCard } from "#components";
 import type { FloatActionItem } from "./FloatActionGroup/types";
 
 const message = useMessage();
@@ -48,7 +48,7 @@ const actions: FloatActionItem[] = [
     type: "panel",
     icon: "ion:mail",
     label: "tooltip.contact",
-    component: markRaw(ContectGroup),
+    component: markRaw(ContactGroup),
   },
   {
     id: "theme",

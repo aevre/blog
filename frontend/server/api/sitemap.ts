@@ -1,4 +1,6 @@
-export default defineSitemapEventHandler(async () => {
+import { defineEventHandler } from "h3";
+
+export default defineEventHandler(async () => {
   try {
     // 调用后端 API 获取 posts 的 meta
     const { data } = await $fetch<{ data: { id: number; updatedAt: Date }[] }>(

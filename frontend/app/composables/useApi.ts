@@ -55,7 +55,7 @@ export function useClientApi() {
    * @returns {Promise<T>} Returns a promise resolving to the data of type T
    *
    * @example
-   * import { useClientApi } from '~/composables/useClientApi'
+   * import { useClientApi } from '~/composables/useApi'
    *
    * const { apiFetch } = useClientApi()
    *
