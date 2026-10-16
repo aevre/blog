@@ -16,7 +16,6 @@ toolbar.setItems(["back-top", "rss", "contact", "theme"]);
 <template>
   <div class="default-layout">
     <ReadProgress />
-    <SiteUtilityBar />
     <BaseHeader :is-sticky="isSticky" />
     <main class="main">
       <slot />
