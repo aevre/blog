@@ -46,6 +46,11 @@ const shellStyle = computed<CSSProperties>(() => ({
 }));
 
 const activeComponent = computed(() => activePanel.value?.component);
+const activePanelProps = computed(() =>
+  Object.fromEntries(
+    Object.entries(activePanel.value?.props ?? {}).map(([key, value]) => [key, toValue(value)]),
+  ),
+);
 const visibleItems = computed(() => items.filter((item) => visibleIds.value.includes(item.id)));
 const overflowItems = computed(() => items.filter((item) => overflowIds.value.includes(item.id)));
 
@@ -174,30 +179,32 @@ onBeforeUnmount(() => {
             </button>
           </header>
 
-          <div v-if="overflowOpen" class="floating-toolbar-overflow-list">
-            <button
-              v-for="item in overflowItems"
-              :key="item.id"
-              class="floating-toolbar-overflow-item"
-              type="button"
-              @click="selectOverflowItem(item)"
-            >
-              <Icon
-                v-if="item.icon"
-                :name="item.icon"
-                class="floating-toolbar-icon"
-                aria-hidden="true"
-              />
-              <span class="floating-toolbar-overflow-label">{{ item.label }}</span>
-            </button>
-          </div>
+          <div class="floating-toolbar-panel-body">
+            <div v-if="overflowOpen" class="floating-toolbar-overflow-list">
+              <button
+                v-for="item in overflowItems"
+                :key="item.id"
+                class="floating-toolbar-overflow-item"
+                type="button"
+                @click="selectOverflowItem(item)"
+              >
+                <Icon
+                  v-if="item.icon"
+                  :name="item.icon"
+                  class="floating-toolbar-icon"
+                  aria-hidden="true"
+                />
+                <span class="floating-toolbar-overflow-label">{{ item.label }}</span>
+              </button>
+            </div>
 
-          <component
-            :is="activeComponent"
-            v-else-if="activePanel"
-            v-bind="activePanel.props"
-            class="floating-toolbar-external-panel"
-          />
+            <component
+              :is="activeComponent"
+              v-else-if="activePanel"
+              v-bind="activePanelProps"
+              class="floating-toolbar-external-panel"
+            />
+          </div>
         </div>
       </section>
     </div>
@@ -264,7 +271,7 @@ onBeforeUnmount(() => {
   box-shadow: var(--shadow-lg);
   backdrop-filter: blur(var(--blur-elevated));
   transition:
-    width 280ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    width 230ms cubic-bezier(0.2, 0.8, 0.2, 1),
     border-radius 220ms ease,
     box-shadow 220ms ease;
 }
@@ -279,21 +286,24 @@ onBeforeUnmount(() => {
   max-height: 0;
   overflow: hidden;
   background: transparent;
-  transition: max-height 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: max-height 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .is-expanded .floating-toolbar-panel-grid {
   max-height: min(60vh, 420px);
-  overflow-y: auto;
 }
 
 .floating-toolbar-panel-clip {
+  display: flex;
   min-height: 0;
-  overflow: visible;
+  max-height: min(60vh, 420px);
+  flex-direction: column;
 }
 
 .floating-toolbar-panel-content {
+  display: flex;
   min-height: 0;
+  flex-direction: column;
   padding: 14px 14px 12px;
   opacity: 0;
   transform: translateY(8px);
@@ -310,6 +320,7 @@ onBeforeUnmount(() => {
 
 .floating-toolbar-panel-header {
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -322,6 +333,16 @@ onBeforeUnmount(() => {
   font-size: 14px;
   font-weight: 600;
   line-height: 1.4;
+}
+
+.floating-toolbar-panel-body {
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: none;
+}
+
+.floating-toolbar-panel-body::-webkit-scrollbar {
+  display: none;
 }
 
 .floating-toolbar-close,

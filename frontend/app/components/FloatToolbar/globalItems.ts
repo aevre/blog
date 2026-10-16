@@ -30,6 +30,9 @@ export const globalItems = [
     icon: "ion:mail",
     label: "tooltip.contact",
     component: ContactGroup,
+    props: {
+      show: true,
+    },
   },
   {
     id: "theme",
