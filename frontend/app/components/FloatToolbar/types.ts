@@ -1,5 +1,4 @@
 import type { Component } from "vue";
-import type { MessageApi } from "~/types/ui/message";
 
 export interface ToolbarItemBase {
   id: string;
@@ -9,9 +8,13 @@ export interface ToolbarItemBase {
   visible?: boolean;
 }
 
+export interface ToolbarContext {
+  notify: (message: string, options?: { type?: string }) => void;
+}
+
 export interface ToolbarAction extends ToolbarItemBase {
   type: "action";
-  handler: (context: { message: MessageApi }) => void | Promise<void>;
+  handler: (context: ToolbarContext) => void | Promise<void>;
 }
 
 export interface ToolbarPanel extends ToolbarItemBase {

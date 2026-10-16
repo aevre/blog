@@ -89,17 +89,10 @@ onMounted(() => {
 
 <style lang="less" scoped>
 .theme-control-card {
-  width: 100%;
+  width: max-content;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 12px;
-  border-radius: var(--radius-nav);
-  background: var(--bg-elevated);
-  backdrop-filter: blur(var(--blur-elevated));
-  border: 1px solid var(--border-color-nav);
-  box-shadow: var(--shadow-nav);
-  transition: var(--transition-nav);
 }
 
 .test-enter-active,

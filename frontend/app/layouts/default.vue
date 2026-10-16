@@ -8,15 +8,9 @@ useHead({
 const isSticky = ref(false);
 useScrollHandler(100, (over) => (isSticky.value = over));
 
-const toolbar = useToolbar([]).register({
-  id: "test",
-  type: "action",
-  label: "123",
-  icon: "mingcute:right-line",
-  handler: () => {},
-});
+const toolbar = useToolbar();
 
-toolbar.setItems(["back-top", "test"]);
+toolbar.setItems(["back-top", "rss", "contact", "theme"]);
 </script>
 
 <template>

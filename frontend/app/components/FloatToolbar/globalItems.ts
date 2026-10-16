@@ -1,4 +1,3 @@
-import { markRaw } from "vue";
 import { ContactGroup, ThemeControlCard } from "#components";
 import type { ToolbarItem } from "./types";
 
@@ -20,9 +19,9 @@ export const globalItems = [
     type: "action",
     icon: "ion:logo-rss",
     label: "tooltip.rss",
-    handler: async ({ message }) => {
+    handler: async ({ notify }) => {
       await navigator.clipboard.writeText(window.location.origin + "/api/v1/rss");
-      message.info("copy");
+      notify("message.rssCopied", { type: "info" });
     },
   },
   {
@@ -30,13 +29,16 @@ export const globalItems = [
     type: "panel",
     icon: "ion:mail",
     label: "tooltip.contact",
-    component: markRaw(ContactGroup),
+    component: ContactGroup,
   },
   {
     id: "theme",
     type: "panel",
     icon: "fluent:apps-list-detail-24-filled",
     label: "tooltip.themeOption",
-    component: markRaw(ThemeControlCard),
+    component: ThemeControlCard,
+    props: {
+      show: true,
+    },
   },
 ] as const satisfies readonly ToolbarItem[];
