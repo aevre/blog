@@ -18,7 +18,8 @@
     "themeOption": "主题设置",
     "contact": "联系我",
     "userSetting": "用户设置",
-    "rss": "RSS 订阅"
+    "rss": "RSS 订阅",
+    "toc": "文章目录"
   },
   "message": {
     "rssCopied": "RSS 订阅链接已复制。"

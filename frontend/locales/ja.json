@@ -18,7 +18,8 @@
     "themeOption": "テーマ設定",
     "contact": "連絡先",
     "userSetting": "ユーザー設定",
-    "rss": "RSSフィード"
+    "rss": "RSSフィード",
+    "toc": "目次"
   },
   "message": {
     "rssCopied": "RSS購読リンクをコピーしました。"

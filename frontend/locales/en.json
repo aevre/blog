@@ -18,7 +18,8 @@
     "themeOption": "Theme setting",
     "contact": "Contact me",
     "userSetting": "User Setting",
-    "rss": "RSS Feed"
+    "rss": "RSS Feed",
+    "toc": "Table of contents"
   },
   "message": {
     "rssCopied": "RSS subscription link has been copied."

@@ -1,22 +1,9 @@
 <script setup lang="ts">
 import type { Post } from "~/types/post";
 import type { ApiResponse } from "~/types/api";
+import { ArticleToc } from "#components";
 
 const { isMobile } = useResponsive();
-
-watch(
-  isMobile,
-  () => {
-    if (isMobile.value) {
-      console.log(1);
-      useToolbar().setItems(["rss"]);
-    } else {
-      console.log(2);
-      useToolbar().setItems(["rss", "back-top"]);
-    }
-  },
-  { immediate: true },
-);
 
 const route = useRoute();
 
@@ -59,6 +46,24 @@ const rendered = computed(() => {
 const content = computed(() => rendered.value.content);
 const toc = computed(() => rendered.value.toc ?? []);
 const { activeId } = useActiveToc(toc);
+
+const toolbar = useToolbar().register({
+  id: "toc",
+  type: "panel",
+  label: "tooltip.toc",
+  component: ArticleToc,
+  icon: "mdi:table-of-contents",
+  width: 400,
+  props: { toc, activeId },
+});
+
+watch(
+  isMobile,
+  () => {
+    toolbar.setItems(isMobile.value ? ["back-top", "toc", "theme"] : ["back-top", "theme"]);
+  },
+  { immediate: true },
+);
 
 const tocShow = ref(true);
 
