@@ -42,7 +42,7 @@ const shellStyle = computed<CSSProperties>(() => ({
   "--toolbar-gap": `${gap.value}px`,
   "--toolbar-expanded-width": `${expandedWidth.value}px`,
   "--toolbar-max-width": `${maxWidth.value}px`,
-  width: isExpanded.value ? "var(--toolbar-expanded-width)" : "max-content",
+  width: isExpanded.value ? "var(--toolbar-expanded-width)" : `${barWidth.value}px`,
 }));
 
 const activeComponent = computed(() => activePanel.value?.component);
@@ -253,7 +253,7 @@ onBeforeUnmount(() => {
   left: 50%;
   bottom: max(16px, env(safe-area-inset-bottom));
   display: grid;
-  grid-template-rows: 0fr auto;
+  grid-template-rows: auto auto;
   max-width: min(var(--toolbar-max-width), calc(100vw - 32px));
   overflow: hidden;
   transform: translateX(-50%);
@@ -271,16 +271,20 @@ onBeforeUnmount(() => {
 
 .floating-toolbar.is-expanded {
   background: var(--toolbar-surface);
-  grid-template-rows: minmax(0, 1fr) auto;
   border-radius: 20px;
 }
 
 .floating-toolbar-panel-grid {
   min-height: 0;
+  max-height: 0;
+  overflow: hidden;
+  background: transparent;
+  transition: max-height 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.is-expanded .floating-toolbar-panel-grid {
   max-height: min(60vh, 420px);
   overflow-y: auto;
-  background: var(--toolbar-surface);
-  border-bottom: 1px solid var(--border-glass);
 }
 
 .floating-toolbar-panel-clip {
@@ -459,6 +463,7 @@ onBeforeUnmount(() => {
 
 @media (prefers-reduced-motion: reduce) {
   .floating-toolbar,
+  .floating-toolbar-panel-grid,
   .floating-toolbar-panel-content,
   .floating-toolbar-button {
     transition: none;
