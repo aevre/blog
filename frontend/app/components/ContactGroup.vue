@@ -77,6 +77,7 @@ const contactItems = computed<ContactItem[]>(() =>
   height: 35px;
   flex-shrink: 0;
   background: var(--bg-nav-base);
+  backdrop-filter: blur(var(--blur-elevated));
   border-radius: var(--radius-nav);
   border: 1px solid var(--border-color-nav);
   box-shadow: var(--shadow-nav);

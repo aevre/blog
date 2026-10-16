@@ -63,7 +63,8 @@ const lineCount = computed(() => {
   height: calc(100% - 60px);
   min-height: 0;
   min-width: 0;
-  background-color: var(--bg-card-base);
+  background-color: var(--bg-elevated);
+  backdrop-filter: blur(var(--blur-surface));
   border-radius: var(--radius-card);
   overflow-y: auto;
   padding: 20px;
@@ -100,7 +101,8 @@ const lineCount = computed(() => {
   height: 50px;
   margin-top: 10px;
   background-color: var(--bg-card-base);
-  border: 1px solid var(--border-color-default);
+  backdrop-filter: blur(var(--blur-surface));
+  border: 1px solid var(--border-default);
   border-radius: 8px;
   box-shadow: var(--shadow-md);
   display: flex;
@@ -126,13 +128,13 @@ const lineCount = computed(() => {
       padding: 8px;
       line-height: 1;
       border-radius: 8px;
-      color: var(--text-color-primary);
+      color: var(--text-primary);
       background-color: transparent;
       box-shadow: var(--shadow-sm);
     }
 
     .trash {
-      border: 1px solid var(--border-color-default);
+      border: 1px solid var(--border-default);
       background-color: var(--bg-card-base);
 
       &:hover {
@@ -145,15 +147,15 @@ const lineCount = computed(() => {
     }
 
     .publish {
-      background-color: var(--color-primary-base);
+      background-color: var(--brand-primary);
       box-shadow: var(--shadow-sm);
 
       &:hover {
-        background-color: var(--color-primary-hover);
+        background-color: var(--brand-hover);
       }
 
       &:active {
-        background-color: var(--color-primary-active);
+        background-color: var(--brand-active);
       }
     }
   }

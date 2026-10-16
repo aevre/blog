@@ -191,7 +191,8 @@ const beforeLeave = (el: Element) => {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--bg-card-base);
+  background: var(--bg-elevated);
+  backdrop-filter: blur(var(--blur-elevated));
   border: 2px solid;
   position: relative;
   width: max-content;

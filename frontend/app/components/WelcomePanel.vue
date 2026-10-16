@@ -81,6 +81,7 @@ const handleDownArrowClick = () => {
   height: 60px;
   width: 100%;
   background: var(--bg-nav-base);
+  backdrop-filter: blur(var(--blur-surface));
   color: var(--text-primary);
   border: 1px solid var(--border-color-nav);
   border-radius: 12px;

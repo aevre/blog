@@ -239,7 +239,6 @@ const initialize = async () => {
   box-sizing: border-box;
   padding: 8rem 2.4rem;
   color: var(--text-primary);
-  background: var(--bg-app);
   font-family: var(--font-family-base);
   font-weight: var(--font-weight-base);
   line-height: var(--line-height-base);
@@ -296,6 +295,7 @@ const initialize = async () => {
 .form-card {
   padding: 2.4rem;
   background: var(--bg-card-base);
+  backdrop-filter: blur(var(--blur-surface));
   border: 1px solid var(--border-color-card);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card-base);

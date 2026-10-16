@@ -197,7 +197,8 @@ watch(mode, async () => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background-color: var(--bg-card-base);
+  background-color: var(--bg-elevated);
+  backdrop-filter: blur(var(--blur-surface));
 }
 
 .toolbar {

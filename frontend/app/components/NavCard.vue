@@ -30,6 +30,7 @@ const route = useRoute();
   top: 20px;
   left: 10px;
   background: var(--bg-nav-base);
+  backdrop-filter: blur(var(--blur-elevated));
   border: 1px solid var(--border-color-nav);
   color: var(--text-primary);
   overflow: hidden;

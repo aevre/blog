@@ -250,7 +250,8 @@ onBeforeUnmount(() => {
 .tooltip-content {
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
-  background-color: var(--tooltip-bg, var(--bg-card-base));
+  background-color: var(--tooltip-bg);
+  backdrop-filter: blur(var(--blur-elevated));
   border: 1px solid var(--tooltip-border-color, var(--border-default));
   color: var(--text-primary);
   box-shadow: var(--shadow-sm);

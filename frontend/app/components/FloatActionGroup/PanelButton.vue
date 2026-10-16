@@ -43,6 +43,7 @@ onClickOutside(panelContent, (event) => {
 
 .action-button {
   background: var(--bg-nav-base);
+  backdrop-filter: blur(var(--blur-elevated));
   position: relative;
   border-radius: var(--radius-nav);
   width: 100%;

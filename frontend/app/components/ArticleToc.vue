@@ -30,7 +30,7 @@ const handleTocClick = (id: string) => {
 
 <style lang="less" scoped>
 .toc {
-  max-height: 500px;
+  max-height: min(500px, 60vh);
   width: 100%;
   list-style: none;
   padding: 0;
@@ -57,7 +57,9 @@ const handleTocClick = (id: string) => {
     padding: 8px 12px;
     margin: 4px 0;
     border-radius: 6px;
-    transition: all 0.2s ease;
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease;
     border-left: 2px solid transparent;
 
     a {
@@ -74,20 +76,21 @@ const handleTocClick = (id: string) => {
     }
 
     &.active {
-      background-color: var(--brand-primary);
+      background-color: var(--brand-bg);
+      border-left-color: var(--brand-primary);
 
       a {
-        color: var(--text-primary);
+        color: var(--brand-primary);
         font-weight: 500;
       }
     }
 
     &:hover {
-      background-color: var(--brand-hover);
+      background-color: var(--bg-interactive-hover);
     }
 
     &:active {
-      background-color: var(--brand-active);
+      background-color: var(--bg-interactive-active);
     }
   }
 }

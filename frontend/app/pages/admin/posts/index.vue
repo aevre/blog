@@ -187,14 +187,15 @@ const columns: Column<PostAdminMeta>[] = [
 <style lang="less" scoped>
 .posts-page {
   padding: 0 24px;
-  color: var(--text-color-primary);
+  color: var(--text-primary);
 }
 
 .sticky-area {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: var(--bg-page);
+  background: var(--bg-nav-base);
+  backdrop-filter: blur(var(--blur-elevated));
   padding-top: 24px;
   padding-bottom: 20px;
 }
@@ -219,7 +220,7 @@ const columns: Column<PostAdminMeta>[] = [
 
   .post-count {
     font-size: 1.3rem;
-    color: var(--text-color-secondary);
+    color: var(--text-secondary);
     background: var(--bg-card-base);
     padding: 2px 10px;
     border-radius: 6px;
@@ -231,8 +232,8 @@ const columns: Column<PostAdminMeta>[] = [
     gap: 6px;
     height: 36px;
     padding: 0 16px;
-    background: var(--color-primary-base);
-    color: var(--color-on-primary);
+    background: var(--brand-primary);
+    color: var(--text-on-brand);
     border-radius: 8px;
     font-size: 1.4rem;
     font-weight: 500;
@@ -254,19 +255,19 @@ const columns: Column<PostAdminMeta>[] = [
     gap: 8px;
     max-width: 360px;
     padding: 8px 12px;
-    border: 1px solid var(--border-color-default);
+    border: 1px solid var(--border-default);
     border-radius: 8px;
     background: var(--bg-card-base);
     transition: border-color 0.2s;
 
     &:focus-within {
-      border-color: var(--color-primary-base);
+      border-color: var(--brand-primary);
     }
   }
 
   .search-icon {
     flex-shrink: 0;
-    color: var(--text-color-secondary);
+    color: var(--text-secondary);
   }
 
   .search-input {
@@ -274,12 +275,12 @@ const columns: Column<PostAdminMeta>[] = [
     border: none;
     outline: none;
     background: transparent;
-    color: var(--text-color-primary);
+    color: var(--text-primary);
     font-size: 1.4rem;
     font-family: inherit;
 
     &::placeholder {
-      color: var(--text-color-tertiary);
+      color: var(--text-tertiary);
     }
   }
 }
@@ -287,9 +288,10 @@ const columns: Column<PostAdminMeta>[] = [
 .table-wrapper {
   overflow: auto;
   max-height: calc(100vh - 240px);
-  border: 1px solid var(--border-color-default);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-card);
   background: var(--bg-card-base);
+  backdrop-filter: blur(var(--blur-surface));
 
   :deep(.table-header) {
     position: sticky;
@@ -307,8 +309,8 @@ const columns: Column<PostAdminMeta>[] = [
     text-align: left;
     padding: 12px 16px;
     font-weight: 600;
-    color: var(--text-color-secondary);
-    border-bottom: 1px solid var(--border-color-default);
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-default);
     font-size: 1.2rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -317,7 +319,7 @@ const columns: Column<PostAdminMeta>[] = [
 
   td {
     padding: 12px 16px;
-    border-bottom: 1px solid var(--border-color-default);
+    border-bottom: 1px solid var(--border-default);
     vertical-align: middle;
   }
 
@@ -368,12 +370,12 @@ const columns: Column<PostAdminMeta>[] = [
 .col-views {
   width: 60px;
   text-align: center;
-  color: var(--text-color-secondary);
+  color: var(--text-secondary);
 }
 
 .col-date {
   width: 100px;
-  color: var(--text-color-secondary);
+  color: var(--text-secondary);
   font-size: 1.3rem;
   white-space: nowrap;
 }
@@ -392,7 +394,7 @@ const columns: Column<PostAdminMeta>[] = [
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  color: var(--text-color-secondary);
+  color: var(--text-secondary);
   background: transparent;
   transition:
     background 0.15s,
@@ -403,11 +405,11 @@ const columns: Column<PostAdminMeta>[] = [
   }
 
   &.edit-btn:hover {
-    color: var(--color-primary-base);
+    color: var(--brand-primary);
   }
 
   &.delete-btn:hover {
-    color: var(--color-danger);
+    color: var(--state-error);
   }
 }
 
@@ -416,7 +418,7 @@ const columns: Column<PostAdminMeta>[] = [
   display: inline-block;
   border-radius: var(--radius-card);
   background: var(--gray-500);
-  color: var(--text-color-primary);
+  color: var(--text-primary);
   font-size: 14px;
 
   &-published {
@@ -436,7 +438,8 @@ const columns: Column<PostAdminMeta>[] = [
   position: sticky;
   bottom: 0;
   z-index: 10;
-  background: var(--bg-page);
+  background: var(--bg-nav-base);
+  backdrop-filter: blur(var(--blur-elevated));
   padding: 16px 0 24px;
 
   .page-btn {
@@ -446,10 +449,10 @@ const columns: Column<PostAdminMeta>[] = [
     min-width: 32px;
     height: 32px;
     padding: 0 8px;
-    border: 1px solid var(--border-color-default);
+    border: 1px solid var(--border-default);
     border-radius: 6px;
     background: var(--bg-card-base);
-    color: var(--text-color-primary);
+    color: var(--text-primary);
     font-size: 1.3rem;
     cursor: pointer;
     transition:
@@ -457,13 +460,13 @@ const columns: Column<PostAdminMeta>[] = [
       background 0.2s;
 
     &:hover {
-      border-color: var(--color-primary-base);
+      border-color: var(--brand-primary);
     }
 
     &.active {
-      background: var(--color-primary-base);
-      color: var(--color-on-primary);
-      border-color: var(--color-primary-base);
+      background: var(--brand-primary);
+      color: var(--text-on-brand);
+      border-color: var(--brand-primary);
     }
 
     &:disabled {
@@ -473,7 +476,7 @@ const columns: Column<PostAdminMeta>[] = [
   }
 
   .page-ellipsis {
-    color: var(--text-color-tertiary);
+    color: var(--text-tertiary);
     padding: 0 4px;
   }
 }

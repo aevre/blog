@@ -155,13 +155,17 @@ async function handleSubmit() {
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  background: var(--bg-overlay);
 }
 
 .content {
   max-width: 480px;
   width: 95%;
-  background: var(--bg-card-base);
-  box-shadow: var(--shadow-card-base);
+  background: var(--bg-elevated);
+  backdrop-filter: blur(var(--blur-elevated));
+  box-shadow:
+    var(--shadow-xl),
+    inset 0 0 0 1px var(--border-glass);
   border-radius: 10px;
   padding: 20px;
   color: var(--text-primary);

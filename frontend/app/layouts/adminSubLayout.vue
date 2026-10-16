@@ -32,6 +32,8 @@ const handleBack = () => {
   width: 100%;
   border-bottom: 1px solid var(--border-default);
   background: var(--bg-nav-base);
+  backdrop-filter: blur(var(--blur-elevated));
+  z-index: 10;
   box-shadow: var(--shadow-sm);
   display: flex;
   align-items: center;

@@ -65,8 +65,8 @@
 
   // ====== UNIFIED STATE TOKENS ======
   // Single source of truth for ALL hover/active states
-  --state-hover: #f5f5f5;
-  --state-active: #f0f0f0;
+  --state-hover: rgb(105 105 110 / 10%);
+  --state-active: rgb(105 105 110 / 18%);
   --state-hover-brand: var(--brand-400);
   --state-active-brand: var(--brand-600);
 
@@ -83,14 +83,20 @@
   --text-visited: var(--brand-600);
 
   // Backgrounds
-  --bg-app: #e2e1e4;
-  --bg-inset: #d6d6d9;
-  --bg-surface: #fff;
-  --bg-surface-muted: #f6f5f4;
-  --bg-elevated: #fff;
-  --bg-overlay: #333;
+  color-scheme: light;
+
+  --bg-app: #e8e7eb;
+  --bg-inset: #dedde2;
+  --bg-surface: rgb(255 255 255 / 78%);
+  --bg-surface-muted: rgb(246 245 244 / 64%);
+  --bg-elevated: rgb(255 255 255 / 92%);
+  --bg-overlay: rgb(19 19 23 / 38%);
   --bg-disabled: #ececec;
-  --bg-content: var(--bg-surface);
+  --bg-content: rgb(246 245 244 / 72%);
+  --bg-wallpaper-tint: rgb(232 231 235 / 18%);
+  --border-glass: rgb(115 115 130 / 22%);
+  --blur-surface: 12px;
+  --blur-elevated: 20px;
 
   // Interactive - all reference unified state tokens
   --bg-interactive-hover: var(--state-hover);
@@ -130,27 +136,27 @@
   --state-info-bg: var(--blue-100);
 
   // Card
-  --bg-card-base: #fafafa;
-  --bg-card-hover: var(--state-hover);
-  --bg-card-active: var(--state-active);
-  --bg-card-title: #fafafa;
-  --border-color-card: #e8e8e8;
+  --bg-card-base: var(--bg-surface);
+  --bg-card-hover: var(--bg-elevated);
+  --bg-card-active: var(--bg-elevated);
+  --bg-card-title: var(--bg-elevated);
+  --border-color-card: var(--border-glass);
   --border-color-card-hover: var(--border-hover);
   --radius-card: 12px;
-  --shadow-card-base: 0 1px 4px #0000000d;
-  --shadow-card-hover: 0 4px 12px #00000014;
+  --shadow-card-base: var(--shadow-sm);
+  --shadow-card-hover: var(--shadow-md);
 
   // Tooltip
-  --tooltip-bg: #fafafa;
-  --tooltip-border-color: #e8e8e8;
+  --tooltip-bg: var(--bg-elevated);
+  --tooltip-border-color: var(--border-glass);
   --tooltip-arrow-color: var(--tooltip-bg);
   --tooltip-arrow-border-color: var(--tooltip-border-color);
 
   // Table
-  --border-table: #e0e0e0;
-  --table-row-even-bg: #fafafa;
+  --border-table: var(--border-glass);
+  --table-row-even-bg: var(--bg-surface-muted);
   --table-row-hover-bg: var(--state-hover);
-  --table-head-bg: #f5f5f5;
+  --table-head-bg: var(--bg-elevated);
   --table-head-border: var(--border-default);
   --font-size-table-header: 1.5rem;
   --font-size-table-row: 1.5rem;
@@ -161,14 +167,14 @@
   --inline-code-bg: var(--gray-50);
 
   // Nav / Sidebar
-  --bg-nav-base: #fafafa;
-  --bg-nav-hover: var(--state-hover);
-  --bg-nav-active: var(--state-active);
-  --bg-sidebar: #fafafa;
+  --bg-nav-base: rgb(250 250 252 / 84%);
+  --bg-nav-hover: var(--bg-elevated);
+  --bg-nav-active: var(--bg-elevated);
+  --bg-sidebar: var(--bg-nav-base);
   --bg-sidebar-item-hover: var(--state-hover);
-  --border-color-nav: #e8e8e8;
+  --border-color-nav: var(--border-glass);
   --radius-nav: 12px;
-  --shadow-nav: 0 2px 8px #0000000f;
+  --shadow-nav: var(--shadow-md);
   --transition-nav: background 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 
   // Toggle
@@ -177,7 +183,7 @@
   --border-color-button-toggle: #e0e0e0;
 
   // Select
-  --bg-select: #fafafa;
+  --bg-select: var(--bg-surface-muted);
   --border-color-select: var(--border-default);
 
   // Scrollbar
@@ -214,8 +220,8 @@
 
 [data-theme="dark"] {
   // ====== UNIFIED STATE TOKENS (dark) ======
-  --state-hover: #2a2a2a;
-  --state-active: #353535;
+  --state-hover: rgb(255 255 255 / 9%);
+  --state-active: rgb(255 255 255 / 15%);
   --state-hover-brand: var(--brand-300);
   --state-active-brand: var(--brand-400);
 
@@ -232,14 +238,18 @@
   --text-visited: var(--brand-400);
 
   // Backgrounds
-  --bg-app: #121212;
-  --bg-inset: #1a1a1a;
-  --bg-surface: #1e1e1e;
-  --bg-surface-muted: #1a1a1a;
-  --bg-elevated: #2d2d2d;
-  --bg-overlay: #1a1a1a;
+  color-scheme: dark;
+
+  --bg-app: #151519;
+  --bg-inset: #1a1a1e;
+  --bg-surface: rgb(34 34 38 / 82%);
+  --bg-surface-muted: rgb(26 26 30 / 68%);
+  --bg-elevated: rgb(42 42 47 / 94%);
+  --bg-overlay: rgb(8 8 12 / 62%);
   --bg-disabled: #252525;
-  --bg-content: var(--bg-surface);
+  --bg-content: rgb(21 21 25 / 78%);
+  --bg-wallpaper-tint: rgb(15 15 19 / 42%);
+  --border-glass: rgb(255 255 255 / 14%);
 
   // Interactive - all reference unified state tokens
   --bg-interactive-hover: var(--state-hover);
@@ -262,26 +272,26 @@
   --focus-ring: 0 0 0 2px var(--brand-bg-active);
 
   // Card
-  --bg-card-base: #222;
-  --bg-card-hover: var(--state-hover);
-  --bg-card-active: var(--state-active);
-  --bg-card-title: #222;
-  --border-color-card: #3a3a3a;
+  --bg-card-base: var(--bg-surface);
+  --bg-card-hover: var(--bg-elevated);
+  --bg-card-active: var(--bg-elevated);
+  --bg-card-title: var(--bg-elevated);
+  --border-color-card: var(--border-glass);
   --border-color-card-hover: var(--border-hover);
-  --shadow-card-base: 0 2px 8px #00000040;
-  --shadow-card-hover: 0 8px 24px #00000060;
+  --shadow-card-base: var(--shadow-sm);
+  --shadow-card-hover: var(--shadow-md);
 
   // Tooltip
-  --tooltip-bg: #2a2a2a;
-  --tooltip-border-color: #505050;
+  --tooltip-bg: var(--bg-elevated);
+  --tooltip-border-color: var(--border-glass);
   --tooltip-arrow-color: var(--tooltip-bg);
   --tooltip-arrow-border-color: var(--tooltip-border-color);
 
   // Table
-  --border-table: #3a3a3a;
-  --table-row-even-bg: #1a1a1a;
+  --border-table: var(--border-glass);
+  --table-row-even-bg: var(--bg-surface-muted);
   --table-row-hover-bg: var(--state-hover);
-  --table-head-bg: #222;
+  --table-head-bg: var(--bg-elevated);
   --table-head-border: var(--border-default);
 
   // Code
@@ -290,13 +300,13 @@
   --inline-code-bg: #2a2a2a;
 
   // Nav / Sidebar
-  --bg-nav-base: #1e1e1e;
-  --bg-nav-hover: var(--state-hover);
-  --bg-nav-active: var(--state-active);
-  --bg-sidebar: #1e1e1e;
+  --bg-nav-base: rgb(30 30 34 / 86%);
+  --bg-nav-hover: var(--bg-elevated);
+  --bg-nav-active: var(--bg-elevated);
+  --bg-sidebar: var(--bg-nav-base);
   --bg-sidebar-item-hover: var(--state-hover);
-  --border-color-nav: #3a3a3a;
-  --shadow-nav: 0 4px 16px #00000040;
+  --border-color-nav: var(--border-glass);
+  --shadow-nav: var(--shadow-md);
 
   // Toggle
   --bg-button-toggle-track: #3a3a3a;
@@ -304,7 +314,7 @@
   --border-color-button-toggle: #444;
 
   // Select
-  --bg-select: #252525;
+  --bg-select: var(--bg-surface-muted);
   --border-color-select: var(--border-default);
 
   // Scrollbar

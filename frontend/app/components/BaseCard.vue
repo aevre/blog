@@ -10,6 +10,7 @@
 .card {
   position: relative;
   background: var(--bg-card-base);
+  backdrop-filter: blur(var(--blur-surface));
   border: 1px solid var(--border-color-card);
   box-shadow: var(--shadow-card-base);
   border-radius: var(--radius-card);

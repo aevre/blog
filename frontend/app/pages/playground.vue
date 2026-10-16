@@ -254,7 +254,7 @@ onBeforeUnmount(() => {
   width: 100%;
   min-height: 100vh;
   padding: 40px;
-  color: var(--text-color-primary);
+  color: var(--text-primary);
   display: flex;
   flex-direction: column;
   gap: 16px;

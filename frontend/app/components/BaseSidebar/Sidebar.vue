@@ -53,6 +53,7 @@ const handleToggle = (key: string) => {
 .sidebar-wrapper {
   position: relative;
   background: var(--bg-sidebar);
+  backdrop-filter: blur(var(--blur-elevated));
   border-right: 1px solid var(--border-color-nav);
   height: 100vh;
   width: 100%;

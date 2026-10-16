@@ -116,7 +116,8 @@ const { onBeforeEnter, onEnter, onAfterEnter, onBeforeLeave, onLeave, onAfterLea
   right: 0;
   width: 100%;
   height: calc(100vh - 60px);
-  background: var(--bg-nav-active);
+  background: var(--bg-elevated);
+  backdrop-filter: blur(var(--blur-elevated));
   border-top: 2px solid var(--border-color-nav);
   box-shadow: var(--shadow-md);
   padding-top: 20px;

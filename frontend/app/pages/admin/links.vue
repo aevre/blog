@@ -31,7 +31,7 @@ const { $ts } = useI18n();
 
 <style lang="less" scoped>
 .links {
-  color: var(--text-color-primary);
+  color: var(--text-primary);
 }
 
 .overview {
@@ -47,6 +47,7 @@ const { $ts } = useI18n();
   flex-direction: column;
   justify-content: space-evenly;
   background: var(--bg-card-base);
+  backdrop-filter: blur(var(--blur-surface));
   height: 140px;
   padding: 20px;
   border-radius: var(--radius-card);
@@ -62,7 +63,7 @@ const { $ts } = useI18n();
 
   &:hover {
     scale: 1.03;
-    box-shadow: 0 0 5px 1px var(--color-primary-base);
+    box-shadow: var(--shadow-card-hover);
   }
 }
 </style>

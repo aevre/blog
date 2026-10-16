@@ -115,7 +115,8 @@ const { onBeforeEnter, onEnter, onAfterEnter, onBeforeLeave, onLeave, onAfterLea
 .article-content {
   width: 100%;
   max-width: 800px;
-  background-color: var(--bg-card-base);
+  background-color: var(--bg-surface);
+  backdrop-filter: blur(var(--blur-surface));
   animation: article-show 1s ease-in-out;
   box-shadow: var(--shadow-lg);
   padding: 40px;
@@ -131,7 +132,8 @@ const { onBeforeEnter, onEnter, onAfterEnter, onBeforeLeave, onLeave, onAfterLea
   top: 80px;
   width: 240px;
   height: max-content;
-  background-color: var(--bg-card-base);
+  background-color: var(--bg-elevated);
+  backdrop-filter: blur(var(--blur-elevated));
   box-shadow: var(--shadow-md);
   padding: 16px;
   margin-top: 8px;

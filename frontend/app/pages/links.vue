@@ -78,6 +78,7 @@ useAddClassOnIntersect(linkCards, "is-visible");
 .submit-link-tips {
   position: relative;
   background: var(--bg-card-base);
+  backdrop-filter: blur(var(--blur-surface));
   border-radius: 10px;
   box-shadow: var(--shadow-card-base);
   padding: 20px;

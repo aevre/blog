@@ -27,6 +27,7 @@ const { isSticky = false } = defineProps<Props>();
   max-width: 1000px;
   margin: auto;
   background: var(--bg-nav-base);
+  backdrop-filter: blur(var(--blur-elevated));
   border: 1px solid var(--border-color-nav);
   overflow: hidden;
   width: calc(100% - 40px);

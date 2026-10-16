@@ -95,7 +95,8 @@ onMounted(() => {
   gap: 10px;
   padding: 12px;
   border-radius: var(--radius-nav);
-  background: var(--bg-nav-base);
+  background: var(--bg-elevated);
+  backdrop-filter: blur(var(--blur-elevated));
   border: 1px solid var(--border-color-nav);
   box-shadow: var(--shadow-nav);
   transition: var(--transition-nav);

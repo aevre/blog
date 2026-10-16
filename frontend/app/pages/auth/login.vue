@@ -51,6 +51,7 @@ const formData = ref({
   max-width: 90vw;
   padding: 20px;
   background: var(--bg-card-base);
+  backdrop-filter: blur(var(--blur-surface));
   box-shadow: var(--shadow-card-base);
   border-radius: 10px;
   color: var(--text-primary);
@@ -80,7 +81,7 @@ const formData = ref({
   margin-left: 1rem;
   font-weight: 700;
   border-radius: 8px;
-  background: var(--bg-card-base);
+  background: var(--bg-surface-muted);
 }
 
 .login-button {

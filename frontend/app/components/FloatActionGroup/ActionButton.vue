@@ -22,6 +22,7 @@ const { height = 30, icon } = defineProps<{
   justify-content: center;
   align-items: center;
   background: var(--bg-nav-base);
+  backdrop-filter: blur(var(--blur-elevated));
   border: 1px solid var(--border-color-nav);
   width: 100%;
   border-radius: var(--radius-nav);

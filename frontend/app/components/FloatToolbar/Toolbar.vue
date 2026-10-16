@@ -239,8 +239,10 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-/* 样式保持原样不变 */
 .floating-toolbar {
+  --toolbar-surface: rgb(255 255 255 / 58%);
+  --toolbar-panel-surface: rgb(246 245 244 / 46%);
+
   position: fixed;
   z-index: 1000;
   left: 50%;
@@ -250,12 +252,12 @@ onBeforeUnmount(() => {
   max-width: calc(100vw - 32px);
   overflow: hidden;
   transform: translateX(-50%);
-  color: var(--floating-toolbar-fg, #f5f5f5);
-  background: var(--floating-toolbar-bg, rgb(30 30 32 / 94%));
-  border: 1px solid var(--floating-toolbar-border, rgb(255 255 255 / 10%));
+  color: var(--text-primary);
+  background: var(--toolbar-surface);
+  border: 1px solid var(--border-glass);
   border-radius: 18px;
-  box-shadow: 0 10px 36px rgb(0 0 0 / 22%);
-  backdrop-filter: blur(18px) saturate(1.2);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(var(--blur-elevated));
   transition:
     width 280ms cubic-bezier(0.2, 0.8, 0.2, 1),
     border-radius 220ms ease,
@@ -263,18 +265,22 @@ onBeforeUnmount(() => {
 }
 
 .floating-toolbar.is-expanded {
+  background: var(--toolbar-surface);
   grid-template-rows: minmax(0, 1fr) auto;
   border-radius: 20px;
 }
 
 .floating-toolbar-panel-grid {
   min-height: 0;
-  overflow: hidden;
+  max-height: min(60vh, 420px);
+  overflow-y: auto;
+  background: var(--toolbar-panel-surface);
+  border-bottom: 1px solid var(--border-glass);
 }
 
 .floating-toolbar-panel-clip {
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .floating-toolbar-panel-content {
@@ -327,7 +333,7 @@ onBeforeUnmount(() => {
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  color: var(--floating-toolbar-muted, #b7b7bb);
+  color: var(--text-secondary);
   font-size: 22px;
   line-height: 1;
 }
@@ -359,7 +365,7 @@ onBeforeUnmount(() => {
 .floating-toolbar-close:hover,
 .floating-toolbar-button:hover,
 .floating-toolbar-overflow-item:hover {
-  background: var(--floating-toolbar-hover, rgb(255 255 255 / 10%));
+  background: var(--bg-interactive-hover);
 }
 
 .floating-toolbar-bar {
@@ -376,8 +382,8 @@ onBeforeUnmount(() => {
 }
 
 .floating-toolbar-button.is-active {
-  color: var(--floating-toolbar-active-fg, #fff);
-  background: var(--floating-toolbar-active-bg, rgb(255 255 255 / 16%));
+  color: var(--text-primary);
+  background: var(--bg-interactive-active);
 }
 
 .floating-toolbar-icon {
@@ -438,6 +444,11 @@ onBeforeUnmount(() => {
   flex: 0 0 40px;
   align-items: center;
   justify-content: center;
+}
+
+[data-theme="dark"] .floating-toolbar {
+  --toolbar-surface: rgb(34 34 38 / 62%);
+  --toolbar-panel-surface: rgb(26 26 30 / 50%);
 }
 
 @media (prefers-reduced-motion: reduce) {

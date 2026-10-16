@@ -43,7 +43,7 @@ const handleToggle = () => {
   width: 100%;
   height: 100vh;
   display: flex;
-  color: var(--text-on-brand);
+  color: var(--text-primary);
 }
 
 .right {
@@ -73,6 +73,7 @@ const handleToggle = () => {
   flex-shrink: 0;
   border-bottom: 1px solid var(--border-default);
   background: var(--bg-nav-base);
+  backdrop-filter: blur(var(--blur-elevated));
   display: flex;
   align-items: center;
   padding: 0 10px;
