@@ -8,90 +8,119 @@ const { toc } = defineProps<Props>();
 
 const handleTocClick = (id: string) => {
   const target = document.getElementById(id);
-
   if (!target) return;
 
-  target.scrollIntoView({
-    behavior: "smooth",
-    block: "start",
-  });
-
+  target.scrollIntoView({ behavior: "smooth", block: "start" });
   history.pushState(null, "", `#${id}`);
 };
 </script>
 
 <template>
-  <ul class="toc">
-    <li v-for="item in toc" :key="item.id" :class="{ active: activeId === item.id }">
-      <a :href="`#${item.id}`" @click.prevent="handleTocClick(item.id)">{{ item.text }}</a>
-    </li>
-  </ul>
+  <nav class="toc-nav" aria-label="文章目录">
+    <ul class="toc-list">
+      <li
+        v-for="item in toc"
+        :key="item.id"
+        class="toc-item"
+        :class="{ active: activeId === item.id, 'toc-item-root': item.level <= 2 }"
+        :style="{ '--toc-depth': Math.min(3, Math.max(0, item.level - 2)) }"
+      >
+        <a
+          class="toc-link"
+          :href="`#${item.id}`"
+          :aria-current="activeId === item.id ? 'location' : undefined"
+          @click.prevent="handleTocClick(item.id)"
+        >
+          {{ item.text }}
+        </a>
+      </li>
+    </ul>
+  </nav>
 </template>
 
 <style lang="less" scoped>
-.toc {
-  max-height: min(500px, 60vh);
+.toc-nav {
   width: 100%;
-  list-style: none;
-  padding: 0;
-  margin: 0;
+  max-height: min(500px, 55vh);
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: var(--brand-primary) transparent;
+  scrollbar-color: var(--border-glass) transparent;
 
   &::-webkit-scrollbar {
     width: 4px;
   }
 
   &::-webkit-scrollbar-thumb {
-    background-color: var(--brand-primary);
+    background: var(--border-glass);
+    border-radius: 4px;
+  }
+}
+
+.toc-list {
+  display: grid;
+  gap: 2px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.toc-item {
+  position: relative;
+  min-width: 0;
+  padding-left: calc(10px + var(--toc-depth) * 12px);
+  border-radius: 5px;
+  transition: background-color 120ms ease;
+
+  &::before {
+    position: absolute;
+    top: 7px;
+    bottom: 7px;
+    left: 0;
+    width: 2px;
     border-radius: 2px;
+    background: transparent;
+    content: "";
+    transition: background-color 120ms ease;
   }
 
-  &::-webkit-scrollbar-track {
-    background-color: transparent;
+  &:hover {
+    background: var(--bg-interactive-hover);
   }
 
-  li {
-    position: relative;
-    padding: 8px 12px;
-    margin: 4px 0;
-    border-radius: 6px;
-    transition:
-      background-color 0.2s ease,
-      border-color 0.2s ease;
-    border-left: 2px solid transparent;
+  &.active {
+    background: var(--brand-bg-muted);
 
-    a {
-      display: block;
-      color: var(--text-primary);
-      text-decoration: none;
-      font-size: 1.4rem;
-      line-height: 1.4;
-      transition: color 0.2s ease;
-
-      &:hover {
-        color: var(--text-primary);
-      }
+    &::before {
+      background: var(--brand-primary);
     }
+  }
+}
 
-    &.active {
-      background-color: var(--brand-bg);
-      border-left-color: var(--brand-primary);
+.toc-link {
+  display: block;
+  overflow: hidden;
+  padding: 7px 9px 7px 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.45;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+  transition: color 120ms ease;
 
-      a {
-        color: var(--brand-primary);
-        font-weight: 500;
-      }
-    }
+  &:hover {
+    color: var(--text-primary);
+  }
 
-    &:hover {
-      background-color: var(--bg-interactive-hover);
-    }
+  .toc-item-root & {
+    font-weight: 500;
+  }
 
-    &:active {
-      background-color: var(--bg-interactive-active);
-    }
+  .toc-item.active &,
+  .toc-item.active &:hover {
+    color: var(--brand-primary);
+    font-weight: 600;
   }
 }
 </style>
