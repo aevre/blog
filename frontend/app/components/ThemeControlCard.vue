@@ -89,7 +89,8 @@ onMounted(() => {
 
 <style lang="less" scoped>
 .theme-control-card {
-  width: max-content;
+  width: 100%;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -169,12 +170,13 @@ onMounted(() => {
   height: 32px;
   width: calc(100% - 10px);
   margin: 0 auto;
-  grid-template-columns: repeat(7, 32px);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   justify-content: center;
   gap: 6px;
 }
 
 .color-picker-item {
+  min-width: 0;
   cursor: pointer;
   border: none;
   box-shadow: var(--shadow-md);

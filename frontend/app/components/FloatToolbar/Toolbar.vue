@@ -12,7 +12,7 @@ interface Emits {
   (event: "action", item: Extract<ToolbarItem, { type: "action" }>): void;
 }
 
-const { items, config, label = "工具栏" } = defineProps<Props>();
+const { items, config, label = "" } = defineProps<Props>();
 const emit = defineEmits<Emits>();
 const activePanel = shallowRef<ToolbarPanel | null>(null);
 const overflowOpen = shallowRef(false);
@@ -34,7 +34,8 @@ const barWidth = computed(() => {
 
 const expandedWidth = computed(() => {
   const requested = activePanel.value?.width ?? 0;
-  return Math.min(Math.max(240, barWidth.value, requested), Math.max(240, viewportWidth() - 32));
+  const maxExpandedWidth = Math.min(maxWidth.value, Math.max(0, viewportWidth() - 32));
+  return Math.min(Math.max(240, barWidth.value, requested), maxExpandedWidth);
 });
 
 const shellStyle = computed<CSSProperties>(() => ({
@@ -152,7 +153,11 @@ onBeforeUnmount(() => {
     :style="shellStyle"
     :data-expanded="isExpanded"
   >
-    <div class="floating-toolbar-panel-grid" :aria-hidden="!isExpanded">
+    <div
+      v-if="visibleItems.length > 0"
+      class="floating-toolbar-panel-grid"
+      :aria-hidden="!isExpanded"
+    >
       <section class="floating-toolbar-panel-clip">
         <div class="floating-toolbar-panel-content">
           <header class="floating-toolbar-panel-header">
@@ -197,7 +202,7 @@ onBeforeUnmount(() => {
       </section>
     </div>
 
-    <nav ref="bar" class="floating-toolbar-bar" :aria-label="label">
+    <nav v-if="visibleItems.length > 0" ref="bar" class="floating-toolbar-bar" :aria-label="label">
       <button
         v-for="item in visibleItems"
         :key="item.id"
@@ -249,7 +254,7 @@ onBeforeUnmount(() => {
   bottom: max(16px, env(safe-area-inset-bottom));
   display: grid;
   grid-template-rows: 0fr auto;
-  max-width: calc(100vw - 32px);
+  max-width: min(var(--toolbar-max-width), calc(100vw - 32px));
   overflow: hidden;
   transform: translateX(-50%);
   color: var(--text-primary);
@@ -274,7 +279,7 @@ onBeforeUnmount(() => {
   min-height: 0;
   max-height: min(60vh, 420px);
   overflow-y: auto;
-  background: var(--toolbar-panel-surface);
+  background: var(--toolbar-surface);
   border-bottom: 1px solid var(--border-glass);
 }
 
@@ -420,6 +425,7 @@ onBeforeUnmount(() => {
 
 .floating-toolbar-external-panel {
   display: block;
+  width: 100%;
   min-width: 0;
   max-width: 100%;
 }

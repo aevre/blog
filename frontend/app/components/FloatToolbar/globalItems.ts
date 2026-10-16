@@ -40,5 +40,6 @@ export const globalItems = [
     props: {
       show: true,
     },
+    width: 300,
   },
 ] as const satisfies readonly ToolbarItem[];
