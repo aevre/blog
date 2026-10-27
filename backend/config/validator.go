@@ -16,14 +16,25 @@ func validate(cfg *Config) error {
 	if cfg.App.Name == "" {
 		errs = append(errs, "app.name is required")
 	}
+	if cfg.App.Environment != EnvDev && cfg.App.Environment != EnvProd {
+		errs = append(errs, "app.environment must be development or production")
+	}
+	if cfg.Log.Format != "" && cfg.Log.Format != "console" && cfg.Log.Format != "json" {
+		errs = append(errs, "log.format must be console or json")
+	}
+	switch strings.ToLower(cfg.Log.Level) {
+	case "debug", "info", "warn", "error":
+	default:
+		errs = append(errs, "log.level must be debug, info, warn, or error")
+	}
 	if cfg.Server.Port <= 0 || cfg.Server.Port > 65535 {
 		errs = append(errs, "server.port must be between 1 and 65535")
 	}
 	if cfg.App.IsProd() && cfg.JWT.Secret == "" {
-		errs = append(errs, "jwt.secret is required in production (set JWT_SECRET env var)")
+		errs = append(errs, "jwt.secret is required in production")
 	}
 	if cfg.App.IsProd() && cfg.Database.Password == "" {
-		errs = append(errs, "database.password is required in production (set DATABASE_PASSWORD env var)")
+		errs = append(errs, "database.password is required in production")
 	}
 
 	if len(errs) > 0 {

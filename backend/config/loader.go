@@ -106,6 +106,9 @@ func load(opt Options) (*Config, error) {
 		v.OnConfigChange(func(e fsnotify.Event) {
 			log.Printf("[config] file changed: %s", e.Name)
 			newCfg, err := decode(v)
+			if err == nil {
+				err = validate(newCfg)
+			}
 			if err != nil {
 				log.Printf("[config] reload error: %v", err)
 				return
@@ -156,7 +159,7 @@ func mergeOptions(opts ...Options) Options {
 	opt.WatchFile = o.WatchFile
 	opt.OnChange = o.OnChange
 
-	if envFile := os.Getenv("CONFIG_FILE"); envFile != "" && opt.ConfigFile == "" {
+	if envFile := os.Getenv("CONFIG_FILE"); envFile != "" {
 		opt.ConfigFile = envFile
 	}
 
