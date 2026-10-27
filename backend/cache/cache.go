@@ -14,6 +14,7 @@ type Store interface {
 
 type AtomicStore interface {
 	Incr(ctx context.Context, key string) (int64, error)
+	IncrBy(ctx context.Context, key string, value int64) (int64, error)
 	PopBatch(ctx context.Context, keys []string) (map[string]string, error)
 }
 

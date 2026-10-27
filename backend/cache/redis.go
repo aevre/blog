@@ -53,6 +53,11 @@ func (c *client) Incr(ctx context.Context, key string) (int64, error) {
 	return c.rdb.Incr(ctx, key).Result()
 }
 
+// IncrBy implements [CacheClient].
+func (c *client) IncrBy(ctx context.Context, key string, value int64) (int64, error) {
+	return c.rdb.IncrBy(ctx, key, value).Result()
+}
+
 func (c *client) Delete(ctx context.Context, key string) error {
 	return c.rdb.Del(ctx, key).Err()
 }
@@ -96,17 +101,27 @@ func (c *client) Close() error {
 func NewCacheClient(cfg *config.Config) (CacheClient, error) {
 	rcfg := cfg.Redis
 	rdb := redis.NewClient(&redis.Options{
-		Addr:         fmt.Sprintf("%s:%d", rcfg.Host, rcfg.Port),
-		Password:     rcfg.Password,
-		DB:           rcfg.DB,
-		PoolSize:     rcfg.PoolSize,
-		MinIdleConns: rcfg.MinIdleConns,
+		Addr:            fmt.Sprintf("%s:%d", rcfg.Host, rcfg.Port),
+		Password:        rcfg.Password,
+		DB:              rcfg.DB,
+		PoolSize:        rcfg.PoolSize,
+		MinIdleConns:    rcfg.MinIdleConns,
+		DialTimeout:     rcfg.DialTimeout,
+		ReadTimeout:     rcfg.ReadTimeout,
+		WriteTimeout:    rcfg.WriteTimeout,
+		PoolTimeout:     rcfg.PoolTimeout,
+		ConnMaxIdleTime: rcfg.IdleTimeout,
 	})
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	pingTimeout := rcfg.DialTimeout
+	if pingTimeout <= 0 {
+		pingTimeout = 5 * time.Second
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), pingTimeout)
 	defer cancel()
 	if err := rdb.Ping(ctx).Err(); err != nil {
-		return nil, err
+		_ = rdb.Close()
+		return nil, fmt.Errorf("ping redis: %w", err)
 	}
 
 	return &client{rdb: rdb}, nil
