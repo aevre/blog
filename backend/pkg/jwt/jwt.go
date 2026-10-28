@@ -2,6 +2,8 @@
 package jwt
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -39,15 +41,16 @@ func (j *jwtx) GenerateAllTokens(userID uint, role entity.UserRole) (string, str
 }
 
 func (j *jwtx) Parse(tokenStr string) (*Claims, error) {
-	token, err := jwtv5.ParseWithClaims(tokenStr, &Claims{}, func(token *jwtv5.Token) (any, error) {
-		if _, ok := token.Method.(*jwtv5.SigningMethodHMAC); !ok {
-			return nil, errx.New(
-				errx.CodeInternalError,
-				fmt.Errorf("unexpected signing method: %v", token.Header["alg"]),
-			)
-		}
-		return []byte(j.cfg.Secret), nil
-	})
+	token, err := jwtv5.ParseWithClaims(
+		tokenStr,
+		&Claims{},
+		func(token *jwtv5.Token) (any, error) {
+			return []byte(j.cfg.Secret), nil
+		},
+		jwtv5.WithValidMethods([]string{jwtv5.SigningMethodHS256.Alg()}),
+		jwtv5.WithExpirationRequired(),
+		jwtv5.WithIssuer(j.cfg.Issuer),
+	)
 	if err != nil {
 		return nil, errx.New(errx.CodeUnauthorized, fmt.Errorf("invalid token: %w", err))
 	}
@@ -61,34 +64,31 @@ func (j *jwtx) Parse(tokenStr string) (*Claims, error) {
 }
 
 func (j *jwtx) Validate(tokenStr string) (bool, error) {
-	_, err := jwtv5.Parse(tokenStr, func(token *jwtv5.Token) (any, error) {
-		if _, ok := token.Method.(*jwtv5.SigningMethodHMAC); !ok {
-			return nil, errx.New(
-				errx.CodeInternalError,
-				fmt.Errorf("unexpected signing method: %v", token.Header["alg"]),
-			)
-		}
-		return []byte(j.cfg.Secret), nil
-	})
-	if err != nil {
-		return false, errx.New(errx.CodeUnauthorized, err)
-	}
-
-	return true, nil
+	_, err := j.Parse(tokenStr)
+	return err == nil, err
 }
 
 func (j *jwtx) generateToken(userID uint, role entity.UserRole, tokenType string, expires time.Duration) (string, error) {
 	now := time.Now()
 
+	var tokenID [16]byte
+
+	if _, err := rand.Read(tokenID[:]); err != nil {
+		return "", errx.New(errx.CodeInternalError, err)
+	}
+
 	claims := Claims{
 		ID:        userID,
 		Role:      role,
 		TokenType: tokenType,
-		ExpiresAt: jwtv5.NewNumericDate(now.Add(expires)),
-		IssuedAt:  jwtv5.NewNumericDate(now),
-		NotBefore: jwtv5.NewNumericDate(now),
-		Issuer:    j.cfg.Issuer,
-		Subject:   "user token",
+		RegisteredClaims: jwtv5.RegisteredClaims{
+			ID:        hex.EncodeToString(tokenID[:]),
+			ExpiresAt: jwtv5.NewNumericDate(now.Add(expires)),
+			IssuedAt:  jwtv5.NewNumericDate(now),
+			NotBefore: jwtv5.NewNumericDate(now),
+			Issuer:    j.cfg.Issuer,
+			Subject:   "user token",
+		},
 	}
 
 	token := jwtv5.NewWithClaims(jwtv5.SigningMethodHS256, claims)
