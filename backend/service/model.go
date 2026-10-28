@@ -72,6 +72,7 @@ func (s *modelService) GenerateSummary(ctx context.Context, content string) (<-c
 			errCh <- errx.New(errx.CodeExternalError, fmt.Errorf("llm request error: %w", err))
 			return
 		}
+		defer func() { _ = resp.Body.Close() }()
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			err = errx.New(errx.CodeExternalError, fmt.Errorf("status code: %d", resp.StatusCode))
 			errCh <- err
@@ -82,9 +83,6 @@ func (s *modelService) GenerateSummary(ctx context.Context, content string) (<-c
 			)
 			return
 		}
-		defer func() {
-			_ = resp.Body.Close()
-		}()
 
 		scanner := bufio.NewScanner(resp.Body)
 		buf := make([]byte, 0, 1024*1024)
@@ -117,10 +115,9 @@ func (s *modelService) GenerateSummary(ctx context.Context, content string) (<-c
 
 			var chunk map[string]any
 			if err := json.Unmarshal([]byte(jsonStr), &chunk); err != nil {
-				s.log.Error("json parse error",
+				s.log.Warn("invalid llm stream chunk",
 					logger.String("module", "GenerateSummary"),
 					logger.Err(err),
-					logger.String("raw_data", jsonStr),
 				)
 				continue
 			}
