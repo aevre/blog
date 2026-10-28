@@ -1,9 +1,10 @@
 package middleware
 
 import (
+	"net/http"
 	"time"
 
-	"blog-server/config"
+	"blog-server/contextx"
 	"blog-server/logger"
 
 	"github.com/google/uuid"
@@ -11,65 +12,61 @@ import (
 )
 
 const (
-	ContextKeyRequestID = "request_id"
-	ContextKeyLogger    = "logger"
-	ContextKeyStart     = "request_start"
+	ContextKeyLogger = "logger"
+	ContextKeyStart  = "request_start"
 )
 
-func RequestLogger(
-	cfg *config.Config,
-	log logger.Logger,
-) echo.MiddlewareFunc {
+func RequestLogger(log logger.Logger) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c *echo.Context) error {
 			start := time.Now()
-
 			reqID := c.Request().Header.Get(echo.HeaderXRequestID)
-			if reqID == "" {
+			if reqID == "" || len(reqID) > 128 {
 				reqID = uuid.New().String()
 			}
 			c.Response().Header().Set(echo.HeaderXRequestID, reqID)
 
 			reqLogger := log.With(logger.String("request_id", reqID))
-			c.Set(ContextKeyRequestID, reqID)
 			c.Set(ContextKeyLogger, reqLogger)
 			c.Set(ContextKeyStart, start)
-
-			if cfg.App.IsDev() {
-				reqLogger.Info("HTTP request started",
-					logger.String("method", c.Request().Method),
-					logger.String("path", c.Request().URL.RequestURI()),
-				)
-			}
+			c.SetRequest(c.Request().WithContext(contextx.SetRequestID(c.Request().Context(), reqID)))
 
 			err := next(c)
 			if err != nil {
-				// ErrorHandler logs this request's outcome instead.
 				return err
 			}
 
-			latency := time.Since(start)
-			fields := []logger.Field{
-				logger.String("method", c.Request().Method),
-				logger.String("path", c.Request().URL.RequestURI()),
-				logger.String("ip", c.RealIP()),
-				logger.String("user_agent", c.Request().UserAgent()),
-				logger.String("referer", c.Request().Referer()),
-				logger.Duration("latency", latency),
+			status := http.StatusOK
+			if resp, unwrapErr := echo.UnwrapResponse(c.Response()); unwrapErr == nil {
+				status = resp.Status
 			}
-
-			if resp, uwErr := echo.UnwrapResponse(c.Response()); uwErr == nil {
-				fields = append(fields, logger.Int("status", resp.Status))
-			}
-
-			if latency > 5*time.Second {
-				fields = append(fields, logger.Bool("slow_request", true))
-				reqLogger.Warn("HTTP request completed", fields...)
-			} else {
-				reqLogger.Info("HTTP request completed", fields...)
-			}
-
+			LogRequest(reqLogger, c, status, time.Since(start), nil)
 			return nil
 		}
+	}
+}
+
+func LogRequest(log logger.Logger, c *echo.Context, status int, duration time.Duration, err error) {
+	path := c.Path()
+	if path == "" {
+		path = c.Request().URL.Path
+	}
+	fields := []logger.Field{
+		logger.String("method", c.Request().Method),
+		logger.String("path", path),
+		logger.Int("status", status),
+		logger.Duration("duration", duration),
+	}
+	if err != nil && status >= http.StatusInternalServerError {
+		fields = append(fields, logger.Err(err))
+	}
+
+	switch {
+	case status >= http.StatusInternalServerError:
+		log.Error("http request completed", fields...)
+	case status >= http.StatusBadRequest || duration > 5*time.Second:
+		log.Warn("http request completed", fields...)
+	default:
+		log.Info("http request completed", fields...)
 	}
 }

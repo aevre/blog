@@ -348,7 +348,10 @@ func (r *postRepo) GetAdminListItemByID(ctx context.Context, id uint) (*entity.P
 		).
 		First(ctx)
 	if err != nil {
-		return nil, errx.New(errx.CodeNotFound, err)
+		if ent.IsNotFound(err) {
+			return nil, errx.New(errx.CodeNotFound, err)
+		}
+		return nil, errx.New(errx.CodeInternalError, err)
 	}
 
 	return mapper.ToPost(p), nil
@@ -394,7 +397,10 @@ func (r *postRepo) GetPublishedByID(ctx context.Context, id uint) (*entity.Post,
 		).
 		First(ctx)
 	if err != nil {
-		return nil, errx.New(errx.CodeNotFound, err)
+		if ent.IsNotFound(err) {
+			return nil, errx.New(errx.CodeNotFound, err)
+		}
+		return nil, errx.New(errx.CodeInternalError, err)
 	}
 
 	return mapper.ToPost(p), nil
@@ -426,7 +432,10 @@ func (r *postRepo) GetByID(ctx context.Context, id uint) (*entity.Post, error) {
 		).
 		First(ctx)
 	if err != nil {
-		return nil, errx.New(errx.CodeNotFound, err)
+		if ent.IsNotFound(err) {
+			return nil, errx.New(errx.CodeNotFound, err)
+		}
+		return nil, errx.New(errx.CodeInternalError, err)
 	}
 
 	return mapper.ToPost(p), nil

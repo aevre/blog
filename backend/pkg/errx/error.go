@@ -103,12 +103,16 @@ func MessageForCode(code int) string {
 	switch code {
 	case CodeNotFound:
 		return "资源不存在"
-	case CodeUnauthorized:
+	case CodeConflict:
+		return "资源状态冲突"
+	case CodeUnauthorized, CodeTokenExpired:
 		return "未登录或登录已过期"
 	case CodeForbidden:
 		return "权限不足"
-	case CodeInvalidParam:
+	case CodeInvalidParam, CodeValidationFailed:
 		return "请求参数错误"
+	case CodeExternalError:
+		return "外部服务暂时不可用"
 	default:
 		return "系统错误，请稍后重试"
 	}

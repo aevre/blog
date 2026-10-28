@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"net"
 	"net/http"
 	"time"
 
@@ -58,11 +59,12 @@ func main() {
 func providerEchoApp(cfg *config.Config, log logger.Logger) *echo.Echo {
 	echoCfg := echo.Config{
 		HTTPErrorHandler: handler.ErrorHandler(cfg, log),
-		IPExtractor:      echo.ExtractIPFromXFFHeader(),
+		IPExtractor:      echo.ExtractIPDirect(),
 	}
 
 	app := echo.NewWithConfig(echoCfg)
-	app.Use(middleware.RequestLogger(cfg, log))
+	app.Use(middleware.RequestLogger(log))
+	app.Use(middleware.Recover)
 	app.Use(middleware.BodyLimit(10 * 1024 * 1024))
 
 	return app
@@ -84,21 +86,27 @@ func runServerLifecycle(
 	log logger.Logger,
 ) {
 	srv := &http.Server{
-		Addr:    cfg.Server.Addr(),
-		Handler: app,
+		Addr:              cfg.Server.Addr(),
+		Handler:           app,
+		ReadTimeout:       cfg.Server.ReadTimeout,
+		WriteTimeout:      cfg.Server.WriteTimeout,
+		IdleTimeout:       cfg.Server.IdleTimeout,
+		MaxHeaderBytes:    cfg.Server.MaxHeaderBytes,
+		ReadHeaderTimeout: cfg.Server.ReadTimeout,
 	}
 
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
+			listener, err := net.Listen("tcp", srv.Addr)
+			if err != nil {
+				return err
+			}
+			log.Info("server started", logger.String("address", srv.Addr))
 			go func() {
-				log.Info("Server is starting")
-
-				if err := srv.ListenAndServe(); err != nil &&
-					!errors.Is(err, http.ErrServerClosed) {
-					log.Error("Server startup failed", logger.Err(err))
+				if err := srv.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
+					log.Error("server failed", logger.Err(err))
 				}
 			}()
-
 			return nil
 		},
 
@@ -107,21 +115,14 @@ func runServerLifecycle(
 			if timeout <= 0 {
 				timeout = 5 * time.Second
 			}
-
-			shutdownCtx, cancel := context.WithTimeout(
-				context.Background(),
-				timeout,
-			)
+			shutdownCtx, cancel := context.WithTimeout(ctx, timeout)
 			defer cancel()
 
-			log.Info("Server is shutting down")
-
+			log.Info("server stopping")
 			if err := srv.Shutdown(shutdownCtx); err != nil {
-				log.Error("Server shutdown failed", logger.Err(err))
 				return err
 			}
-
-			log.Info("Server has been shut down successfully")
+			log.Info("server stopped")
 			return nil
 		},
 	})
