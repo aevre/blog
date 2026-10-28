@@ -3,7 +3,7 @@ export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
 
   runtimeConfig: {
-    apiBase: process.env.NUXT_SERVER_API_BASE || "http://localhost:8000/api/v1",
+    apiBase: process.env.NUXT_API_BASE || "http://localhost:8000/api/v1",
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE || "/api",
     },

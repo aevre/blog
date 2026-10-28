@@ -85,7 +85,7 @@ services:
       NODE_ENV: production
       NUXT_TELEMETRY_DISABLED: "1"
       # SSR 服务端访问后端地址
-      NUXT_SERVER_API_BASE: "http://backend:8000/api/v1"
+      NUXT_API_BASE: "http://backend:8000/api/v1"
       NUXT_BACKEND_URL: "http://backend:8000"
     depends_on:
       - backend

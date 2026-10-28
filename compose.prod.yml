@@ -80,7 +80,7 @@ services:
       NODE_ENV: production
       NUXT_TELEMETRY_DISABLED: "1"
       # SSR 服务端访问后端地址（同网络用服务名，不设置默认 localhost:8000）
-      NUXT_SERVER_API_BASE: "http://backend:8000/api/v1"
+      NUXT_API_BASE: "http://backend:8000/api/v1"
       NUXT_BACKEND_URL: "http://backend:8000"
     # 不依赖 backend，避免其重建阻塞删除；就绪后由 nginx reload 接入
     networks:
