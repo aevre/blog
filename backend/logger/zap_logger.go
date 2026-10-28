@@ -2,10 +2,13 @@ package logger
 
 import (
 	"context"
+	"errors"
 	"os"
+	"syscall"
 	"time"
 
 	"blog-server/config"
+	"blog-server/contextx"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -35,7 +38,7 @@ func (z *zapLogger) Error(msg string, fields ...Field) { z.log(zap.ErrorLevel, m
 // error returned by stderr/stdout sync on some platforms.
 func (z *zapLogger) Sync() error {
 	err := z.l.Sync()
-	if err != nil && err.Error() == "invalid argument" {
+	if errors.Is(err, syscall.EINVAL) {
 		return nil
 	}
 	return err
@@ -60,25 +63,10 @@ func (z *zapLogger) WithContext(ctx context.Context) Logger {
 		return z
 	}
 
-	fields := make([]Field, 0, 2)
-
-	if v := ctx.Value("request_id"); v != nil {
-		if s, ok := v.(string); ok {
-			fields = append(fields, String("request_id", s))
-		}
+	if requestID := contextx.GetRequestID(ctx); requestID != "" {
+		return z.With(String("request_id", requestID))
 	}
-
-	if v := ctx.Value("trace_id"); v != nil {
-		if s, ok := v.(string); ok {
-			fields = append(fields, String("trace_id", s))
-		}
-	}
-
-	if len(fields) == 0 {
-		return z
-	}
-
-	return z.With(fields...)
+	return z
 }
 
 // NewLogger creates a new Logger instance based on application configuration.
@@ -156,7 +144,7 @@ func buildEncoder(cfg *config.Config) (zapcore.Encoder, zapcore.Level) {
 		EncodeDuration: zapcore.StringDurationEncoder,
 	}
 
-	return zapcore.NewConsoleEncoder(ec), zap.DebugLevel
+	return zapcore.NewConsoleEncoder(ec), level
 }
 
 // convert transforms internal Field types into zap.Field slice.
