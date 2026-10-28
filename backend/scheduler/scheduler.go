@@ -3,6 +3,7 @@ package scheduler
 
 import (
 	"context"
+	"sync"
 
 	"blog-server/logger"
 	"blog-server/scheduler/jobs"
@@ -20,6 +21,15 @@ func NewScheduler(log logger.Logger, postService service.PostService, linkServic
 }
 
 func (s *Scheduler) Start(ctx context.Context) {
-	go jobs.StartViewFlushJob(ctx, s.postService, s.log)
-	go jobs.StartCheckLinkStatusJob(ctx, s.linkService, s.log)
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		jobs.StartViewFlushJob(ctx, s.postService, s.log)
+	}()
+	go func() {
+		defer wg.Done()
+		jobs.StartCheckLinkStatusJob(ctx, s.linkService, s.log)
+	}()
+	wg.Wait()
 }

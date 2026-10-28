@@ -14,8 +14,9 @@ func StartCheckLinkStatusJob(ctx context.Context, svc service.LinkService, log l
 		next := now.Truncate(time.Hour).Add(time.Hour)
 		wait := time.Until(next)
 
+		ticker := time.NewTimer(wait)
 		select {
-		case <-time.After(wait):
+		case <-ticker.C:
 			if err := svc.CheckLinkStatus(ctx); err != nil {
 				log.Error("check link status failed",
 					logger.String("module", "scheduler"),
@@ -24,6 +25,7 @@ func StartCheckLinkStatusJob(ctx context.Context, svc service.LinkService, log l
 				)
 			}
 		case <-ctx.Done():
+			ticker.Stop()
 			return
 		}
 	}

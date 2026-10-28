@@ -15,16 +15,18 @@ func StartViewFlushJob(ctx context.Context, svc service.PostService, log logger.
 		next := now.Truncate(time.Hour).Add(time.Hour)
 		wait := time.Until(next)
 
+		ticker := time.NewTimer(wait)
 		select {
-		case <-time.After(wait):
+		case <-ticker.C:
 			if err := svc.FlushViewCountToDB(ctx); err != nil {
-				log.Error("check link status failed",
+				log.Error("flush post view counts failed",
 					logger.String("module", "scheduler"),
 					logger.String("job", "view_count_flush"),
 					logger.Err(err),
 				)
 			}
 		case <-ctx.Done():
+			ticker.Stop()
 			return
 		}
 	}
