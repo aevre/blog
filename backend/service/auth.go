@@ -71,6 +71,7 @@ type AuthService interface {
 	SendCaptchaMail(ctx context.Context, to string, captchaType CaptchaType) error
 	Register(ctx context.Context, input *RegisterInput) (*AuthResult, error)
 	Login(ctx context.Context, input *LoginInput) (*AuthResult, error)
+	Logout(ctx context.Context, refreshToken string) error
 	HasRole(ctx context.Context, id uint, roles ...entity.UserRole) (bool, error)
 	RefreshAccessToken(ctx context.Context, token string) (string, string, error)
 }
@@ -88,13 +89,14 @@ type authService struct {
 func NewAuthService(
 	ds *datastore.DataStore,
 	rc cache.CacheClient,
+	cfg *config.Config,
 	userRepo repository.UserRepo,
 	mailService MailService,
 ) AuthService {
 	return &authService{
 		ds:          ds,
 		rc:          rc,
-		cfg:         config.Get(),
+		cfg:         cfg,
 		userRepo:    userRepo,
 		mailService: mailService,
 	}
@@ -160,6 +162,9 @@ func (s *authService) Register(ctx context.Context, input *RegisterInput) (*Auth
 func (s *authService) Login(ctx context.Context, input *LoginInput) (*AuthResult, error) {
 	user, err := s.userRepo.GetAuthByEmail(ctx, input.Email)
 	if err != nil {
+		if errx.ToAppError(err).Code == errx.CodeNotFound {
+			return nil, errx.New(errx.CodeInvalidParam, fmt.Errorf("invalid credentials"))
+		}
 		return nil, err
 	}
 	if !utils.VerifyPassword(input.Password, user.Password) {
@@ -230,6 +235,21 @@ func (s *authService) SendCaptchaMail(ctx context.Context, to string, captchaTyp
 	return nil
 }
 
+func (s *authService) Logout(ctx context.Context, refreshToken string) error {
+	claims, err := jwt.New(s.cfg.JWT).Parse(refreshToken)
+	if err != nil {
+		return err
+	}
+	if claims.TokenType != jwt.TokenTypeRefresh {
+		return errx.New(errx.CodeUnauthorized, fmt.Errorf("refresh token required"))
+	}
+
+	if err := s.rc.Delete(ctx, fmt.Sprintf("RefreshToken:%d", claims.ID)); err != nil {
+		return errx.New(errx.CodeInternalError, err)
+	}
+	return nil
+}
+
 // RefreshAccessToken refreshes the access token using a valid refresh token.
 func (s *authService) RefreshAccessToken(ctx context.Context, token string) (string, string, error) {
 	j := jwt.New(s.cfg.JWT)
@@ -237,16 +257,14 @@ func (s *authService) RefreshAccessToken(ctx context.Context, token string) (str
 	if err != nil {
 		return "", "", err
 	}
+	if claims.TokenType != jwt.TokenTypeRefresh {
+		return "", "", errx.New(errx.CodeUnauthorized, fmt.Errorf("refresh token required"))
+	}
 
 	userID := claims.ID
-	role := claims.Role
-
-	existed, err := s.userRepo.ExistsByID(ctx, userID)
+	user, err := s.userRepo.GetAuthByID(ctx, userID)
 	if err != nil {
 		return "", "", err
-	}
-	if !existed {
-		return "", "", errx.New(errx.CodeNotFound, fmt.Errorf("user %d not found", userID))
 	}
 
 	cachedRefreshToken, err := s.rc.Get(ctx, fmt.Sprintf("RefreshToken:%d", userID))
@@ -258,7 +276,7 @@ func (s *authService) RefreshAccessToken(ctx context.Context, token string) (str
 		return "", "", errx.New(errx.CodeUnauthorized, fmt.Errorf("invalid refresh token"))
 	}
 
-	accessToken, refreshToken, err := j.GenerateAllTokens(userID, role)
+	accessToken, refreshToken, err := j.GenerateAllTokens(userID, user.Role)
 	if err != nil {
 		return "", "", err
 	}

@@ -28,11 +28,12 @@ type AuthHandler interface {
 type authHandler struct {
 	svc      service.AuthService
 	validate validatorx.Validator
+	cfg      *config.Config
 }
 
 // NewAuthHandler creates a new auth handler instance.
-func NewAuthHandler(authService service.AuthService, validate validatorx.Validator) AuthHandler {
-	return &authHandler{svc: authService, validate: validate}
+func NewAuthHandler(authService service.AuthService, validate validatorx.Validator, cfg *config.Config) AuthHandler {
+	return &authHandler{svc: authService, validate: validate, cfg: cfg}
 }
 
 // SendCaptcha handles sending captcha email for verification.
@@ -83,7 +84,8 @@ func (h *authHandler) Register(c *echo.Context) error {
 		return err
 	}
 
-	setRefreshTokenCookie(c, result.RefreshToken)
+	h.setRefreshTokenCookie(c, result.RefreshToken)
+	h.setAccessTokenCookie(c, result.AccessToken)
 
 	return response.OK(c, response.Success(toLoginRes(result)))
 }
@@ -105,22 +107,40 @@ func (h *authHandler) Login(c *echo.Context) error {
 		return err
 	}
 
-	setRefreshTokenCookie(c, result.RefreshToken)
+	h.setRefreshTokenCookie(c, result.RefreshToken)
+	h.setAccessTokenCookie(c, result.AccessToken)
 
 	return response.OK(c, response.Success(toLoginRes(result)))
 }
 
 // Logout handles user logout by clearing the refresh token cookie.
 func (h *authHandler) Logout(c *echo.Context) error {
-	cookie := new(http.Cookie)
-	cookie.Name = "refreshToken"
-	cookie.Value = ""
-	cookie.Expires = time.Now().Add(-time.Hour)
-	cookie.HttpOnly = true
-	cookie.Secure = true
-	c.SetCookie(cookie)
+	if err := h.logoutRefreshToken(c); err != nil {
+		return err
+	}
+
+	h.clearTokenCookie(c, "refreshToken")
+	h.clearTokenCookie(c, "accessToken")
 
 	return response.OK(c, response.SuccessWithMsg("logout success", "logout success"))
+}
+
+func (h *authHandler) logoutRefreshToken(c *echo.Context) error {
+	token, err := c.Cookie("refreshToken")
+	if err != nil || token.Value == "" {
+		return nil
+	}
+
+	err = h.svc.Logout(c.Request().Context(), token.Value)
+	if err == nil {
+		return nil
+	}
+
+	code := errx.ToAppError(err).Code
+	if code == errx.CodeUnauthorized || code == errx.CodeTokenExpired {
+		return nil
+	}
+	return err
 }
 
 // Refresh handles access token refresh using refresh token from cookie.
@@ -137,7 +157,8 @@ func (h *authHandler) Refresh(c *echo.Context) error {
 		return err
 	}
 
-	setRefreshTokenCookie(c, refreshToken)
+	h.setRefreshTokenCookie(c, refreshToken)
+	h.setAccessTokenCookie(c, accessToken)
 
 	return response.OK(c, response.Success(&response.RefreshRes{
 		AccessToken:  accessToken,
@@ -167,16 +188,35 @@ func toLoginRes(result *service.AuthResult) *response.LoginRes {
 	}
 }
 
-// setRefreshTokenCookie sets the refresh token as an HTTP-only cookie.
-func setRefreshTokenCookie(c *echo.Context, value string) {
-	maxAge := config.Get().JWT.RefreshExpiration
-	cookie := &http.Cookie{
-		Name:     "refreshToken",
+func (h *authHandler) setTokenCookie(c *echo.Context, name string, value string, exp time.Duration) {
+	c.SetCookie(&http.Cookie{
+		Name:     name,
 		Value:    value,
-		Expires:  time.Now().Add(maxAge),
+		Path:     "/",
+		Expires:  time.Now().Add(exp),
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   h.cfg.App.IsProd(),
 		SameSite: http.SameSiteStrictMode,
-	}
-	c.SetCookie(cookie)
+	})
+}
+
+func (h *authHandler) clearTokenCookie(c *echo.Context, name string) {
+	c.SetCookie(&http.Cookie{
+		Name:     name,
+		Path:     "/",
+		Expires:  time.Unix(0, 0),
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   h.cfg.App.IsProd(),
+		SameSite: http.SameSiteStrictMode,
+	})
+}
+
+// setRefreshTokenCookie sets the refresh token as an HTTP-only cookie.
+func (h *authHandler) setRefreshTokenCookie(c *echo.Context, value string) {
+	h.setTokenCookie(c, "refreshToken", value, h.cfg.JWT.RefreshExpiration)
+}
+
+func (h *authHandler) setAccessTokenCookie(c *echo.Context, value string) {
+	h.setTokenCookie(c, "accessToken", value, h.cfg.JWT.AccessExpiration)
 }

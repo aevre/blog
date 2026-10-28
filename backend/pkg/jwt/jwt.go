@@ -17,11 +17,11 @@ type jwtx struct {
 }
 
 func (j *jwtx) GenerateAccessToken(userID uint, role entity.UserRole) (string, error) {
-	return j.generateToken(userID, role, j.cfg.AccessExpiration)
+	return j.generateToken(userID, role, TokenTypeAccess, j.cfg.AccessExpiration)
 }
 
 func (j *jwtx) GenerateRefreshToken(userID uint, role entity.UserRole) (string, error) {
-	return j.generateToken(userID, role, j.cfg.RefreshExpiration)
+	return j.generateToken(userID, role, TokenTypeRefresh, j.cfg.RefreshExpiration)
 }
 
 func (j *jwtx) GenerateAllTokens(userID uint, role entity.UserRole) (string, string, error) {
@@ -77,12 +77,13 @@ func (j *jwtx) Validate(tokenStr string) (bool, error) {
 	return true, nil
 }
 
-func (j *jwtx) generateToken(userID uint, role entity.UserRole, expires time.Duration) (string, error) {
+func (j *jwtx) generateToken(userID uint, role entity.UserRole, tokenType string, expires time.Duration) (string, error) {
 	now := time.Now()
 
 	claims := Claims{
 		ID:        userID,
 		Role:      role,
+		TokenType: tokenType,
 		ExpiresAt: jwtv5.NewNumericDate(now.Add(expires)),
 		IssuedAt:  jwtv5.NewNumericDate(now),
 		NotBefore: jwtv5.NewNumericDate(now),

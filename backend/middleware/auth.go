@@ -48,6 +48,9 @@ func (m *AuthMiddleware) Handler() echo.MiddlewareFunc {
 			if err != nil {
 				return err
 			}
+			if claims.TokenType != jwt.TokenTypeAccess {
+				return errx.New(errx.CodeUnauthorized, fmt.Errorf("access token required"))
+			}
 
 			user := contextx.User{
 				ID:   claims.ID,
