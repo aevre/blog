@@ -8,6 +8,7 @@ const content = defineModel<string>("content", { default: "" });
 
 const editor = useEditor({
   content: content.value,
+  contentType: "markdown",
   extensions: [StarterKit, Markdown],
   onUpdate: ({ editor }) => {
     content.value = editor.getMarkdown();
