@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { watch } from "vue";
 import type { ApiResponse } from "~/types/api";
 import type { PostAdminDetail } from "~/types/post";
 
@@ -6,20 +7,30 @@ definePageMeta({
   layout: false,
 });
 
-const { get } = useClientApi();
-
 const route = useRoute();
-
 const id = computed<number>(() => Number(route.params.id) || -1);
+
+const { data } = await useApiFetch<ApiResponse<PostAdminDetail>>(`/admin/posts/${id.value}`);
+
+// const { get } = useClientApi();
 
 const content = ref<string>("");
 const title = ref<string>("");
 
-onMounted(async () => {
-  const { data } = await get<ApiResponse<PostAdminDetail>>(`/admin/posts/${id.value}`);
-  content.value = data.content;
-  title.value = data.title;
-});
+watch(
+  () => data.value?.data,
+  (post) => {
+    title.value = post?.title ?? "";
+    content.value = post?.content ?? "";
+  },
+  { immediate: true },
+);
+
+// onMounted(async () => {
+//   const { data } = await api<ApiResponse<PostAdminDetail>>(`/admin/posts/${id.value}`);
+//   content.value = data.content;
+//   title.value = data.title;
+// });
 
 const charCount = computed(() => content.value.length);
 

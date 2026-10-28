@@ -32,8 +32,6 @@ const form = reactive<InitializeReq>({
 const loading = ref(false);
 const error = ref("");
 
-const { post } = useClientApi();
-
 const initialize = async () => {
   error.value = "";
 
@@ -45,9 +43,12 @@ const initialize = async () => {
   loading.value = true;
 
   try {
-    const res = await post<ApiResponse<InitializeData>>("/setup", form);
+    const { data } = await useApiFetch<ApiResponse<InitializeData>>("/setup", {
+      method: "post",
+      body: form,
+    });
 
-    if (!res.data.initialized) {
+    if (!data.value?.data.initialized) {
       error.value = "初始化未完成";
       return;
     }

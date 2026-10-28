@@ -20,7 +20,7 @@ export const globalItems = [
     icon: "ion:logo-rss",
     label: "tooltip.rss",
     handler: async ({ notify }) => {
-      await navigator.clipboard.writeText(window.location.origin + "/api/v1/rss");
+      await navigator.clipboard.writeText(window.location.origin + "/api/rss");
       notify("message.rssCopied", { type: "info" });
     },
   },

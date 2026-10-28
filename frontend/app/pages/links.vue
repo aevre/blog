@@ -7,7 +7,7 @@ useHead({
   title: $ts("page.links"),
 });
 
-const { data } = await useFetch<ApiListResponse<FriendLink>>("/api/v1/links", {
+const { data } = await useApiFetch<ApiListResponse<FriendLink>>("/links", {
   method: "get",
 });
 

@@ -10,32 +10,15 @@ const searchQuery = ref("");
 const currentPage = ref(1);
 const pageSize = ref(20);
 
-const { get } = useClientApi();
-
-const { data, pending, refresh } = useAsyncData(
-  "admin-posts",
-  () => {
-    return get<ApiPageResponse<PostAdminMeta>>("/admin/posts", {
-      query: {
-        page: currentPage.value,
-        pageSize: pageSize.value,
-        search: searchQuery.value,
-      },
-    });
-  },
+const { data, pending, refresh } = await useApiFetch<ApiPageResponse<PostAdminMeta>>(
+  "/admin/posts",
   {
-    default: () => ({
-      code: 0,
-      msg: "",
-      data: {
-        list: [],
-        total: 0,
-        page: 1,
-        pageSize: 20,
-      },
-    }),
-    server: false,
-    watch: [currentPage, pageSize, searchQuery],
+    baseURL: "/api",
+    query: {
+      page: currentPage,
+      pageSize,
+      search: searchQuery,
+    },
   },
 );
 

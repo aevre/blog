@@ -78,7 +78,7 @@ async function handleSubmit() {
   }
   loading.value = true;
   try {
-    await useFetch("/api/v1/links/apply-link", {
+    await useApiFetch("/links/apply-link", {
       method: "post",
       body: form.value,
     });

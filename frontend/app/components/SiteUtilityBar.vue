@@ -21,7 +21,7 @@ const toUserSetting = () => {
 };
 
 const copyRSSFeedUrl = async () => {
-  await navigator.clipboard.writeText(window.location.origin + "/api/v1/rss");
+  await navigator.clipboard.writeText(window.location.origin + "/api/rss");
 
   message.success($ts("message.rssCopied"), {
     keepAliveOnHover: true,

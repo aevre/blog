@@ -2,6 +2,13 @@
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
 
+  runtimeConfig: {
+    apiBase: process.env.NUXT_SERVER_API_BASE || "http://localhost:8000/api/v1",
+    public: {
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || "/api",
+    },
+  },
+
   devServer: {
     host: "0.0.0.0",
     port: 3000,
@@ -13,7 +20,6 @@ export default defineNuxtConfig({
       enabled: true,
     },
   },
-
   // 应用信息配置
   app: {
     head: {

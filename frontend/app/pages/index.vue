@@ -5,7 +5,7 @@ import type { Post } from "~/types/post";
 const page = ref<number>(1);
 const pageSize = ref<number>(10);
 
-const { data } = await useFetch<ApiPageResponse<Post>>("/api/v1/posts", {
+const { data } = await useApiFetch<ApiPageResponse<Post>>("/posts", {
   method: "get",
   query: {
     page,

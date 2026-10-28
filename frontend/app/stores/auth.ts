@@ -1,69 +1,98 @@
 import type { ApiResponse } from "~/types/api";
 import type { User } from "~/types/user";
 
-export type AuthData = {
-  accessToken: string;
-} & User;
-
 export const useAuthStore = defineStore("auth", () => {
-  const { data } = useFetch<{ initialized: boolean }>("/api/v1/setup", {
-    method: "GET",
-  });
+  const user = ref<User | null>(null);
+  const authChecked = ref(false);
 
-  const initialized = computed(() => data.value?.initialized ?? null);
+  const isAuthenticated = computed(() => user.value !== null);
 
-  const { apiFetch } = useClientApi();
+  let pendingFetch: Promise<User | null> | null = null;
 
-  const accessToken = ref(import.meta.client ? localStorage.getItem("accessToken") || "" : "");
+  const fetchUser = async (force = false): Promise<User | null> => {
+    if (!force && authChecked.value) return Promise.resolve(user.value);
 
-  const setAccessToken = (newAccessToken: string) => {
-    accessToken.value = newAccessToken;
-    localStorage.setItem("accessToken", newAccessToken);
-  };
-
-  const logout = async () => {
-    try {
-      await apiFetch("/auth/logout", {
-        method: "POST",
-      });
-    } finally {
-      accessToken.value = "";
-      localStorage.removeItem("accessToken");
+    if (pendingFetch) {
+      return pendingFetch;
     }
+
+    const { $api } = useNuxtApp();
+
+    pendingFetch = (async () => {
+      try {
+        const response = await $api<ApiResponse<User>>("/user/me");
+
+        if (response.code !== 0) {
+          throw new Error(`Failed to fetch user: ${response.code}`);
+        }
+
+        user.value = response.data;
+        authChecked.value = true;
+
+        return user.value;
+      } catch (error) {
+        const status = (error as { status?: number }).status;
+        if (status === 401) {
+          user.value = null;
+          authChecked.value = true;
+          return null;
+        }
+        throw error;
+      }
+    })().finally(() => {
+      pendingFetch = null;
+    });
+
+    return pendingFetch;
   };
 
   const login = async (email: string, password: string) => {
-    const { code, data } = await apiFetch<ApiResponse<AuthData>>("/auth/login", {
-      method: "POST",
+    const { $api } = useNuxtApp();
+    const response = await $api<ApiResponse<User>>("/auth/login", {
+      method: "post",
       body: { email, password },
     });
-    if (code !== 200) {
-      // TODO: login failed logic
-      console.warn(code);
+    if (response.code !== 0) {
+      throw new Error(`Login failed: ${response.code}`);
     }
-    setAccessToken(data.accessToken);
 
-    // TODO: login successed logic
+    authChecked.value = false;
 
-    navigateTo("/admin");
+    const currentUser = await fetchUser(true);
+
+    if (!currentUser) {
+      throw new Error(`Failed to restore authenticated user.`);
+    }
+
+    await navigateTo("/admin");
   };
 
-  async function refresh() {
-    const res = await $fetch<ApiResponse<{ accessToken: string }>>("/api/v1/auth/refresh", {
-      method: "POST",
-      credentials: "include",
-    });
+  const logout = async () => {
+    const { $api } = useNuxtApp();
+    try {
+      await $api("/auth/logout", {
+        method: "post",
+      });
+    } finally {
+      user.value = null;
+      authChecked.value = true;
+    }
 
-    accessToken.value = res.data.accessToken;
-    localStorage.setItem("accessToken", res.data.accessToken);
-  }
+    await navigateTo("/auth");
+  };
+
+  const clear = () => {
+    user.value = null;
+    authChecked.value = false;
+  };
 
   return {
-    initialized,
-    accessToken,
-    setAccessToken,
-    refresh,
+    user,
+    authChecked,
+    isAuthenticated,
+    fetchUser,
     login,
     logout,
+    clear,
   };
 });

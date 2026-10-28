@@ -9,7 +9,7 @@ const route = useRoute();
 
 const params = computed(() => route.params);
 
-const { data } = await useFetch<ApiResponse<Post>>(() => `/api/v1/posts/${params.value.id}`, {
+const { data } = await useApiFetch<ApiResponse<Post>>(() => `/posts/${params.value.id}`, {
   method: "get",
 });
 

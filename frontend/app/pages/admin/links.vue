@@ -6,9 +6,9 @@ interface Overview {
   pending: number;
 }
 
-const { data } = await useFetch<{
+const { data } = await useApiFetch<{
   data: Overview;
-}>("/api/v1/links/overview", {
+}>("/links/overview", {
   method: "get",
 });
 
