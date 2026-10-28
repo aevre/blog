@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"net/http"
+	"runtime"
 	"time"
 
 	"blog-server/config"
@@ -39,7 +40,12 @@ func ErrorHandler(cfg *config.Config, log logger.Logger) echo.HTTPErrorHandler {
 				httpCode = resp.Status
 			}
 		}
-		if cfg.App.IsDev() && httpCode >= http.StatusInternalServerError {
+		reqLogger = reqLogger.With(logger.Int("code", appErr.Code))
+		if stack := appErr.Stack(); len(stack) > 0 {
+			origin, _ := runtime.CallersFrames(stack).Next()
+			reqLogger = reqLogger.With(logger.Any("error_origin", origin))
+		}
+		if cfg.App.IsDev() || httpCode >= http.StatusInternalServerError {
 			reqLogger = reqLogger.With(logger.String("stack", appErr.StackString()))
 		}
 		middleware.LogRequest(reqLogger, c, httpCode, duration, err)

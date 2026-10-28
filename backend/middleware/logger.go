@@ -47,6 +47,7 @@ func RequestLogger(log logger.Logger) echo.MiddlewareFunc {
 }
 
 func LogRequest(log logger.Logger, c *echo.Context, status int, duration time.Duration, err error) {
+	log = log.WithCallerSkip(1)
 	path := c.Path()
 	if path == "" {
 		path = c.Request().URL.Path
@@ -57,7 +58,7 @@ func LogRequest(log logger.Logger, c *echo.Context, status int, duration time.Du
 		logger.Int("status", status),
 		logger.Duration("duration", duration),
 	}
-	if err != nil && status >= http.StatusInternalServerError {
+	if err != nil {
 		fields = append(fields, logger.Err(err))
 	}
 

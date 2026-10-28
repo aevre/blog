@@ -23,6 +23,9 @@ type Logger interface {
 	// attached to all subsequent log entries.
 	With(fields ...Field) Logger
 
+	// WithCallerSkip skips additional logging wrapper frames when reporting the caller.
+	WithCallerSkip(skip int) Logger
+
 	// WithContext attaches a context to the logger, typically used for
 	// request-scoped logging (e.g., trace ID, request ID).
 	WithContext(ctx context.Context) Logger

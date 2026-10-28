@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -17,7 +18,9 @@ import (
 // zapLogger is a Logger implementation backed by Uber Zap.
 // It wraps zap.Logger to provide a simplified structured logging interface.
 type zapLogger struct {
-	l *zap.Logger
+	l      *zap.Logger
+	stack  string
+	origin *runtime.Frame
 }
 
 // Debug logs a message at debug level with structured fields.
@@ -46,9 +49,26 @@ func (z *zapLogger) Sync() error {
 
 // With returns a new Logger instance enriched with the provided structured fields.
 func (z *zapLogger) With(fields ...Field) Logger {
-	return &zapLogger{
-		l: z.l.With(convert(fields)...),
+	child := *z
+	regular := make([]Field, 0, len(fields))
+	for _, field := range fields {
+		if stack, ok := field.Value.(string); field.Key == "stack" && ok {
+			child.stack = stack
+		} else if origin, ok := field.Value.(runtime.Frame); field.Key == "error_origin" && ok {
+			child.origin = &origin
+		} else {
+			regular = append(regular, field)
+		}
 	}
+	child.l = z.l.With(convert(regular)...)
+	return &child
+}
+
+// WithCallerSkip returns a logger that skips additional wrapper frames.
+func (z *zapLogger) WithCallerSkip(skip int) Logger {
+	child := *z
+	child.l = z.l.WithOptions(zap.AddCallerSkip(skip))
+	return &child
 }
 
 // WithContext extracts supported values from context and attaches them as fields.
@@ -121,6 +141,7 @@ func buildEncoder(cfg *config.Config) (zapcore.Encoder, zapcore.Level) {
 	}
 	if cfg.Log.Format == "json" || cfg.App.IsProd() {
 		ec := zap.NewProductionEncoderConfig()
+		ec.StacktraceKey = "stack"
 		ec.EncodeTime = zapcore.ISO8601TimeEncoder
 		return zapcore.NewJSONEncoder(ec), level
 	}
@@ -176,7 +197,15 @@ func convert(fields []Field) []zap.Field {
 
 // log writes a log entry at the specified level with structured fields.
 func (z *zapLogger) log(level zapcore.Level, msg string, fields ...Field) {
-	z.l.Log(level, msg, convert(fields)...)
+	if entry := z.l.Check(level, msg); entry != nil {
+		if z.origin != nil {
+			entry.Caller = zapcore.EntryCaller{Defined: true, PC: z.origin.PC, File: z.origin.File, Line: z.origin.Line, Function: z.origin.Function}
+		}
+		if z.stack != "" {
+			entry.Stack = z.stack
+		}
+		entry.Write(convert(fields)...)
+	}
 }
 
 // Fatal logs a message at fatal level and then exits the application.

@@ -41,6 +41,7 @@ func (l *testLogger) Panic(msg string, fields ...logger.Field) { panic(msg) }
 func (l *testLogger) With(fields ...logger.Field) logger.Logger {
 	return &testLogger{entries: l.entries, fields: append(append([]logger.Field{}, l.fields...), fields...)}
 }
+func (l *testLogger) WithCallerSkip(int) logger.Logger          { return l }
 func (l *testLogger) WithContext(context.Context) logger.Logger { return l }
 func (l *testLogger) Sync() error                               { return nil }
 
