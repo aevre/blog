@@ -26,8 +26,8 @@ type PostService interface {
 	CreatePost(ctx context.Context, user contextx.User, input *CreatePostInput) (*entity.Post, error)
 	FlushViewCountToDB(ctx context.Context) error
 
-	AdminGetPosts(ctx context.Context, status *entity.PostStatus, keyword *string, page, pageSize int) ([]*entity.Post, int, error)
-	AdminGetPostByID(ctx context.Context, id uint) (*entity.Post, error)
+	AdminGetPosts(ctx context.Context, user contextx.User, status *entity.PostStatus, keyword *string, page, pageSize int) ([]*entity.Post, int, error)
+	AdminGetPostByID(ctx context.Context, user contextx.User, id uint) (*entity.Post, error)
 	UpdatePost(ctx context.Context, user contextx.User, input *UpdatePostInput) (*entity.Post, error)
 	DeletePost(ctx context.Context, user contextx.User, id uint) error
 }
@@ -179,7 +179,10 @@ func (s *postService) CreatePost(ctx context.Context, user contextx.User, input 
 }
 
 // AdminGetPosts retrieves all posts inclueing drafts for admin.
-func (s *postService) AdminGetPosts(ctx context.Context, status *entity.PostStatus, keyword *string, page, pageSize int) ([]*entity.Post, int, error) {
+func (s *postService) AdminGetPosts(ctx context.Context, user contextx.User, status *entity.PostStatus, keyword *string, page, pageSize int) ([]*entity.Post, int, error) {
+	if user.Role != entity.UserRoleAdmin {
+		return nil, 0, authz.ErrForbidden()
+	}
 	count, err := s.pr.CountAll(ctx, status, keyword)
 	if err != nil {
 		return nil, 0, err
@@ -193,7 +196,10 @@ func (s *postService) AdminGetPosts(ctx context.Context, status *entity.PostStat
 }
 
 // AdminGetPostByID retrieves a single post by ID for admin.
-func (s *postService) AdminGetPostByID(ctx context.Context, id uint) (*entity.Post, error) {
+func (s *postService) AdminGetPostByID(ctx context.Context, user contextx.User, id uint) (*entity.Post, error) {
+	if user.Role != entity.UserRoleAdmin {
+		return nil, authz.ErrForbidden()
+	}
 	return s.pr.GetByID(ctx, id)
 }
 
@@ -290,6 +296,7 @@ func (s *postService) FlushViewCountToDB(ctx context.Context) error {
 		}
 
 		updates := make(map[uint]int64)
+		keysByPostID := make(map[uint]string)
 		for key, valStr := range data {
 			count, err := strconv.ParseInt(valStr, 10, 64)
 			if err != nil || count == 0 {
@@ -306,11 +313,13 @@ func (s *postService) FlushViewCountToDB(ctx context.Context) error {
 			}
 
 			updates[uint(postID)] += count
+			keysByPostID[uint(postID)] = key
 		}
 
 		if len(updates) > 0 {
 			if err := s.pr.BatchIncrViewCounts(ctx, updates); err != nil {
 				allErrors = append(allErrors, fmt.Errorf("db update failed: %w", err))
+				allErrors = append(allErrors, restoreViewCounts(ctx, s.rc, updates, keysByPostID)...)
 			}
 		}
 
@@ -322,4 +331,14 @@ func (s *postService) FlushViewCountToDB(ctx context.Context) error {
 		return fmt.Errorf("flush completed with %d errors: %v", len(allErrors), allErrors)
 	}
 	return nil
+}
+
+func restoreViewCounts(ctx context.Context, store cache.AtomicStore, updates map[uint]int64, keysByPostID map[uint]string) []error {
+	var errs []error
+	for postID, count := range updates {
+		if _, err := store.IncrBy(ctx, keysByPostID[postID], count); err != nil {
+			errs = append(errs, fmt.Errorf("restore view count for post %d: %w", postID, err))
+		}
+	}
+	return errs
 }

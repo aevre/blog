@@ -143,7 +143,11 @@ func (h *postHandler) AdminGetPosts(c *echo.Context) error {
 		return errx.New(errx.CodeValidationFailed, err)
 	}
 
-	posts, total, err := h.svc.AdminGetPosts(c.Request().Context(), query.Status, query.Keyword, query.Page, query.PageSize)
+	u, ok := contextx.GetUser(c.Request().Context())
+	if !ok {
+		return errx.New(errx.CodeUnauthorized, fmt.Errorf("missing user in context"))
+	}
+	posts, total, err := h.svc.AdminGetPosts(c.Request().Context(), u, query.Status, query.Keyword, query.Page, query.PageSize)
 	if err != nil {
 		return err
 	}
@@ -166,7 +170,11 @@ func (h *postHandler) AdminGetPost(c *echo.Context) error {
 		return errx.New(errx.CodeInvalidParam, err)
 	}
 
-	post, err := h.svc.AdminGetPostByID(c.Request().Context(), uint(id))
+	u, ok := contextx.GetUser(c.Request().Context())
+	if !ok {
+		return errx.New(errx.CodeUnauthorized, fmt.Errorf("missing user in context"))
+	}
+	post, err := h.svc.AdminGetPostByID(c.Request().Context(), u, uint(id))
 	if err != nil {
 		return err
 	}
