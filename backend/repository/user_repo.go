@@ -19,6 +19,7 @@ import (
 // and existence checks. All queries automatically exclude soft-deleted records.
 type UserRepo interface {
 	Create(ctx context.Context, user *entity.User, hashPassword string) (*entity.User, error)
+	GetByID(ctx context.Context, id uint) (*entity.User, error)
 	GetByEmail(ctx context.Context, email string) (*entity.User, error)
 
 	ExistsByEmail(ctx context.Context, email string) (bool, error)
@@ -69,6 +70,21 @@ func (r *userRepo) Create(ctx context.Context, u *entity.User, hashPassword stri
 	}
 
 	return mapper.ToUser(created), nil
+}
+
+// GetByID retrieves a user by ID.
+func (r *userRepo) GetByID(ctx context.Context, id uint) (*entity.User, error) {
+	u, err := r.baseQuery(ctx).
+		Where(user.IDEQ(id)).
+		Only(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, errx.New(errx.CodeNotFound, err)
+		}
+		return nil, errx.New(errx.CodeInternalError, err)
+	}
+
+	return mapper.ToUser(u), nil
 }
 
 // GetByEmail retrieves a user by email.

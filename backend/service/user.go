@@ -20,11 +20,16 @@ type CreateUserInput struct {
 
 type UserService interface {
 	CreateAdmin(ctx context.Context, in *CreateUserInput) (*entity.User, error)
+	GetByID(ctx context.Context, id uint) (*entity.User, error)
 }
 
 type userService struct {
 	tx   txmgr.TxManager
 	user repository.UserRepo
+}
+
+func (s *userService) GetByID(ctx context.Context, id uint) (*entity.User, error) {
+	return s.user.GetByID(ctx, id)
 }
 
 func (s *userService) CreateAdmin(ctx context.Context, in *CreateUserInput) (*entity.User, error) {

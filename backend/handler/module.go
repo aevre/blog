@@ -17,6 +17,7 @@ type Handlers struct {
 	Link  LinkHandler
 	Model ModelHandler
 	Setup SetupHandler
+	User  UserHandler
 }
 
 type Middlewares struct {
@@ -38,6 +39,7 @@ func RegisterRoutes(
 	RegisterRssRoutes(v1, h.Rss)
 	RegisterLinkRoutes(v1, h.Link)
 	RegisterModelRoutes(v1, h.Model)
+	RegisterUserRoutes(v1, h.User, m.Auth)
 }
 
 func Module() fx.Option {
@@ -50,6 +52,7 @@ func Module() fx.Option {
 			NewAuthHandler,
 			NewLinkHandler,
 			NewModelHandler,
+			NewUserHandler,
 		),
 		fx.Invoke(
 			RegisterRoutes,
