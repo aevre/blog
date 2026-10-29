@@ -18,21 +18,21 @@ type jwtx struct {
 	cfg config.JWTConfig
 }
 
-func (j *jwtx) GenerateAccessToken(userID uint, role entity.UserRole) (string, error) {
-	return j.generateToken(userID, role, TokenTypeAccess, j.cfg.AccessExpiration)
+func (j *jwtx) GenerateAccessToken(userID uint, role entity.UserRole, sessionID string) (string, error) {
+	return j.generateToken(userID, role, sessionID, TokenTypeAccess, j.cfg.AccessExpiration)
 }
 
-func (j *jwtx) GenerateRefreshToken(userID uint, role entity.UserRole) (string, error) {
-	return j.generateToken(userID, role, TokenTypeRefresh, j.cfg.RefreshExpiration)
+func (j *jwtx) GenerateRefreshToken(userID uint, role entity.UserRole, sessionID string) (string, error) {
+	return j.generateToken(userID, role, sessionID, TokenTypeRefresh, j.cfg.RefreshExpiration)
 }
 
-func (j *jwtx) GenerateAllTokens(userID uint, role entity.UserRole) (string, string, error) {
-	access, err := j.GenerateAccessToken(userID, role)
+func (j *jwtx) GenerateAllTokens(userID uint, role entity.UserRole, sessionID string) (string, string, error) {
+	access, err := j.GenerateAccessToken(userID, role, sessionID)
 	if err != nil {
 		return "", "", err
 	}
 
-	refresh, err := j.GenerateRefreshToken(userID, role)
+	refresh, err := j.GenerateRefreshToken(userID, role, sessionID)
 	if err != nil {
 		return "", "", err
 	}
@@ -68,7 +68,7 @@ func (j *jwtx) Validate(tokenStr string) (bool, error) {
 	return err == nil, err
 }
 
-func (j *jwtx) generateToken(userID uint, role entity.UserRole, tokenType string, expires time.Duration) (string, error) {
+func (j *jwtx) generateToken(userID uint, role entity.UserRole, sessionID string, tokenType string, expires time.Duration) (string, error) {
 	now := time.Now()
 
 	var tokenID [16]byte
@@ -81,6 +81,7 @@ func (j *jwtx) generateToken(userID uint, role entity.UserRole, tokenType string
 		ID:        userID,
 		Role:      role,
 		TokenType: tokenType,
+		SessionID: sessionID,
 		RegisteredClaims: jwtv5.RegisteredClaims{
 			ID:        hex.EncodeToString(tokenID[:]),
 			ExpiresAt: jwtv5.NewNumericDate(now.Add(expires)),

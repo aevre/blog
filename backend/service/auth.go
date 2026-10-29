@@ -138,8 +138,10 @@ func (s *authService) Register(ctx context.Context, input *RegisterInput) (*Auth
 		return nil, errx.New(errx.CodeInternalError, err)
 	}
 
+	sessionID := uuid.NewString()
+
 	j := jwt.New(s.cfg.JWT)
-	accessToken, refreshToken, err := j.GenerateAllTokens(created.ID, created.Role)
+	accessToken, refreshToken, err := j.GenerateAllTokens(created.ID, created.Role, sessionID)
 	if err != nil {
 		return nil, err
 	}
@@ -177,8 +179,10 @@ func (s *authService) Login(ctx context.Context, input *LoginInput) (*AuthResult
 		return nil, err
 	}
 
+	sessionID := uuid.NewString()
+
 	j := jwt.New(s.cfg.JWT)
-	accessToken, refreshToken, err := j.GenerateAllTokens(user.ID, user.Role)
+	accessToken, refreshToken, err := j.GenerateAllTokens(user.ID, user.Role, sessionID)
 	if err != nil {
 		return nil, err
 	}
@@ -261,6 +265,10 @@ func (s *authService) RefreshAccessToken(ctx context.Context, token string) (str
 		return "", "", errx.New(errx.CodeUnauthorized, fmt.Errorf("refresh token required"))
 	}
 
+	if claims.SessionID == "" {
+		return "", "", errx.New(errx.CodeUnauthorized, fmt.Errorf("refresh token session ID required"))
+	}
+
 	userID := claims.ID
 	user, err := s.userRepo.GetAuthByID(ctx, userID)
 	if err != nil {
@@ -276,7 +284,7 @@ func (s *authService) RefreshAccessToken(ctx context.Context, token string) (str
 		return "", "", errx.New(errx.CodeUnauthorized, fmt.Errorf("invalid refresh token"))
 	}
 
-	accessToken, refreshToken, err := j.GenerateAllTokens(userID, user.Role)
+	accessToken, refreshToken, err := j.GenerateAllTokens(userID, user.Role, claims.SessionID)
 	if err != nil {
 		return "", "", err
 	}

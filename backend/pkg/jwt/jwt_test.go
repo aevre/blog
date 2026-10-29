@@ -8,6 +8,7 @@ import (
 	"blog-server/entity"
 
 	jwtv5 "github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 func testJWTConfig() config.JWTConfig {
@@ -27,7 +28,7 @@ func TestGeneratedTokensHaveDistinctTypes(t *testing.T) {
 		RefreshExpiration: time.Hour,
 	})
 
-	access, refresh, err := j.GenerateAllTokens(1, entity.UserRoleReader)
+	access, refresh, err := j.GenerateAllTokens(1, entity.UserRoleReader, "session-1")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,17 +46,27 @@ func TestGeneratedTokensHaveDistinctTypes(t *testing.T) {
 	if refreshClaims.TokenType != TokenTypeRefresh {
 		t.Fatalf("refresh token type = %q", refreshClaims.TokenType)
 	}
+
+	if accessClaims.SessionID != "session-1" {
+		t.Fatalf("access token session ID = %q, want %q", accessClaims.SessionID, "session-1")
+	}
+
+	if refreshClaims.SessionID != "session-1" {
+		t.Fatalf("refresh token session ID = %q, want %q", refreshClaims.SessionID, "session-1")
+	}
 }
 
 func TestGeneratedRefreshTokenAreUnique(t *testing.T) {
 	j := New(testJWTConfig())
 
-	_, first, err := j.GenerateAllTokens(1, entity.UserRoleReader)
+	sid := uuid.NewString()
+
+	_, first, err := j.GenerateAllTokens(1, entity.UserRoleReader, sid)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	_, second, err := j.GenerateAllTokens(1, entity.UserRoleReader)
+	_, second, err := j.GenerateAllTokens(1, entity.UserRoleReader, sid)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,7 +103,7 @@ func TestGeneratedRefreshTokenAreUnique(t *testing.T) {
 
 func TestGeneratedTokenPreservesUserClaims(t *testing.T) {
 	j := New(testJWTConfig())
-	access, err := j.GenerateAccessToken(42, entity.UserRoleAdmin)
+	access, err := j.GenerateAccessToken(42, entity.UserRoleAdmin, uuid.NewString())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -120,7 +131,7 @@ func TestParseRejectsUnexpectedIssuer(t *testing.T) {
 	otherConfig := expectedConfig
 	otherConfig.Issuer = "other-issuer"
 
-	token, err := New(otherConfig).GenerateAccessToken(1, entity.UserRoleReader)
+	token, err := New(otherConfig).GenerateAccessToken(1, entity.UserRoleReader, uuid.NewString())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -136,6 +147,7 @@ func TestParseRejectsUnexpectedSigningMethod(t *testing.T) {
 		ID:        1,
 		Role:      entity.UserRoleReader,
 		TokenType: TokenTypeAccess,
+		SessionID: uuid.NewString(),
 		RegisteredClaims: jwtv5.RegisteredClaims{
 			ID:        "test-jti",
 			Issuer:    cfg.Issuer,
@@ -159,6 +171,7 @@ func TestParseRejectsTokenWithoutExpiration(t *testing.T) {
 		ID:        1,
 		Role:      entity.UserRoleReader,
 		TokenType: TokenTypeAccess,
+		SessionID: uuid.NewString(),
 		RegisteredClaims: jwtv5.RegisteredClaims{
 			ID:        "test-jti",
 			Issuer:    cfg.Issuer,

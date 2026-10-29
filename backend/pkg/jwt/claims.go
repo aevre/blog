@@ -15,5 +15,6 @@ type Claims struct {
 	ID        uint            `json:"id"`
 	Role      entity.UserRole `json:"role"`
 	TokenType string          `json:"tokenType"`
+	SessionID string          `json:"sid"`
 	jwt.RegisteredClaims
 }
