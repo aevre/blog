@@ -3,7 +3,7 @@
 package user
 
 import (
-	"blog-server/entity"
+	accountmodel "blog-server/internal/account/model"
 	"fmt"
 	"time"
 
@@ -89,10 +89,10 @@ var (
 	UsernameValidator func(string) error
 )
 
-const DefaultRole entity.UserRole = "reader"
+const DefaultRole accountmodel.UserRole = "reader"
 
 // RoleValidator is a validator for the "role" field enum values. It is called by the builders before save.
-func RoleValidator(r entity.UserRole) error {
+func RoleValidator(r accountmodel.UserRole) error {
 	switch r {
 	case "reader", "admin":
 		return nil

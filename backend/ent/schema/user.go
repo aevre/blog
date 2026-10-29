@@ -1,7 +1,7 @@
 package schema
 
 import (
-	"blog-server/entity"
+	accountmodel "blog-server/internal/account/model"
 
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
@@ -41,8 +41,8 @@ func (User) Fields() []ent.Field {
 			MaxLen(255),
 
 		field.Enum("role").
-			GoType(entity.UserRole("")).
-			Default(string(entity.UserRoleReader)),
+			GoType(accountmodel.UserRole("")).
+			Default(string(accountmodel.UserRoleReader)),
 
 		field.String("username").
 			MaxLen(50),

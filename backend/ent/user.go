@@ -4,7 +4,7 @@ package ent
 
 import (
 	"blog-server/ent/user"
-	"blog-server/entity"
+	accountmodel "blog-server/internal/account/model"
 	"fmt"
 	"strings"
 	"time"
@@ -34,7 +34,7 @@ type User struct {
 	// Password holds the value of the "password" field.
 	Password string `json:"-"`
 	// Role holds the value of the "role" field.
-	Role entity.UserRole `json:"role,omitempty"`
+	Role accountmodel.UserRole `json:"role,omitempty"`
 	// Username holds the value of the "username" field.
 	Username string `json:"username,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -143,7 +143,7 @@ func (_m *User) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field role", values[i])
 			} else if value.Valid {
-				_m.Role = entity.UserRole(value.String)
+				_m.Role = accountmodel.UserRole(value.String)
 			}
 		case user.FieldUsername:
 			if value, ok := values[i].(*sql.NullString); !ok {

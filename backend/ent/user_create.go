@@ -5,7 +5,7 @@ package ent
 import (
 	"blog-server/ent/post"
 	"blog-server/ent/user"
-	"blog-server/entity"
+	accountmodel "blog-server/internal/account/model"
 	"context"
 	"errors"
 	"fmt"
@@ -108,13 +108,13 @@ func (_c *UserCreate) SetPassword(v string) *UserCreate {
 }
 
 // SetRole sets the "role" field.
-func (_c *UserCreate) SetRole(v entity.UserRole) *UserCreate {
+func (_c *UserCreate) SetRole(v accountmodel.UserRole) *UserCreate {
 	_c.mutation.SetRole(v)
 	return _c
 }
 
 // SetNillableRole sets the "role" field if the given value is not nil.
-func (_c *UserCreate) SetNillableRole(v *entity.UserRole) *UserCreate {
+func (_c *UserCreate) SetNillableRole(v *accountmodel.UserRole) *UserCreate {
 	if v != nil {
 		_c.SetRole(*v)
 	}
@@ -483,7 +483,7 @@ func (u *UserUpsert) UpdatePassword() *UserUpsert {
 }
 
 // SetRole sets the "role" field.
-func (u *UserUpsert) SetRole(v entity.UserRole) *UserUpsert {
+func (u *UserUpsert) SetRole(v accountmodel.UserRole) *UserUpsert {
 	u.Set(user.FieldRole, v)
 	return u
 }
@@ -667,7 +667,7 @@ func (u *UserUpsertOne) UpdatePassword() *UserUpsertOne {
 }
 
 // SetRole sets the "role" field.
-func (u *UserUpsertOne) SetRole(v entity.UserRole) *UserUpsertOne {
+func (u *UserUpsertOne) SetRole(v accountmodel.UserRole) *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
 		s.SetRole(v)
 	})
@@ -1021,7 +1021,7 @@ func (u *UserUpsertBulk) UpdatePassword() *UserUpsertBulk {
 }
 
 // SetRole sets the "role" field.
-func (u *UserUpsertBulk) SetRole(v entity.UserRole) *UserUpsertBulk {
+func (u *UserUpsertBulk) SetRole(v accountmodel.UserRole) *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
 		s.SetRole(v)
 	})

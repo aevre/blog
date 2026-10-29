@@ -1,7 +1,7 @@
 package schema
 
 import (
-	"blog-server/entity"
+	contentmodel "blog-server/internal/content/model"
 
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
@@ -45,8 +45,8 @@ func (Post) Fields() []ent.Field {
 			Default(0),
 
 		field.Enum("status").
-			GoType(entity.PostStatus("")).
-			Default(string(entity.PostStatusDraft)),
+			GoType(contentmodel.PostStatus("")).
+			Default(string(contentmodel.PostStatusDraft)),
 
 		field.Time("published_at").
 			Optional().

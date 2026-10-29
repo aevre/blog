@@ -4,7 +4,7 @@ package post
 
 import (
 	"blog-server/ent/predicate"
-	"blog-server/entity"
+	contentmodel "blog-server/internal/content/model"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -622,19 +622,19 @@ func ViewCountLTE(v uint) predicate.Post {
 }
 
 // StatusEQ applies the EQ predicate on the "status" field.
-func StatusEQ(v entity.PostStatus) predicate.Post {
+func StatusEQ(v contentmodel.PostStatus) predicate.Post {
 	vc := v
 	return predicate.Post(sql.FieldEQ(FieldStatus, vc))
 }
 
 // StatusNEQ applies the NEQ predicate on the "status" field.
-func StatusNEQ(v entity.PostStatus) predicate.Post {
+func StatusNEQ(v contentmodel.PostStatus) predicate.Post {
 	vc := v
 	return predicate.Post(sql.FieldNEQ(FieldStatus, vc))
 }
 
 // StatusIn applies the In predicate on the "status" field.
-func StatusIn(vs ...entity.PostStatus) predicate.Post {
+func StatusIn(vs ...contentmodel.PostStatus) predicate.Post {
 	v := make([]any, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -643,7 +643,7 @@ func StatusIn(vs ...entity.PostStatus) predicate.Post {
 }
 
 // StatusNotIn applies the NotIn predicate on the "status" field.
-func StatusNotIn(vs ...entity.PostStatus) predicate.Post {
+func StatusNotIn(vs ...contentmodel.PostStatus) predicate.Post {
 	v := make([]any, len(vs))
 	for i := range v {
 		v[i] = vs[i]

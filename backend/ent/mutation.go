@@ -15,7 +15,9 @@ import (
 	"blog-server/ent/site"
 	"blog-server/ent/system"
 	"blog-server/ent/user"
-	"blog-server/entity"
+	accountmodel "blog-server/internal/account/model"
+	contentmodel "blog-server/internal/content/model"
+	linkmodel "blog-server/internal/link/model"
 	"context"
 	"errors"
 	"fmt"
@@ -527,7 +529,7 @@ type LinkMutation struct {
 	addsort_order   *int
 	url             *string
 	avatar          *string
-	status          *entity.LinkStatus
+	status          *linkmodel.LinkStatus
 	clearedFields   map[string]struct{}
 	category        *uint
 	clearedcategory bool
@@ -1024,12 +1026,12 @@ func (m *LinkMutation) ResetAvatar() {
 }
 
 // SetStatus sets the "status" field.
-func (m *LinkMutation) SetStatus(es entity.LinkStatus) {
-	m.status = &es
+func (m *LinkMutation) SetStatus(ls linkmodel.LinkStatus) {
+	m.status = &ls
 }
 
 // Status returns the value of the "status" field in the mutation.
-func (m *LinkMutation) Status() (r entity.LinkStatus, exists bool) {
+func (m *LinkMutation) Status() (r linkmodel.LinkStatus, exists bool) {
 	v := m.status
 	if v == nil {
 		return
@@ -1040,7 +1042,7 @@ func (m *LinkMutation) Status() (r entity.LinkStatus, exists bool) {
 // OldStatus returns the old "status" field's value of the Link entity.
 // If the Link object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *LinkMutation) OldStatus(ctx context.Context) (v entity.LinkStatus, err error) {
+func (m *LinkMutation) OldStatus(ctx context.Context) (v linkmodel.LinkStatus, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
 	}
@@ -1337,7 +1339,7 @@ func (m *LinkMutation) SetField(name string, value ent.Value) error {
 		m.SetAvatar(v)
 		return nil
 	case link.FieldStatus:
-		v, ok := value.(entity.LinkStatus)
+		v, ok := value.(linkmodel.LinkStatus)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -2268,7 +2270,7 @@ type PostMutation struct {
 	addread_time_minutes *int
 	view_count           *uint
 	addview_count        *int
-	status               *entity.PostStatus
+	status               *contentmodel.PostStatus
 	published_at         *time.Time
 	clearedFields        map[string]struct{}
 	author               *uint
@@ -2828,12 +2830,12 @@ func (m *PostMutation) ResetViewCount() {
 }
 
 // SetStatus sets the "status" field.
-func (m *PostMutation) SetStatus(es entity.PostStatus) {
-	m.status = &es
+func (m *PostMutation) SetStatus(cs contentmodel.PostStatus) {
+	m.status = &cs
 }
 
 // Status returns the value of the "status" field in the mutation.
-func (m *PostMutation) Status() (r entity.PostStatus, exists bool) {
+func (m *PostMutation) Status() (r contentmodel.PostStatus, exists bool) {
 	v := m.status
 	if v == nil {
 		return
@@ -2844,7 +2846,7 @@ func (m *PostMutation) Status() (r entity.PostStatus, exists bool) {
 // OldStatus returns the old "status" field's value of the Post entity.
 // If the Post object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PostMutation) OldStatus(ctx context.Context) (v entity.PostStatus, err error) {
+func (m *PostMutation) OldStatus(ctx context.Context) (v contentmodel.PostStatus, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
 	}
@@ -3276,7 +3278,7 @@ func (m *PostMutation) SetField(name string, value ent.Value) error {
 		m.SetViewCount(v)
 		return nil
 	case post.FieldStatus:
-		v, ok := value.(entity.PostStatus)
+		v, ok := value.(contentmodel.PostStatus)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -6867,7 +6869,7 @@ type UserMutation struct {
 	avatar        *string
 	email         *string
 	password      *string
-	role          *entity.UserRole
+	role          *accountmodel.UserRole
 	username      *string
 	clearedFields map[string]struct{}
 	posts         map[uint]struct{}
@@ -7261,12 +7263,12 @@ func (m *UserMutation) ResetPassword() {
 }
 
 // SetRole sets the "role" field.
-func (m *UserMutation) SetRole(er entity.UserRole) {
-	m.role = &er
+func (m *UserMutation) SetRole(ar accountmodel.UserRole) {
+	m.role = &ar
 }
 
 // Role returns the value of the "role" field in the mutation.
-func (m *UserMutation) Role() (r entity.UserRole, exists bool) {
+func (m *UserMutation) Role() (r accountmodel.UserRole, exists bool) {
 	v := m.role
 	if v == nil {
 		return
@@ -7277,7 +7279,7 @@ func (m *UserMutation) Role() (r entity.UserRole, exists bool) {
 // OldRole returns the old "role" field's value of the User entity.
 // If the User object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserMutation) OldRole(ctx context.Context) (v entity.UserRole, err error) {
+func (m *UserMutation) OldRole(ctx context.Context) (v accountmodel.UserRole, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldRole is only allowed on UpdateOne operations")
 	}
@@ -7560,7 +7562,7 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		m.SetPassword(v)
 		return nil
 	case user.FieldRole:
-		v, ok := value.(entity.UserRole)
+		v, ok := value.(accountmodel.UserRole)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}

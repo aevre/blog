@@ -7,18 +7,21 @@ import (
 	"net/http"
 	"time"
 
-	"blog-server/authz"
-	"blog-server/cache"
-	"blog-server/config"
-	"blog-server/datastore"
-	"blog-server/handler"
-	"blog-server/logger"
-	"blog-server/middleware"
+	"blog-server/internal/account"
+	"blog-server/internal/api"
+	"blog-server/internal/authz"
+	"blog-server/internal/content"
+	linkfeature "blog-server/internal/link"
+	"blog-server/internal/platform/cache"
+	"blog-server/internal/platform/config"
+	"blog-server/internal/platform/database"
+	logger "blog-server/internal/platform/logging"
+	"blog-server/internal/platform/middleware"
+	"blog-server/internal/scheduler"
+	"blog-server/internal/setup"
+	"blog-server/internal/shared/validatorx"
+	"blog-server/internal/summary"
 	"blog-server/migration"
-	"blog-server/pkg/validatorx"
-	"blog-server/repository"
-	"blog-server/scheduler"
-	"blog-server/service"
 
 	"github.com/labstack/echo/v5"
 	"go.uber.org/fx"
@@ -27,20 +30,27 @@ import (
 // main initializes the application using Uber Fx and starts the dependency
 // injection container.
 //
-// It registers configuration, logging, datastore, migration, HTTP server,
+// It registers configuration, logging, database, migration, HTTP server,
 // and other application modules required to run the service.
 func main() {
-	app := fx.New(
+	fx.New(applicationOptions()).Run()
+}
+
+func applicationOptions() fx.Option {
+	return fx.Options(
 		fx.Options(
 			config.Module(),
 			logger.Module(),
 			cache.Module(),
-			datastore.Module(),
+			database.Module(),
 			migration.Module(),
-			repository.Module(),
 			authz.Module(),
-			service.Module(),
-			handler.Module(),
+			account.Module(),
+			content.Module(),
+			linkfeature.Module(),
+			setup.Module(),
+			summary.Module(),
+			api.Module(),
 			scheduler.Module(),
 		),
 		fx.Provide(
@@ -52,13 +62,11 @@ func main() {
 			runServerLifecycle,
 		),
 	)
-
-	app.Run()
 }
 
-func providerEchoApp(cfg *config.Config, log logger.Logger) *echo.Echo {
+func providerEchoApp(cfg *config.Config, log logger.Logger, rc *cache.Client) *echo.Echo {
 	echoCfg := echo.Config{
-		HTTPErrorHandler: handler.ErrorHandler(cfg, log),
+		HTTPErrorHandler: api.ErrorHandler(cfg, log),
 		IPExtractor:      echo.ExtractIPDirect(),
 	}
 
@@ -66,6 +74,7 @@ func providerEchoApp(cfg *config.Config, log logger.Logger) *echo.Echo {
 	app.Use(middleware.RequestLogger(log))
 	app.Use(middleware.Recover)
 	app.Use(middleware.BodyLimit(10 * 1024 * 1024))
+	app.Use(middleware.LoginLimit(rc, log))
 
 	return app
 }

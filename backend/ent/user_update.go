@@ -6,7 +6,7 @@ import (
 	"blog-server/ent/post"
 	"blog-server/ent/predicate"
 	"blog-server/ent/user"
-	"blog-server/entity"
+	accountmodel "blog-server/internal/account/model"
 	"context"
 	"errors"
 	"fmt"
@@ -143,13 +143,13 @@ func (_u *UserUpdate) SetNillablePassword(v *string) *UserUpdate {
 }
 
 // SetRole sets the "role" field.
-func (_u *UserUpdate) SetRole(v entity.UserRole) *UserUpdate {
+func (_u *UserUpdate) SetRole(v accountmodel.UserRole) *UserUpdate {
 	_u.mutation.SetRole(v)
 	return _u
 }
 
 // SetNillableRole sets the "role" field if the given value is not nil.
-func (_u *UserUpdate) SetNillableRole(v *entity.UserRole) *UserUpdate {
+func (_u *UserUpdate) SetNillableRole(v *accountmodel.UserRole) *UserUpdate {
 	if v != nil {
 		_u.SetRole(*v)
 	}
@@ -497,13 +497,13 @@ func (_u *UserUpdateOne) SetNillablePassword(v *string) *UserUpdateOne {
 }
 
 // SetRole sets the "role" field.
-func (_u *UserUpdateOne) SetRole(v entity.UserRole) *UserUpdateOne {
+func (_u *UserUpdateOne) SetRole(v accountmodel.UserRole) *UserUpdateOne {
 	_u.mutation.SetRole(v)
 	return _u
 }
 
 // SetNillableRole sets the "role" field if the given value is not nil.
-func (_u *UserUpdateOne) SetNillableRole(v *entity.UserRole) *UserUpdateOne {
+func (_u *UserUpdateOne) SetNillableRole(v *accountmodel.UserRole) *UserUpdateOne {
 	if v != nil {
 		_u.SetRole(*v)
 	}

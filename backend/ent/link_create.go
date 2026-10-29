@@ -5,7 +5,7 @@ package ent
 import (
 	"blog-server/ent/link"
 	"blog-server/ent/linkcategory"
-	"blog-server/entity"
+	linkmodel "blog-server/internal/link/model"
 	"context"
 	"errors"
 	"fmt"
@@ -135,13 +135,13 @@ func (_c *LinkCreate) SetNillableAvatar(v *string) *LinkCreate {
 }
 
 // SetStatus sets the "status" field.
-func (_c *LinkCreate) SetStatus(v entity.LinkStatus) *LinkCreate {
+func (_c *LinkCreate) SetStatus(v linkmodel.LinkStatus) *LinkCreate {
 	_c.mutation.SetStatus(v)
 	return _c
 }
 
 // SetNillableStatus sets the "status" field if the given value is not nil.
-func (_c *LinkCreate) SetNillableStatus(v *entity.LinkStatus) *LinkCreate {
+func (_c *LinkCreate) SetNillableStatus(v *linkmodel.LinkStatus) *LinkCreate {
 	if v != nil {
 		_c.SetStatus(*v)
 	}
@@ -553,7 +553,7 @@ func (u *LinkUpsert) ClearAvatar() *LinkUpsert {
 }
 
 // SetStatus sets the "status" field.
-func (u *LinkUpsert) SetStatus(v entity.LinkStatus) *LinkUpsert {
+func (u *LinkUpsert) SetStatus(v linkmodel.LinkStatus) *LinkUpsert {
 	u.Set(link.FieldStatus, v)
 	return u
 }
@@ -785,7 +785,7 @@ func (u *LinkUpsertOne) ClearAvatar() *LinkUpsertOne {
 }
 
 // SetStatus sets the "status" field.
-func (u *LinkUpsertOne) SetStatus(v entity.LinkStatus) *LinkUpsertOne {
+func (u *LinkUpsertOne) SetStatus(v linkmodel.LinkStatus) *LinkUpsertOne {
 	return u.Update(func(s *LinkUpsert) {
 		s.SetStatus(v)
 	})
@@ -1188,7 +1188,7 @@ func (u *LinkUpsertBulk) ClearAvatar() *LinkUpsertBulk {
 }
 
 // SetStatus sets the "status" field.
-func (u *LinkUpsertBulk) SetStatus(v entity.LinkStatus) *LinkUpsertBulk {
+func (u *LinkUpsertBulk) SetStatus(v linkmodel.LinkStatus) *LinkUpsertBulk {
 	return u.Update(func(s *LinkUpsert) {
 		s.SetStatus(v)
 	})

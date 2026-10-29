@@ -8,7 +8,7 @@ import (
 	"blog-server/ent/posttag"
 	"blog-server/ent/predicate"
 	"blog-server/ent/user"
-	"blog-server/entity"
+	contentmodel "blog-server/internal/content/model"
 	"context"
 	"errors"
 	"fmt"
@@ -206,13 +206,13 @@ func (_u *PostUpdate) AddViewCount(v int) *PostUpdate {
 }
 
 // SetStatus sets the "status" field.
-func (_u *PostUpdate) SetStatus(v entity.PostStatus) *PostUpdate {
+func (_u *PostUpdate) SetStatus(v contentmodel.PostStatus) *PostUpdate {
 	_u.mutation.SetStatus(v)
 	return _u
 }
 
 // SetNillableStatus sets the "status" field if the given value is not nil.
-func (_u *PostUpdate) SetNillableStatus(v *entity.PostStatus) *PostUpdate {
+func (_u *PostUpdate) SetNillableStatus(v *contentmodel.PostStatus) *PostUpdate {
 	if v != nil {
 		_u.SetStatus(*v)
 	}
@@ -771,13 +771,13 @@ func (_u *PostUpdateOne) AddViewCount(v int) *PostUpdateOne {
 }
 
 // SetStatus sets the "status" field.
-func (_u *PostUpdateOne) SetStatus(v entity.PostStatus) *PostUpdateOne {
+func (_u *PostUpdateOne) SetStatus(v contentmodel.PostStatus) *PostUpdateOne {
 	_u.mutation.SetStatus(v)
 	return _u
 }
 
 // SetNillableStatus sets the "status" field if the given value is not nil.
-func (_u *PostUpdateOne) SetNillableStatus(v *entity.PostStatus) *PostUpdateOne {
+func (_u *PostUpdateOne) SetNillableStatus(v *contentmodel.PostStatus) *PostUpdateOne {
 	if v != nil {
 		_u.SetStatus(*v)
 	}

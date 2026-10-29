@@ -4,7 +4,7 @@ package user
 
 import (
 	"blog-server/ent/predicate"
-	"blog-server/entity"
+	accountmodel "blog-server/internal/account/model"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -473,19 +473,19 @@ func PasswordContainsFold(v string) predicate.User {
 }
 
 // RoleEQ applies the EQ predicate on the "role" field.
-func RoleEQ(v entity.UserRole) predicate.User {
+func RoleEQ(v accountmodel.UserRole) predicate.User {
 	vc := v
 	return predicate.User(sql.FieldEQ(FieldRole, vc))
 }
 
 // RoleNEQ applies the NEQ predicate on the "role" field.
-func RoleNEQ(v entity.UserRole) predicate.User {
+func RoleNEQ(v accountmodel.UserRole) predicate.User {
 	vc := v
 	return predicate.User(sql.FieldNEQ(FieldRole, vc))
 }
 
 // RoleIn applies the In predicate on the "role" field.
-func RoleIn(vs ...entity.UserRole) predicate.User {
+func RoleIn(vs ...accountmodel.UserRole) predicate.User {
 	v := make([]any, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -494,7 +494,7 @@ func RoleIn(vs ...entity.UserRole) predicate.User {
 }
 
 // RoleNotIn applies the NotIn predicate on the "role" field.
-func RoleNotIn(vs ...entity.UserRole) predicate.User {
+func RoleNotIn(vs ...accountmodel.UserRole) predicate.User {
 	v := make([]any, len(vs))
 	for i := range v {
 		v[i] = vs[i]

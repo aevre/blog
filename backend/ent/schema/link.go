@@ -1,7 +1,7 @@
 package schema
 
 import (
-	"blog-server/entity"
+	linkmodel "blog-server/internal/link/model"
 
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
@@ -44,8 +44,8 @@ func (Link) Fields() []ent.Field {
 			Optional(),
 
 		field.Enum("status").
-			GoType(entity.LinkStatus("")).
-			Default(string(entity.LinkStatusNormal)),
+			GoType(linkmodel.LinkStatus("")).
+			Default(string(linkmodel.LinkStatusNormal)),
 
 		field.Uint("category_id").
 			Optional(),

@@ -12,9 +12,11 @@ ORM 访问 PostgreSQL，并使用 Redis 做缓存与计数。后台定时任务�
 ## 功能特性
 
 - **认证与授权**
-  - 邮箱 + 密码的注册与登录，使用 JWT 访问/刷新令牌。
-  - 刷新令牌通过 `HttpOnly` Cookie 返回，访问令牌在 JSON 响应体中返回。
+  - 邮箱 + 密码注册与登录，访问令牌使用 JWT。
+  - 刷新令牌使用签名 JWT，PostgreSQL 仅保存其 SHA-256 哈希和过期时间，并只通过 `HttpOnly` Cookie 返回。
+  - 刷新令牌在事务内轮换；旧令牌重用会撤销对应会话，退出仅撤销当前会话。
   - 注册前通过邮件（SMTP）发送验证码。
+  - 登录按直连 IP 每分钟最多尝试 10 次；Redis 故障时记录错误并放行。
   - 基于角色的访问控制（RBAC），包含两种角色（`admin`、`reader`）。仅 `admin` 可创建/更新/删除文章与友链；`reader` 仅可读取。
 - **文章**
   - 公开的文章列表 / 详情 / 元数据接口。
@@ -35,6 +37,7 @@ ORM 访问 PostgreSQL，并使用 Redis 做缓存与计数。后台定时任务�
   - 结构化 Zap 日志（开发环境控制台，生产环境 JSON）。
   - TOML 配置，支持环境变量覆盖与热更新（文件变更触发优雅重启）。
   - 可配置的优雅关闭超时。
+  - 存活检查以及 PostgreSQL/Redis 就绪检查。
 
 ## 技术栈
 
@@ -145,8 +148,8 @@ endpoint = "http://localhost:9000/"
 
 ### 热更新
 
-配置文件在磁盘上发生变化时，`config` 模块会触发 Fx 优雅关闭（`fx.Shutdowner`），
-进程随之重启并加载新配置。
+配置文件在磁盘上发生变化时，`config` 模块会触发 Fx 优雅关闭（`fx.Shutdowner`）。
+需要由进程管理器或容器重启策略重新启动应用，新的配置才会生效。
 
 ## 运行
 
@@ -154,26 +157,24 @@ endpoint = "http://localhost:9000/"
 # 下载依赖
 go mod download
 
-# 启动 HTTP 服务（加载 config.toml，启动定时任务）
+# 启动应用（加载 config.toml、执行 Goose migration、
+# 启动 HTTP 服务和定时任务）
 go run ./cmd/server
 
 # 构建静态二进制
 go build -o blog-server ./cmd/server
 ./blog-server
-
-# 创建 / 迁移数据库结构（Ent schema create；会删除多余的列与索引）
-go run ./cmd/migration
 ```
 
 ### Docker
 
-`Dockerfile` 会构建 `blog-server` 与 `migration` 两个二进制（禁用 CGO），并暴露 `8000` 端口。
-挂载或内置一份 `config.toml`，并在启动 `./blog-server` 前先运行一次 `./migration`。
+`Dockerfile` 会构建禁用 CGO 的 `blog-server` 二进制，并暴露 `8000` 端口。
+挂载或内置一份 `config.toml`；应用会在接受 HTTP 请求前执行内嵌的 Goose migration。
 
 ## API
 
-所有路由挂载在 `/api/v1` 下。受保护路由需要在 `Authorization: Bearer <accessToken>` 头中携带访问令牌。
-响应使用统一信封：
+业务路由挂载在 `/api/v1` 下。受保护路由需要在 `Authorization: Bearer <accessToken>` 头中携带访问令牌。
+健康检查不使用 API 前缀，分别为 `GET /health/live` 和 `GET /health/ready`。响应使用统一信封：
 
 ```json
 { "code": 0, "msg": "success", "data": { } }
@@ -207,7 +208,11 @@ go run ./cmd/migration
 ```
 
 `login` / `register` 的响应包含 `accessToken`、`uuid`、`username`、`role`、`avatar`；
-`refreshToken` 通过 `HttpOnly` Cookie 下发，不会出现在 JSON 响应体中。
+刷新 JWT 通过 `HttpOnly` Cookie 下发，不会出现在 JSON 响应体中。PostgreSQL 仅保存其 SHA-256 哈希及与 JWT 一致的过期时间。
+轮换后保留旧哈希到对应 JWT 过期，用于检测重用并撤销会话；过期 JWT 在查询会话前即被拒绝。
+清理任务在启动时及之后每小时执行，每轮最多删除 500 条过期 token 记录，再删除最多 500 个已无 token 的过期或撤销会话，单轮超时 10 秒。
+查询使用过期时间索引及 `SKIP LOCKED`，支持多实例执行。积压记录可能延后到后续批次删除，但不能用于刷新。
+migration 00004 会撤销旧不透明 token 会话，升级后用户须重新登录。已经过期的 JWT 再次提交不会触发所属会话撤销。
 
 ### 文章
 
@@ -276,46 +281,35 @@ go run ./cmd/migration
 ## 项目结构
 
 ```
-cmd/
-  server/main.go        # Fx 应用装配 + HTTP 服务生命周期
-  migration/main.go     # Ent 结构迁移执行器
-
-config/                 # 配置结构体、Viper 加载器、校验、热更新
-handler/                # Echo 处理器 + 路由注册（按资源分组）
-middleware/             # JWT 认证、请求日志、请求体大小限制
-authz/                  # RBAC + 归属（ABAC）鉴权器
-contextx/               # 请求作用域的用户 / 请求 ID 辅助函数
-service/                # 业务逻辑（auth、post、link、rss、mail、model）
-repository/             # 基于 Ent 的数据访问层（post、link、user）
-mapper/                 # Ent <-> 领域实体转换
-entity/                 # 纯领域结构体（Post、User、Link、RSS 等）
-request/                # 入站 DTO（含校验标签）
-response/               # 出站 DTO / 响应信封
-datastore/              # Ent 客户端 + 事务管理器（txmgr.TxManager）
-ent/                    # Ent schema 定义 + 生成代码
-cache/                  # Redis 客户端（Store / AtomicStore / PatternScanner）
-storage/                # 兼容 S3 的 Storage 接口与实现（未接入）
-scheduler/              # 后台任务（浏览量落库、友链状态检查）
-pkg/
-  errx/                 # 错误码、AppError、HTTP 状态码映射
-  jwt/                  # 令牌生成 / 解析
-  validatorx/           # validator.v10 封装
-  txmgr/                # 事务管理器接口
-logger/                 # 基于 Zap 的结构化日志
-templates/              # 内嵌的邮件模板（captcha.html）
-utils/                  # 密码哈希、随机串、Cloudflare IP 获取
+cmd/server/             # 应用装配、migration、HTTP 与后台任务生命周期
+internal/
+  account/              # 认证、用户、邮件和账户模型
+  content/              # 文章、分类、标签、RSS 和内容模型
+  link/                 # 友链及友链模型
+  setup/                # 站点初始化和站点模型
+  summary/              # Summary sessions and SSE
+  api/                  # Routes, errors, health checks
+  platform/             # Cache, config, database, logging, middleware, storage
+  shared/               # 上下文、错误、HTTP 信封、JWT、随机值、事务和校验
+  authz/                # Authorization rules
+  scheduler/            # Background jobs
+ent/                    # Schemas and generated code
+migration/              # 内嵌 Goose SQL migration 与启动模块
+templates/              # 邮件模板
 ```
+
+行为变化、部署限制和集成测试命令见 [REFACTOR.md](REFACTOR.md)。
 
 ### 请求流程
 
-1. `cmd/server/main.go` 构建包含所有模块的 Fx 容器，并启动 Echo。
-2. 全局中间件：请求日志（附加请求 ID 与每请求日志器）以及 10 MiB 请求体大小限制。
+1. `cmd/server/main.go` 构建 Fx 容器；内嵌 Goose migration 在 Echo 接受请求前作用于 PostgreSQL，定时任务随应用启动。Redis 可用性由就绪检查报告。
+2. 全局中间件提供请求日志、panic 恢复、10 MiB 请求体限制和基于 Redis 原子计数的登录限流。
 3. 路由注册在 `/api/v1` 下。受保护路由挂载 `middleware.AuthMiddleware`，
    解析 Bearer 令牌，将用户解析为 `contextx.User` 并存入请求上下文。
-4. 处理器绑定并校验请求，调用 `service`，写出 `response` 信封。领域错误被包装为
-   `errx.AppError`，由统一的 `ErrorHandler` 渲染。
-5. 服务层通过 repository（Ent）与事务管理器执行写操作。文章与友链通过
-   `authz.Authorizer`（RBAC + 归属检查）进行授权。
+4. 各功能 handler 自己持有请求/响应 DTO；通用 HTTP 信封和分页类型位于 `internal/shared/httpx`。
+   领域错误由统一的 `api.ErrorHandler` 渲染。
+5. 服务层通过功能包内的 repository（Ent）与事务管理器执行写操作，文章与友链通过
+   `authz.Authorizer` 进行授权。
 
 ### 定时任务
 

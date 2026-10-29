@@ -6,7 +6,7 @@ import (
 	"blog-server/ent/link"
 	"blog-server/ent/linkcategory"
 	"blog-server/ent/predicate"
-	"blog-server/entity"
+	linkmodel "blog-server/internal/link/model"
 	"context"
 	"errors"
 	"fmt"
@@ -183,13 +183,13 @@ func (_u *LinkUpdate) ClearAvatar() *LinkUpdate {
 }
 
 // SetStatus sets the "status" field.
-func (_u *LinkUpdate) SetStatus(v entity.LinkStatus) *LinkUpdate {
+func (_u *LinkUpdate) SetStatus(v linkmodel.LinkStatus) *LinkUpdate {
 	_u.mutation.SetStatus(v)
 	return _u
 }
 
 // SetNillableStatus sets the "status" field if the given value is not nil.
-func (_u *LinkUpdate) SetNillableStatus(v *entity.LinkStatus) *LinkUpdate {
+func (_u *LinkUpdate) SetNillableStatus(v *linkmodel.LinkStatus) *LinkUpdate {
 	if v != nil {
 		_u.SetStatus(*v)
 	}
@@ -552,13 +552,13 @@ func (_u *LinkUpdateOne) ClearAvatar() *LinkUpdateOne {
 }
 
 // SetStatus sets the "status" field.
-func (_u *LinkUpdateOne) SetStatus(v entity.LinkStatus) *LinkUpdateOne {
+func (_u *LinkUpdateOne) SetStatus(v linkmodel.LinkStatus) *LinkUpdateOne {
 	_u.mutation.SetStatus(v)
 	return _u
 }
 
 // SetNillableStatus sets the "status" field if the given value is not nil.
-func (_u *LinkUpdateOne) SetNillableStatus(v *entity.LinkStatus) *LinkUpdateOne {
+func (_u *LinkUpdateOne) SetNillableStatus(v *linkmodel.LinkStatus) *LinkUpdateOne {
 	if v != nil {
 		_u.SetStatus(*v)
 	}

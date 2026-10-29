@@ -5,7 +5,7 @@ package ent
 import (
 	"blog-server/ent/post"
 	"blog-server/ent/user"
-	"blog-server/entity"
+	contentmodel "blog-server/internal/content/model"
 	"fmt"
 	"strings"
 	"time"
@@ -40,7 +40,7 @@ type Post struct {
 	// ViewCount holds the value of the "view_count" field.
 	ViewCount uint `json:"view_count,omitempty"`
 	// Status holds the value of the "status" field.
-	Status entity.PostStatus `json:"status,omitempty"`
+	Status contentmodel.PostStatus `json:"status,omitempty"`
 	// PublishedAt holds the value of the "published_at" field.
 	PublishedAt *time.Time `json:"published_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -212,7 +212,7 @@ func (_m *Post) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
-				_m.Status = entity.PostStatus(value.String)
+				_m.Status = contentmodel.PostStatus(value.String)
 			}
 		case post.FieldPublishedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {

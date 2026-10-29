@@ -4,7 +4,7 @@ package link
 
 import (
 	"blog-server/ent/predicate"
-	"blog-server/entity"
+	linkmodel "blog-server/internal/link/model"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -567,19 +567,19 @@ func AvatarContainsFold(v string) predicate.Link {
 }
 
 // StatusEQ applies the EQ predicate on the "status" field.
-func StatusEQ(v entity.LinkStatus) predicate.Link {
+func StatusEQ(v linkmodel.LinkStatus) predicate.Link {
 	vc := v
 	return predicate.Link(sql.FieldEQ(FieldStatus, vc))
 }
 
 // StatusNEQ applies the NEQ predicate on the "status" field.
-func StatusNEQ(v entity.LinkStatus) predicate.Link {
+func StatusNEQ(v linkmodel.LinkStatus) predicate.Link {
 	vc := v
 	return predicate.Link(sql.FieldNEQ(FieldStatus, vc))
 }
 
 // StatusIn applies the In predicate on the "status" field.
-func StatusIn(vs ...entity.LinkStatus) predicate.Link {
+func StatusIn(vs ...linkmodel.LinkStatus) predicate.Link {
 	v := make([]any, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -588,7 +588,7 @@ func StatusIn(vs ...entity.LinkStatus) predicate.Link {
 }
 
 // StatusNotIn applies the NotIn predicate on the "status" field.
-func StatusNotIn(vs ...entity.LinkStatus) predicate.Link {
+func StatusNotIn(vs ...linkmodel.LinkStatus) predicate.Link {
 	v := make([]any, len(vs))
 	for i := range v {
 		v[i] = vs[i]

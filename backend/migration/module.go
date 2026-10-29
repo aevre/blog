@@ -3,7 +3,7 @@ package migration
 import (
 	"context"
 
-	"blog-server/datastore"
+	"blog-server/internal/platform/database"
 
 	"go.uber.org/fx"
 )
@@ -13,7 +13,7 @@ import (
 // are executed before Invokes in their parent module.
 func runMigrationLifecycle(
 	lc fx.Lifecycle,
-	ds *datastore.DataStore,
+	ds *database.DataStore,
 ) {
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {

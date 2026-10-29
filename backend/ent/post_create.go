@@ -7,7 +7,7 @@ import (
 	"blog-server/ent/postcategory"
 	"blog-server/ent/posttag"
 	"blog-server/ent/user"
-	"blog-server/entity"
+	contentmodel "blog-server/internal/content/model"
 	"context"
 	"errors"
 	"fmt"
@@ -135,13 +135,13 @@ func (_c *PostCreate) SetNillableViewCount(v *uint) *PostCreate {
 }
 
 // SetStatus sets the "status" field.
-func (_c *PostCreate) SetStatus(v entity.PostStatus) *PostCreate {
+func (_c *PostCreate) SetStatus(v contentmodel.PostStatus) *PostCreate {
 	_c.mutation.SetStatus(v)
 	return _c
 }
 
 // SetNillableStatus sets the "status" field if the given value is not nil.
-func (_c *PostCreate) SetNillableStatus(v *entity.PostStatus) *PostCreate {
+func (_c *PostCreate) SetNillableStatus(v *contentmodel.PostStatus) *PostCreate {
 	if v != nil {
 		_c.SetStatus(*v)
 	}
@@ -640,7 +640,7 @@ func (u *PostUpsert) AddViewCount(v uint) *PostUpsert {
 }
 
 // SetStatus sets the "status" field.
-func (u *PostUpsert) SetStatus(v entity.PostStatus) *PostUpsert {
+func (u *PostUpsert) SetStatus(v contentmodel.PostStatus) *PostUpsert {
 	u.Set(post.FieldStatus, v)
 	return u
 }
@@ -893,7 +893,7 @@ func (u *PostUpsertOne) UpdateViewCount() *PostUpsertOne {
 }
 
 // SetStatus sets the "status" field.
-func (u *PostUpsertOne) SetStatus(v entity.PostStatus) *PostUpsertOne {
+func (u *PostUpsertOne) SetStatus(v contentmodel.PostStatus) *PostUpsertOne {
 	return u.Update(func(s *PostUpsert) {
 		s.SetStatus(v)
 	})
@@ -1317,7 +1317,7 @@ func (u *PostUpsertBulk) UpdateViewCount() *PostUpsertBulk {
 }
 
 // SetStatus sets the "status" field.
-func (u *PostUpsertBulk) SetStatus(v entity.PostStatus) *PostUpsertBulk {
+func (u *PostUpsertBulk) SetStatus(v contentmodel.PostStatus) *PostUpsertBulk {
 	return u.Update(func(s *PostUpsert) {
 		s.SetStatus(v)
 	})

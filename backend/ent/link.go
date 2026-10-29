@@ -5,7 +5,7 @@ package ent
 import (
 	"blog-server/ent/link"
 	"blog-server/ent/linkcategory"
-	"blog-server/entity"
+	linkmodel "blog-server/internal/link/model"
 	"fmt"
 	"strings"
 	"time"
@@ -38,7 +38,7 @@ type Link struct {
 	// Avatar holds the value of the "avatar" field.
 	Avatar string `json:"avatar,omitempty"`
 	// Status holds the value of the "status" field.
-	Status entity.LinkStatus `json:"status,omitempty"`
+	Status linkmodel.LinkStatus `json:"status,omitempty"`
 	// CategoryID holds the value of the "category_id" field.
 	CategoryID uint `json:"category_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -160,7 +160,7 @@ func (_m *Link) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
-				_m.Status = entity.LinkStatus(value.String)
+				_m.Status = linkmodel.LinkStatus(value.String)
 			}
 		case link.FieldCategoryID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {

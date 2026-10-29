@@ -13,9 +13,11 @@ persistence.
 ## Features
 
 - **Authentication & authorization**
-  - Email + password registration and login with JWT access/refresh tokens.
-  - Refresh token is returned as an `HttpOnly` cookie; access token is returned in the JSON body.
+  - Email + password registration and login with JWT access tokens.
+  - Refresh tokens are signed JWTs stored only as SHA-256 hashes with their expiry in PostgreSQL and returned only as `HttpOnly` cookies.
+  - Refresh-token rotation is transactional; reuse revokes the affected session, while logout revokes only the current session.
   - Captcha codes sent by email (SMTP) before registration.
+  - Login is limited to 10 attempts per minute per directly connected IP; Redis failures are logged and fail open.
   - RBAC with two roles (`admin`, `reader`). Only `admin` can create/update/delete posts and links; `reader` can only read.
 - **Posts**
   - Public list / detail / metadata endpoints.
@@ -36,6 +38,7 @@ persistence.
   - Structured Zap logging (console in dev, JSON in production).
   - TOML configuration with environment-variable overrides and hot-reload (file change triggers a graceful restart).
   - Graceful HTTP shutdown with a configurable timeout.
+  - Liveness and PostgreSQL/Redis readiness endpoints.
 
 ## Tech Stack
 
@@ -150,8 +153,8 @@ endpoint = "http://localhost:9000/"
 ### Hot reload
 
 When the config file changes on disk, the `config` module triggers an Fx
-graceful shutdown (`fx.Shutdowner`), so the process restarts and picks up the
-new configuration.
+graceful shutdown (`fx.Shutdowner`). A process manager or container restart
+policy must restart the application to load the new configuration.
 
 ## Running
 
@@ -159,27 +162,27 @@ new configuration.
 # Download dependencies
 go mod download
 
-# Run the HTTP server (loads config.toml, starts scheduled jobs)
+# Run the application (loads config.toml, runs Goose migrations,
+# starts the HTTP server and scheduled jobs)
 go run ./cmd/server
 
 # Build a static binary
 go build -o blog-server ./cmd/server
 ./blog-server
-
-# Create / migrate the database schema (Ent schema create; drops stale columns/indexes)
-go run ./cmd/migration
 ```
 
 ### Docker
 
-`Dockerfile` builds both the `blog-server` and `migration` binaries (CGO disabled)
-and exposes port `8000`. Mount or bake in a `config.toml` and run `./migration`
-once before `./blog-server`.
+`Dockerfile` builds the `blog-server` binary with CGO disabled and exposes port
+`8000`. Mount or bake in a `config.toml`. The application runs embedded Goose
+migrations before accepting HTTP traffic.
 
 ## API
 
-All routes are mounted under `/api/v1`. Protected routes require an
-`Authorization: Bearer <accessToken>` header. Responses use a common envelope:
+Application routes are mounted under `/api/v1`. Protected routes require an
+`Authorization: Bearer <accessToken>` header. Health endpoints are exposed as
+`GET /health/live` and `GET /health/ready` outside the API prefix. Responses use
+a common envelope:
 
 ```json
 { "code": 0, "msg": "success", "data": { } }
@@ -214,8 +217,15 @@ Request bodies:
 ```
 
 `login` / `register` responses include `accessToken`, `uuid`, `username`,
-`role`, and `avatar`; the `refreshToken` is set as an `HttpOnly` cookie and is
-not returned in the JSON body.
+`role`, and `avatar`. The refresh JWT is set as an `HttpOnly` cookie
+and is not returned in the JSON body. PostgreSQL stores its SHA-256 hash and exact JWT expiry.
+Rotation retains used hashes until expiry to detect reuse and revoke the session.
+Expired JWTs are rejected before session lookup. Cleanup runs at startup and every hour,
+deleting up to 500 expired token records and 500 empty expired or revoked sessions per run,
+with a 10-second timeout. Indexed batches use `SKIP LOCKED` for multiple instances.
+Expired records may remain until a later batch; they cannot be used to refresh.
+Migration 00004 revokes previous opaque-token sessions, so users must sign in again.
+Reusing an already expired JWT does not revoke its former session.
 
 ### Posts
 
@@ -286,49 +296,40 @@ and reports failures via `event: error\ndata: <message>`.
 ## Project Structure
 
 ```
-cmd/
-  server/main.go        # Fx app wiring + HTTP server lifecycle
-  migration/main.go     # Ent schema migration runner
-
-config/                 # Config structs, Viper loader, validation, hot-reload
-handler/                # Echo handlers + route registration (per-resource groups)
-middleware/             # JWT auth, request logger, body-size limit
-authz/                  # RBAC + ownership (ABAC) authorizer
-contextx/               # Request-scoped user/request-id helpers
-service/                # Business logic (auth, post, link, rss, mail, model)
-repository/             # Data-access layer over Ent (post, link, user)
-mapper/                 # Ent <-> domain entity conversions
-entity/                 # Plain domain structs (Post, User, Link, RSS, ...)
-request/                # Inbound DTOs with validation tags
-response/               # Outbound DTOs / response envelopes
-datastore/              # Ent client + transaction manager (txmgr.TxManager)
-ent/                    # Ent schema definitions + generated code
-cache/                  # Redis client (Store / AtomicStore / PatternScanner)
-storage/                # S3-compatible Storage interface + implementation (not wired)
-scheduler/              # Background jobs (view-count flush, link status check)
-pkg/
-  errx/                 # Error codes, AppError, HTTP-status mapping
-  jwt/                  # Token generation / parsing
-  validatorx/          # validator.v10 wrapper
-  txmgr/                # Transaction manager interface
-logger/                 # Zap-backed structured logger
-templates/              # Embedded email templates (captcha.html)
-utils/                  # Password hashing, random strings, Cloudflare IP fetch
+cmd/server/             # Application composition, migrations, HTTP and job lifecycle
+internal/
+  account/              # Auth, users, mail, account models
+  content/              # Posts, categories, tags, RSS and content models
+  link/                 # Links and link models
+  setup/                # Site initialization and site models
+  summary/              # Summary sessions and SSE
+  api/                  # Routes, errors, health checks
+  platform/             # Cache, config, database, logging, middleware, storage
+  shared/               # Context, errors, HTTP envelopes, JWT, random values, transactions, validation
+  authz/                # Authorization rules
+  scheduler/            # Background jobs
+ent/                    # Schemas and generated code
+migration/              # Embedded Goose SQL migrations and startup module
+templates/              # Email templates
 ```
+
+See [REFACTOR.md](REFACTOR.md) for behavior, deployment limits, and integration test commands.
 
 ### Request flow
 
-1. `cmd/server/main.go` builds an Fx container with all modules and starts Echo.
-2. Global middleware: request logger (attaches request id + per-request logger)
-   and a 10 MiB body-size limit.
+1. `cmd/server/main.go` builds the Fx container. Embedded Goose migrations run
+   against PostgreSQL before Echo begins accepting requests; scheduled jobs start
+   with the application. Redis availability is reported by the readiness endpoint.
+2. Global middleware provides request logging, panic recovery, a 10 MiB body
+   limit, and atomic Redis-backed login limiting.
 3. Routes are registered under `/api/v1`. Protected routes attach
    `middleware.AuthMiddleware`, which parses the Bearer token, resolves the user
    into `contextx.User`, and stores it on the request context.
-4. Handlers bind + validate the request, call a `service`, and write a
-   `response` envelope. Domain errors are wrapped in `errx.AppError` and rendered
-   by the central `ErrorHandler`.
-5. Services use repositories (Ent) and the transaction manager for writes. Posts
-   and links authorize through `authz.Authorizer` (RBAC + ownership check).
+4. Each feature handler owns its request/response DTOs. Shared HTTP envelopes and
+   pagination types live in `internal/shared/httpx`. Domain errors are rendered by
+   the central `api.ErrorHandler`.
+5. Services use feature-local repositories (Ent) and the transaction manager for
+   writes. Posts and links authorize through `authz.Authorizer`.
 
 ### Scheduled jobs
 

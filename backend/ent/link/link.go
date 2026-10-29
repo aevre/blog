@@ -3,7 +3,7 @@
 package link
 
 import (
-	"blog-server/entity"
+	linkmodel "blog-server/internal/link/model"
 	"fmt"
 	"time"
 
@@ -96,10 +96,10 @@ var (
 	AvatarValidator func(string) error
 )
 
-const DefaultStatus entity.LinkStatus = "normal"
+const DefaultStatus linkmodel.LinkStatus = "normal"
 
 // StatusValidator is a validator for the "status" field enum values. It is called by the builders before save.
-func StatusValidator(s entity.LinkStatus) error {
+func StatusValidator(s linkmodel.LinkStatus) error {
 	switch s {
 	case "normal", "abnormal":
 		return nil
