@@ -11,6 +11,8 @@ import (
 
 	"blog-server/ent/migrate"
 
+	"blog-server/ent/accountrefreshtoken"
+	"blog-server/ent/accountsession"
 	"blog-server/ent/comment"
 	"blog-server/ent/link"
 	"blog-server/ent/linkcategory"
@@ -27,6 +29,7 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/google/uuid"
 )
 
 // Client is the client that holds all ent builders.
@@ -34,6 +37,10 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// AccountRefreshToken is the client for interacting with the AccountRefreshToken builders.
+	AccountRefreshToken *AccountRefreshTokenClient
+	// AccountSession is the client for interacting with the AccountSession builders.
+	AccountSession *AccountSessionClient
 	// Comment is the client for interacting with the Comment builders.
 	Comment *CommentClient
 	// Link is the client for interacting with the Link builders.
@@ -67,6 +74,8 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.AccountRefreshToken = NewAccountRefreshTokenClient(c.config)
+	c.AccountSession = NewAccountSessionClient(c.config)
 	c.Comment = NewCommentClient(c.config)
 	c.Link = NewLinkClient(c.config)
 	c.LinkCategory = NewLinkCategoryClient(c.config)
@@ -170,6 +179,8 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	return &Tx{
 		ctx:                  ctx,
 		config:               cfg,
+		AccountRefreshToken:  NewAccountRefreshTokenClient(cfg),
+		AccountSession:       NewAccountSessionClient(cfg),
 		Comment:              NewCommentClient(cfg),
 		Link:                 NewLinkClient(cfg),
 		LinkCategory:         NewLinkCategoryClient(cfg),
@@ -200,6 +211,8 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	return &Tx{
 		ctx:                  ctx,
 		config:               cfg,
+		AccountRefreshToken:  NewAccountRefreshTokenClient(cfg),
+		AccountSession:       NewAccountSessionClient(cfg),
 		Comment:              NewCommentClient(cfg),
 		Link:                 NewLinkClient(cfg),
 		LinkCategory:         NewLinkCategoryClient(cfg),
@@ -217,7 +230,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Comment.
+//		AccountRefreshToken.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -240,8 +253,9 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Comment, c.Link, c.LinkCategory, c.Post, c.PostCategory,
-		c.PostCategoryRelation, c.PostTag, c.PostTagRelation, c.Site, c.System, c.User,
+		c.AccountRefreshToken, c.AccountSession, c.Comment, c.Link, c.LinkCategory,
+		c.Post, c.PostCategory, c.PostCategoryRelation, c.PostTag, c.PostTagRelation,
+		c.Site, c.System, c.User,
 	} {
 		n.Use(hooks...)
 	}
@@ -251,8 +265,9 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Comment, c.Link, c.LinkCategory, c.Post, c.PostCategory,
-		c.PostCategoryRelation, c.PostTag, c.PostTagRelation, c.Site, c.System, c.User,
+		c.AccountRefreshToken, c.AccountSession, c.Comment, c.Link, c.LinkCategory,
+		c.Post, c.PostCategory, c.PostCategoryRelation, c.PostTag, c.PostTagRelation,
+		c.Site, c.System, c.User,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -261,6 +276,10 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *AccountRefreshTokenMutation:
+		return c.AccountRefreshToken.mutate(ctx, m)
+	case *AccountSessionMutation:
+		return c.AccountSession.mutate(ctx, m)
 	case *CommentMutation:
 		return c.Comment.mutate(ctx, m)
 	case *LinkMutation:
@@ -285,6 +304,320 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.User.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// AccountRefreshTokenClient is a client for the AccountRefreshToken schema.
+type AccountRefreshTokenClient struct {
+	config
+}
+
+// NewAccountRefreshTokenClient returns a client for the AccountRefreshToken from the given config.
+func NewAccountRefreshTokenClient(c config) *AccountRefreshTokenClient {
+	return &AccountRefreshTokenClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `accountrefreshtoken.Hooks(f(g(h())))`.
+func (c *AccountRefreshTokenClient) Use(hooks ...Hook) {
+	c.hooks.AccountRefreshToken = append(c.hooks.AccountRefreshToken, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `accountrefreshtoken.Intercept(f(g(h())))`.
+func (c *AccountRefreshTokenClient) Intercept(interceptors ...Interceptor) {
+	c.inters.AccountRefreshToken = append(c.inters.AccountRefreshToken, interceptors...)
+}
+
+// Create returns a builder for creating a AccountRefreshToken entity.
+func (c *AccountRefreshTokenClient) Create() *AccountRefreshTokenCreate {
+	mutation := newAccountRefreshTokenMutation(c.config, OpCreate)
+	return &AccountRefreshTokenCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of AccountRefreshToken entities.
+func (c *AccountRefreshTokenClient) CreateBulk(builders ...*AccountRefreshTokenCreate) *AccountRefreshTokenCreateBulk {
+	return &AccountRefreshTokenCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *AccountRefreshTokenClient) MapCreateBulk(slice any, setFunc func(*AccountRefreshTokenCreate, int)) *AccountRefreshTokenCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &AccountRefreshTokenCreateBulk{err: fmt.Errorf("calling to AccountRefreshTokenClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*AccountRefreshTokenCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &AccountRefreshTokenCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for AccountRefreshToken.
+func (c *AccountRefreshTokenClient) Update() *AccountRefreshTokenUpdate {
+	mutation := newAccountRefreshTokenMutation(c.config, OpUpdate)
+	return &AccountRefreshTokenUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *AccountRefreshTokenClient) UpdateOne(_m *AccountRefreshToken) *AccountRefreshTokenUpdateOne {
+	mutation := newAccountRefreshTokenMutation(c.config, OpUpdateOne, withAccountRefreshToken(_m))
+	return &AccountRefreshTokenUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *AccountRefreshTokenClient) UpdateOneID(id string) *AccountRefreshTokenUpdateOne {
+	mutation := newAccountRefreshTokenMutation(c.config, OpUpdateOne, withAccountRefreshTokenID(id))
+	return &AccountRefreshTokenUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for AccountRefreshToken.
+func (c *AccountRefreshTokenClient) Delete() *AccountRefreshTokenDelete {
+	mutation := newAccountRefreshTokenMutation(c.config, OpDelete)
+	return &AccountRefreshTokenDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *AccountRefreshTokenClient) DeleteOne(_m *AccountRefreshToken) *AccountRefreshTokenDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *AccountRefreshTokenClient) DeleteOneID(id string) *AccountRefreshTokenDeleteOne {
+	builder := c.Delete().Where(accountrefreshtoken.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &AccountRefreshTokenDeleteOne{builder}
+}
+
+// Query returns a query builder for AccountRefreshToken.
+func (c *AccountRefreshTokenClient) Query() *AccountRefreshTokenQuery {
+	return &AccountRefreshTokenQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeAccountRefreshToken},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a AccountRefreshToken entity by its id.
+func (c *AccountRefreshTokenClient) Get(ctx context.Context, id string) (*AccountRefreshToken, error) {
+	return c.Query().Where(accountrefreshtoken.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *AccountRefreshTokenClient) GetX(ctx context.Context, id string) *AccountRefreshToken {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QuerySession queries the session edge of a AccountRefreshToken.
+func (c *AccountRefreshTokenClient) QuerySession(_m *AccountRefreshToken) *AccountSessionQuery {
+	query := (&AccountSessionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(accountrefreshtoken.Table, accountrefreshtoken.FieldID, id),
+			sqlgraph.To(accountsession.Table, accountsession.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, accountrefreshtoken.SessionTable, accountrefreshtoken.SessionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *AccountRefreshTokenClient) Hooks() []Hook {
+	return c.hooks.AccountRefreshToken
+}
+
+// Interceptors returns the client interceptors.
+func (c *AccountRefreshTokenClient) Interceptors() []Interceptor {
+	return c.inters.AccountRefreshToken
+}
+
+func (c *AccountRefreshTokenClient) mutate(ctx context.Context, m *AccountRefreshTokenMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&AccountRefreshTokenCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&AccountRefreshTokenUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&AccountRefreshTokenUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&AccountRefreshTokenDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown AccountRefreshToken mutation op: %q", m.Op())
+	}
+}
+
+// AccountSessionClient is a client for the AccountSession schema.
+type AccountSessionClient struct {
+	config
+}
+
+// NewAccountSessionClient returns a client for the AccountSession from the given config.
+func NewAccountSessionClient(c config) *AccountSessionClient {
+	return &AccountSessionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `accountsession.Hooks(f(g(h())))`.
+func (c *AccountSessionClient) Use(hooks ...Hook) {
+	c.hooks.AccountSession = append(c.hooks.AccountSession, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `accountsession.Intercept(f(g(h())))`.
+func (c *AccountSessionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.AccountSession = append(c.inters.AccountSession, interceptors...)
+}
+
+// Create returns a builder for creating a AccountSession entity.
+func (c *AccountSessionClient) Create() *AccountSessionCreate {
+	mutation := newAccountSessionMutation(c.config, OpCreate)
+	return &AccountSessionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of AccountSession entities.
+func (c *AccountSessionClient) CreateBulk(builders ...*AccountSessionCreate) *AccountSessionCreateBulk {
+	return &AccountSessionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *AccountSessionClient) MapCreateBulk(slice any, setFunc func(*AccountSessionCreate, int)) *AccountSessionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &AccountSessionCreateBulk{err: fmt.Errorf("calling to AccountSessionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*AccountSessionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &AccountSessionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for AccountSession.
+func (c *AccountSessionClient) Update() *AccountSessionUpdate {
+	mutation := newAccountSessionMutation(c.config, OpUpdate)
+	return &AccountSessionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *AccountSessionClient) UpdateOne(_m *AccountSession) *AccountSessionUpdateOne {
+	mutation := newAccountSessionMutation(c.config, OpUpdateOne, withAccountSession(_m))
+	return &AccountSessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *AccountSessionClient) UpdateOneID(id uuid.UUID) *AccountSessionUpdateOne {
+	mutation := newAccountSessionMutation(c.config, OpUpdateOne, withAccountSessionID(id))
+	return &AccountSessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for AccountSession.
+func (c *AccountSessionClient) Delete() *AccountSessionDelete {
+	mutation := newAccountSessionMutation(c.config, OpDelete)
+	return &AccountSessionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *AccountSessionClient) DeleteOne(_m *AccountSession) *AccountSessionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *AccountSessionClient) DeleteOneID(id uuid.UUID) *AccountSessionDeleteOne {
+	builder := c.Delete().Where(accountsession.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &AccountSessionDeleteOne{builder}
+}
+
+// Query returns a query builder for AccountSession.
+func (c *AccountSessionClient) Query() *AccountSessionQuery {
+	return &AccountSessionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeAccountSession},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a AccountSession entity by its id.
+func (c *AccountSessionClient) Get(ctx context.Context, id uuid.UUID) (*AccountSession, error) {
+	return c.Query().Where(accountsession.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *AccountSessionClient) GetX(ctx context.Context, id uuid.UUID) *AccountSession {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUser queries the user edge of a AccountSession.
+func (c *AccountSessionClient) QueryUser(_m *AccountSession) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(accountsession.Table, accountsession.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, accountsession.UserTable, accountsession.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryRefreshTokens queries the refresh_tokens edge of a AccountSession.
+func (c *AccountSessionClient) QueryRefreshTokens(_m *AccountSession) *AccountRefreshTokenQuery {
+	query := (&AccountRefreshTokenClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(accountsession.Table, accountsession.FieldID, id),
+			sqlgraph.To(accountrefreshtoken.Table, accountrefreshtoken.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, accountsession.RefreshTokensTable, accountsession.RefreshTokensColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *AccountSessionClient) Hooks() []Hook {
+	return c.hooks.AccountSession
+}
+
+// Interceptors returns the client interceptors.
+func (c *AccountSessionClient) Interceptors() []Interceptor {
+	return c.inters.AccountSession
+}
+
+func (c *AccountSessionClient) mutate(ctx context.Context, m *AccountSessionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&AccountSessionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&AccountSessionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&AccountSessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&AccountSessionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown AccountSession mutation op: %q", m.Op())
 	}
 }
 
@@ -1884,6 +2217,22 @@ func (c *UserClient) QueryPosts(_m *User) *PostQuery {
 	return query
 }
 
+// QuerySessions queries the sessions edge of a User.
+func (c *UserClient) QuerySessions(_m *User) *AccountSessionQuery {
+	query := (&AccountSessionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(accountsession.Table, accountsession.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.SessionsTable, user.SessionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -1912,11 +2261,13 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Comment, Link, LinkCategory, Post, PostCategory, PostCategoryRelation, PostTag,
-		PostTagRelation, Site, System, User []ent.Hook
+		AccountRefreshToken, AccountSession, Comment, Link, LinkCategory, Post,
+		PostCategory, PostCategoryRelation, PostTag, PostTagRelation, Site, System,
+		User []ent.Hook
 	}
 	inters struct {
-		Comment, Link, LinkCategory, Post, PostCategory, PostCategoryRelation, PostTag,
-		PostTagRelation, Site, System, User []ent.Interceptor
+		AccountRefreshToken, AccountSession, Comment, Link, LinkCategory, Post,
+		PostCategory, PostCategoryRelation, PostTag, PostTagRelation, Site, System,
+		User []ent.Interceptor
 	}
 )

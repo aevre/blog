@@ -6,6 +6,12 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// AccountRefreshToken is the predicate function for accountrefreshtoken builders.
+type AccountRefreshToken func(*sql.Selector)
+
+// AccountSession is the predicate function for accountsession builders.
+type AccountSession func(*sql.Selector)
+
 // Comment is the predicate function for comment builders.
 type Comment func(*sql.Selector)
 

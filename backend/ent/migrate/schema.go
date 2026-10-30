@@ -9,6 +9,67 @@ import (
 )
 
 var (
+	// AccountRefreshTokensColumns holds the columns for the "account_refresh_tokens" table.
+	AccountRefreshTokensColumns = []*schema.Column{
+		{Name: "hash", Type: field.TypeString, SchemaType: map[string]string{"postgres": "text"}},
+		{Name: "expires_at", Type: field.TypeTime},
+		{Name: "used_at", Type: field.TypeTime, Nullable: true},
+		{Name: "session_id", Type: field.TypeUUID},
+	}
+	// AccountRefreshTokensTable holds the schema information for the "account_refresh_tokens" table.
+	AccountRefreshTokensTable = &schema.Table{
+		Name:       "account_refresh_tokens",
+		Columns:    AccountRefreshTokensColumns,
+		PrimaryKey: []*schema.Column{AccountRefreshTokensColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "account_refresh_tokens_account_sessions_refresh_tokens",
+				Columns:    []*schema.Column{AccountRefreshTokensColumns[3]},
+				RefColumns: []*schema.Column{AccountSessionsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "account_refresh_tokens_session_id",
+				Unique:  false,
+				Columns: []*schema.Column{AccountRefreshTokensColumns[3]},
+			},
+			{
+				Name:    "account_refresh _tokens_expires_at",
+				Unique:  false,
+				Columns: []*schema.Column{AccountRefreshTokensColumns[1], AccountRefreshTokensColumns[0]},
+			},
+		},
+	}
+	// AccountSessionsColumns holds the columns for the "account_sessions" table.
+	AccountSessionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "expires_at", Type: field.TypeTime},
+		{Name: "revoked_at", Type: field.TypeTime, Nullable: true},
+		{Name: "user_id", Type: field.TypeUint},
+	}
+	// AccountSessionsTable holds the schema information for the "account_sessions" table.
+	AccountSessionsTable = &schema.Table{
+		Name:       "account_sessions",
+		Columns:    AccountSessionsColumns,
+		PrimaryKey: []*schema.Column{AccountSessionsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "account_sessions_users_sessions",
+				Columns:    []*schema.Column{AccountSessionsColumns[3]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "account_sessions_expires_at",
+				Unique:  false,
+				Columns: []*schema.Column{AccountSessionsColumns[1], AccountSessionsColumns[0]},
+			},
+		},
+	}
 	// CommentsColumns holds the columns for the "comments" table.
 	CommentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUint, Increment: true},
@@ -227,6 +288,8 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		AccountRefreshTokensTable,
+		AccountSessionsTable,
 		CommentsTable,
 		LinksTable,
 		LinkCategoriesTable,
@@ -242,6 +305,14 @@ var (
 )
 
 func init() {
+	AccountRefreshTokensTable.ForeignKeys[0].RefTable = AccountSessionsTable
+	AccountRefreshTokensTable.Annotation = &entsql.Annotation{
+		Table: "account_refresh_tokens",
+	}
+	AccountSessionsTable.ForeignKeys[0].RefTable = UsersTable
+	AccountSessionsTable.Annotation = &entsql.Annotation{
+		Table: "account_sessions",
+	}
 	LinksTable.ForeignKeys[0].RefTable = LinkCategoriesTable
 	PostsTable.ForeignKeys[0].RefTable = UsersTable
 	PostCategoryRelationsTable.ForeignKeys[0].RefTable = PostsTable

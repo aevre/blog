@@ -12,6 +12,10 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
+	// AccountRefreshToken is the client for interacting with the AccountRefreshToken builders.
+	AccountRefreshToken *AccountRefreshTokenClient
+	// AccountSession is the client for interacting with the AccountSession builders.
+	AccountSession *AccountSessionClient
 	// Comment is the client for interacting with the Comment builders.
 	Comment *CommentClient
 	// Link is the client for interacting with the Link builders.
@@ -165,6 +169,8 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
+	tx.AccountRefreshToken = NewAccountRefreshTokenClient(tx.config)
+	tx.AccountSession = NewAccountSessionClient(tx.config)
 	tx.Comment = NewCommentClient(tx.config)
 	tx.Link = NewLinkClient(tx.config)
 	tx.LinkCategory = NewLinkCategoryClient(tx.config)
@@ -185,7 +191,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: Comment.QueryXXX(), the query will be executed
+// applies a query, for example: AccountRefreshToken.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

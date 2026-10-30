@@ -3,6 +3,8 @@
 package ent
 
 import (
+	"blog-server/ent/accountrefreshtoken"
+	"blog-server/ent/accountsession"
 	"blog-server/ent/comment"
 	"blog-server/ent/link"
 	"blog-server/ent/linkcategory"
@@ -83,6 +85,8 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
+			accountrefreshtoken.Table:  accountrefreshtoken.ValidColumn,
+			accountsession.Table:       accountsession.ValidColumn,
 			comment.Table:              comment.ValidColumn,
 			link.Table:                 link.ValidColumn,
 			linkcategory.Table:         linkcategory.ValidColumn,

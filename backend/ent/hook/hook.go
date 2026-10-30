@@ -8,6 +8,30 @@ import (
 	"fmt"
 )
 
+// The AccountRefreshTokenFunc type is an adapter to allow the use of ordinary
+// function as AccountRefreshToken mutator.
+type AccountRefreshTokenFunc func(context.Context, *ent.AccountRefreshTokenMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f AccountRefreshTokenFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.AccountRefreshTokenMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AccountRefreshTokenMutation", m)
+}
+
+// The AccountSessionFunc type is an adapter to allow the use of ordinary
+// function as AccountSession mutator.
+type AccountSessionFunc func(context.Context, *ent.AccountSessionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f AccountSessionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.AccountSessionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AccountSessionMutation", m)
+}
+
 // The CommentFunc type is an adapter to allow the use of ordinary
 // function as Comment mutator.
 type CommentFunc func(context.Context, *ent.CommentMutation) (ent.Value, error)
