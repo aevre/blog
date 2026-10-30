@@ -9,6 +9,8 @@ import (
 	"blog-server/internal/account/repository"
 	"blog-server/internal/platform/config"
 	"blog-server/internal/shared/jwt"
+
+	"github.com/google/uuid"
 )
 
 type sessionStub struct {
@@ -17,26 +19,26 @@ type sessionStub struct {
 	revoked bool
 }
 
-func (s *sessionStub) Create(_ context.Context, _ string, _ uint, hash string, _ time.Time) error {
+func (s *sessionStub) Create(_ context.Context, _ uuid.UUID, _ uint, hash string, _ time.Time) error {
 	s.current = hash
 	s.used = map[string]bool{}
 	return nil
 }
 
-func (s *sessionStub) Rotate(_ context.Context, old, next string, _ time.Time) (uint, string, bool, error) {
+func (s *sessionStub) Rotate(_ context.Context, old, next string, _ time.Time) (uint, uuid.UUID, bool, error) {
 	if s.revoked {
-		return 0, "", false, nil
+		return 0, uuid.Nil, false, nil
 	}
 	if s.used[old] {
 		s.revoked = true
-		return 0, "", false, nil
+		return 0, uuid.Nil, false, nil
 	}
 	if s.current != old {
-		return 0, "", false, nil
+		return 0, uuid.Nil, false, nil
 	}
 	s.used[old] = true
 	s.current = next
-	return 1, "session", true, nil
+	return 1, uuid.New(), true, nil
 }
 func (s *sessionStub) Revoke(context.Context, string) error { s.revoked = true; return nil }
 
@@ -51,7 +53,8 @@ func TestSessionRotationAndLogout(t *testing.T) {
 	store := &sessionStub{}
 	svc := &authService{cfg: cfg, sessions: store, userRepo: &sessionRepoStub{}}
 	j := jwt.New(cfg.JWT)
-	token, err := j.GenerateRefreshToken(1, accountmodel.UserRoleReader, "session")
+	sid := uuid.New()
+	token, err := j.GenerateRefreshToken(1, accountmodel.UserRoleReader, sid)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,7 +63,7 @@ func TestSessionRotationAndLogout(t *testing.T) {
 		t.Fatalf("invalid refresh JWT: %v", err)
 	}
 	ctx := context.Background()
-	if err := svc.createSession(ctx, 1, "session", token); err != nil {
+	if err := svc.createSession(ctx, 1, sid, token); err != nil {
 		t.Fatal(err)
 	}
 	if store.current == token {

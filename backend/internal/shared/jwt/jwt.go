@@ -12,21 +12,22 @@ import (
 	"blog-server/internal/shared/errx"
 
 	jwtv5 "github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 type jwtx struct {
 	cfg config.JWTConfig
 }
 
-func (j *jwtx) GenerateAccessToken(userID uint, role accountmodel.UserRole, sessionID string) (string, error) {
+func (j *jwtx) GenerateAccessToken(userID uint, role accountmodel.UserRole, sessionID uuid.UUID) (string, error) {
 	return j.generateToken(userID, role, sessionID, TokenTypeAccess, j.cfg.AccessExpiration)
 }
 
-func (j *jwtx) GenerateRefreshToken(userID uint, role accountmodel.UserRole, sessionID string) (string, error) {
+func (j *jwtx) GenerateRefreshToken(userID uint, role accountmodel.UserRole, sessionID uuid.UUID) (string, error) {
 	return j.generateToken(userID, role, sessionID, TokenTypeRefresh, j.cfg.RefreshExpiration)
 }
 
-func (j *jwtx) GenerateAllTokens(userID uint, role accountmodel.UserRole, sessionID string) (string, string, error) {
+func (j *jwtx) GenerateAllTokens(userID uint, role accountmodel.UserRole, sessionID uuid.UUID) (string, string, error) {
 	access, err := j.GenerateAccessToken(userID, role, sessionID)
 	if err != nil {
 		return "", "", err
@@ -68,7 +69,7 @@ func (j *jwtx) Validate(tokenStr string) (bool, error) {
 	return err == nil, err
 }
 
-func (j *jwtx) generateToken(userID uint, role accountmodel.UserRole, sessionID string, tokenType string, expires time.Duration) (string, error) {
+func (j *jwtx) generateToken(userID uint, role accountmodel.UserRole, sessionID uuid.UUID, tokenType string, expires time.Duration) (string, error) {
 	now := time.Now()
 
 	var tokenID [16]byte
@@ -81,7 +82,7 @@ func (j *jwtx) generateToken(userID uint, role accountmodel.UserRole, sessionID 
 		ID:        userID,
 		Role:      role,
 		TokenType: tokenType,
-		SessionID: sessionID,
+		SessionID: sessionID.String(),
 		RegisteredClaims: jwtv5.RegisteredClaims{
 			ID:        hex.EncodeToString(tokenID[:]),
 			ExpiresAt: jwtv5.NewNumericDate(now.Add(expires)),

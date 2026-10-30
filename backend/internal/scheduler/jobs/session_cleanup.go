@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"blog-server/internal/platform/logging"
+	logger "blog-server/internal/platform/logging"
 )
 
 type sessionCleaner interface {

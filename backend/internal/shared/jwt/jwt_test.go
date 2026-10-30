@@ -28,7 +28,9 @@ func TestGeneratedTokensHaveDistinctTypes(t *testing.T) {
 		RefreshExpiration: time.Hour,
 	})
 
-	access, refresh, err := j.GenerateAllTokens(1, accountmodel.UserRoleReader, "session-1")
+	sessionID := uuid.New()
+
+	access, refresh, err := j.GenerateAllTokens(1, accountmodel.UserRoleReader, sessionID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -47,19 +49,20 @@ func TestGeneratedTokensHaveDistinctTypes(t *testing.T) {
 		t.Fatalf("refresh token type = %q", refreshClaims.TokenType)
 	}
 
-	if accessClaims.SessionID != "session-1" {
-		t.Fatalf("access token session ID = %q, want %q", accessClaims.SessionID, "session-1")
+	wantSessionID := sessionID.String()
+	if accessClaims.SessionID != wantSessionID {
+		t.Fatalf("access token session ID = %q, want %q", accessClaims.SessionID, wantSessionID)
 	}
 
-	if refreshClaims.SessionID != "session-1" {
-		t.Fatalf("refresh token session ID = %q, want %q", refreshClaims.SessionID, "session-1")
+	if refreshClaims.SessionID != wantSessionID {
+		t.Fatalf("refresh token session ID = %q, want %q", refreshClaims.SessionID, wantSessionID)
 	}
 }
 
 func TestGeneratedRefreshTokenAreUnique(t *testing.T) {
 	j := New(testJWTConfig())
 
-	sid := uuid.NewString()
+	sid := uuid.New()
 
 	_, first, err := j.GenerateAllTokens(1, accountmodel.UserRoleReader, sid)
 	if err != nil {
@@ -103,7 +106,7 @@ func TestGeneratedRefreshTokenAreUnique(t *testing.T) {
 
 func TestGeneratedTokenPreservesUserClaims(t *testing.T) {
 	j := New(testJWTConfig())
-	access, err := j.GenerateAccessToken(42, accountmodel.UserRoleAdmin, uuid.NewString())
+	access, err := j.GenerateAccessToken(42, accountmodel.UserRoleAdmin, uuid.New())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -131,7 +134,7 @@ func TestParseRejectsUnexpectedIssuer(t *testing.T) {
 	otherConfig := expectedConfig
 	otherConfig.Issuer = "other-issuer"
 
-	token, err := New(otherConfig).GenerateAccessToken(1, accountmodel.UserRoleReader, uuid.NewString())
+	token, err := New(otherConfig).GenerateAccessToken(1, accountmodel.UserRoleReader, uuid.New())
 	if err != nil {
 		t.Fatal(err)
 	}

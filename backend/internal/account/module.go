@@ -14,7 +14,7 @@ func Module() fx.Option {
 		"account",
 		fx.Provide(
 			repository.NewUserRepo,
-			repository.NewSessions,
+			repository.NewSessionRepo,
 			service.NewEmailService,
 			service.NewAuthService,
 			service.NewUserService,

@@ -35,8 +35,8 @@ func TestSessionsIntegration(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	s := NewSessions(ds)
-	id := uuid.NewString()
+	s := NewSessionRepo(ds)
+	id := uuid.New()
 	expires := time.Now().Add(time.Hour)
 	if err := s.Create(ctx, id, u.ID, "old", expires); err != nil {
 		t.Fatal(err)
@@ -65,7 +65,7 @@ func TestSessionsIntegration(t *testing.T) {
 	if !revoked {
 		t.Fatal("reuse did not revoke session")
 	}
-	if err := s.Create(ctx, uuid.NewString(), u.ID, "other", expires); err != nil {
+	if err := s.Create(ctx, uuid.New(), u.ID, "other", expires); err != nil {
 		t.Fatal(err)
 	}
 	_, _, ok, err := s.Rotate(ctx, "other", "next", expires)
@@ -80,7 +80,7 @@ func TestSessionsIntegration(t *testing.T) {
 		t.Fatalf("logout failed: %v %v", ok, err)
 	}
 
-	liveID := uuid.NewString()
+	liveID := uuid.New()
 	if err := s.Create(ctx, liveID, u.ID, "live-token", expires); err != nil {
 		t.Fatal(err)
 	}
@@ -89,7 +89,7 @@ func TestSessionsIntegration(t *testing.T) {
 		FROM generate_series(1,501) n`, liveID); err != nil {
 		t.Fatal(err)
 	}
-	expiredID := uuid.NewString()
+	expiredID := uuid.New()
 	if err := s.Create(ctx, expiredID, u.ID, "expired-session", time.Now().Add(-time.Hour)); err != nil {
 		t.Fatal(err)
 	}

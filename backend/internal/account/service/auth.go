@@ -79,9 +79,9 @@ type AuthService interface {
 	RefreshAccessToken(ctx context.Context, token string) (string, string, error)
 }
 
-type sessionStore interface {
-	Create(context.Context, string, uint, string, time.Time) error
-	Rotate(context.Context, string, string, time.Time) (uint, string, bool, error)
+type sessionRepo interface {
+	Create(context.Context, uuid.UUID, uint, string, time.Time) error
+	Rotate(context.Context, string, string, time.Time) (uint, uuid.UUID, bool, error)
 	Revoke(context.Context, string) error
 }
 
@@ -89,7 +89,7 @@ type sessionStore interface {
 type authService struct {
 	ds          *database.DataStore
 	rc          cache.Store
-	sessions    sessionStore
+	sessions    sessionRepo
 	cfg         *config.Config
 	userRepo    repository.UserRepo
 	mailService MailService
@@ -102,7 +102,7 @@ func NewAuthService(
 	cfg *config.Config,
 	userRepo repository.UserRepo,
 	mailService MailService,
-	sessions *repository.Sessions,
+	sessions *repository.SessionRepo,
 ) AuthService {
 	return &authService{
 		ds:          ds,
@@ -153,7 +153,7 @@ func (s *authService) Register(ctx context.Context, input *RegisterInput) (*Auth
 		return nil, errx.New(errx.CodeInternalError, err)
 	}
 
-	sessionID := uuid.NewString()
+	sessionID := uuid.New()
 
 	j := jwt.New(s.cfg.JWT)
 	accessToken, refreshToken, err := generateSessionTokens(j, created.ID, created.Role, sessionID)
@@ -194,7 +194,7 @@ func (s *authService) Login(ctx context.Context, input *LoginInput) (*AuthResult
 		return nil, err
 	}
 
-	sessionID := uuid.NewString()
+	sessionID := uuid.New()
 
 	j := jwt.New(s.cfg.JWT)
 	accessToken, refreshToken, err := generateSessionTokens(j, user.ID, user.Role, sessionID)
@@ -268,7 +268,12 @@ func (s *authService) RefreshAccessToken(ctx context.Context, token string) (str
 	if err != nil {
 		return "", "", err
 	}
-	refreshToken, err := j.GenerateRefreshToken(claims.ID, claims.Role, claims.SessionID)
+	sid, err := uuid.Parse(claims.SessionID)
+	if err != nil {
+		return "", "", fmt.Errorf("invalid refresh token session ID: %w", err)
+	}
+
+	refreshToken, err := j.GenerateRefreshToken(claims.ID, claims.Role, sid)
 	if err != nil {
 		return "", "", err
 	}
@@ -314,7 +319,7 @@ func (s *authService) HasRole(ctx context.Context, id uint, roles ...accountmode
 }
 
 // createSession persists only the refresh token hash.
-func (s *authService) createSession(ctx context.Context, id uint, sessionID, refreshToken string) error {
+func (s *authService) createSession(ctx context.Context, id uint, sessionID uuid.UUID, refreshToken string) error {
 	claims, err := parseRefreshToken(jwt.New(s.cfg.JWT), refreshToken)
 	if err != nil {
 		return err
@@ -339,7 +344,7 @@ func parseRefreshToken(j jwt.Jwt, token string) (*jwt.Claims, error) {
 	return claims, nil
 }
 
-func generateSessionTokens(j jwt.Jwt, id uint, role accountmodel.UserRole, sessionID string) (string, string, error) {
+func generateSessionTokens(j jwt.Jwt, id uint, role accountmodel.UserRole, sessionID uuid.UUID) (string, string, error) {
 	return j.GenerateAllTokens(id, role, sessionID)
 }
 

@@ -8,24 +8,27 @@ import (
 	accountmodel "blog-server/internal/account/model"
 	"blog-server/internal/platform/config"
 	"blog-server/internal/shared/jwt"
+
+	"github.com/google/uuid"
 )
 
 func TestRefreshRejectsInvalidTokensBeforeStorage(t *testing.T) {
 	cfg := &config.Config{JWT: config.JWTConfig{Secret: "secret", Issuer: "test", AccessExpiration: time.Minute, RefreshExpiration: time.Hour}}
 	j := jwt.New(cfg.JWT)
-	access, err := j.GenerateAccessToken(1, accountmodel.UserRoleReader, "session")
+	sid := uuid.New()
+	access, err := j.GenerateAccessToken(1, accountmodel.UserRoleReader, sid)
 	if err != nil {
 		t.Fatal(err)
 	}
 	expiredCfg := cfg.JWT
 	expiredCfg.RefreshExpiration = -time.Hour
-	expired, err := jwt.New(expiredCfg).GenerateRefreshToken(1, accountmodel.UserRoleReader, "session")
+	expired, err := jwt.New(expiredCfg).GenerateRefreshToken(1, accountmodel.UserRoleReader, sid)
 	if err != nil {
 		t.Fatal(err)
 	}
 	otherCfg := cfg.JWT
 	otherCfg.Secret = "other"
-	forged, err := jwt.New(otherCfg).GenerateRefreshToken(1, accountmodel.UserRoleReader, "session")
+	forged, err := jwt.New(otherCfg).GenerateRefreshToken(1, accountmodel.UserRoleReader, sid)
 	if err != nil {
 		t.Fatal(err)
 	}

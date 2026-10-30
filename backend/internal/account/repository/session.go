@@ -2,101 +2,213 @@ package repository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"time"
 
+	"blog-server/ent"
+	"blog-server/ent/accountrefreshtoken"
+	"blog-server/ent/accountsession"
 	"blog-server/internal/platform/database"
+
+	"entgo.io/ent/dialect/sql"
+	"github.com/google/uuid"
 )
 
-type Sessions struct{ ds *database.DataStore }
+type SessionRepo struct {
+	ds *database.DataStore
+}
 
-func NewSessions(ds *database.DataStore) *Sessions { return &Sessions{ds: ds} }
-func (s *Sessions) Create(ctx context.Context, id string, userID uint, hash string, expires time.Time) error {
-	tx, err := s.ds.DB().BeginTx(ctx, nil)
-	if err != nil {
-		return err
+func NewSessionRepo(ds *database.DataStore) *SessionRepo {
+	return &SessionRepo{
+		ds: ds,
 	}
-	defer func() { _ = tx.Rollback() }()
-	if _, err = tx.ExecContext(ctx, "INSERT INTO account_sessions(id,user_id,expires_at) VALUES($1,$2,$3)", id, userID, expires); err != nil {
-		return err
-	}
-	if _, err = tx.ExecContext(ctx, "INSERT INTO account_refresh_tokens(hash,session_id,expires_at) VALUES($1,$2,$3)", hash, id, expires); err != nil {
-		return err
-	}
-	return tx.Commit()
+}
+
+func (r *SessionRepo) Create(ctx context.Context, id uuid.UUID, userID uint, hash string, expires time.Time) error {
+	return r.ds.WithTx(ctx, func(ctx context.Context) error {
+		client := r.ds.Client(ctx)
+
+		if _, err := client.AccountSession.
+			Create().
+			SetID(id).
+			SetUserID(userID).
+			SetExpiresAt(expires).
+			Save(ctx); err != nil {
+			return err
+		}
+
+		if _, err := client.AccountRefreshToken.
+			Create().
+			SetID(hash).
+			SetSessionID(id).
+			SetExpiresAt(expires).
+			Save(ctx); err != nil {
+			return err
+		}
+
+		return nil
+	})
 }
 
 // Rotate locks the session so concurrent use cannot consume the same token twice.
-func (s *Sessions) Rotate(ctx context.Context, oldHash, newHash string, expires time.Time) (uint, string, bool, error) {
-	tx, err := s.ds.DB().BeginTx(ctx, nil)
-	if err != nil {
-		return 0, "", false, err
-	}
-	defer func() { _ = tx.Rollback() }()
-	var userID uint
-	var id string
-	var revoked, used sql.NullTime
-	var deadline time.Time
-	err = tx.QueryRowContext(ctx, `SELECT s.user_id,s.id,s.expires_at,s.revoked_at,t.used_at FROM account_sessions s JOIN account_refresh_tokens t ON t.session_id=s.id WHERE t.hash=$1 AND t.expires_at > now() FOR UPDATE OF s`, oldHash).Scan(&userID, &id, &deadline, &revoked, &used)
-	if errors.Is(err, sql.ErrNoRows) {
-		return 0, "", false, nil
-	}
-	if err != nil {
-		return 0, "", false, err
-	}
-	if revoked.Valid || !deadline.After(time.Now()) {
-		return 0, "", false, nil
-	}
-	if used.Valid {
-		if _, err = tx.ExecContext(ctx, "UPDATE account_sessions SET revoked_at=now() WHERE id=$1", id); err != nil {
-			return 0, "", false, err
+func (r *SessionRepo) Rotate(ctx context.Context, oldHash, newHash string, expires time.Time) (uint, uuid.UUID, bool, error) {
+	var (
+		userID    uint
+		sessionID uuid.UUID
+		rotated   bool
+	)
+
+	err := r.ds.WithTx(ctx, func(ctx context.Context) error {
+		client := r.ds.Client(ctx)
+		now := time.Now()
+
+		token, err := client.AccountRefreshToken.
+			Query().
+			Where(
+				accountrefreshtoken.IDEQ(oldHash),
+				accountrefreshtoken.ExpiresAtGT(now),
+			).
+			ForUpdate().
+			Only(ctx)
+		if ent.IsNotFound(err) {
+			return nil
 		}
-		return 0, "", false, tx.Commit()
-	}
-	// Read token usage again after obtaining the session lock: a concurrent query may have waited.
-	if err = tx.QueryRowContext(ctx, "SELECT used_at FROM account_refresh_tokens WHERE hash=$1", oldHash).Scan(&used); err != nil {
-		return 0, "", false, err
-	}
-	if used.Valid {
-		if _, err = tx.ExecContext(ctx, "UPDATE account_sessions SET revoked_at=now() WHERE id=$1", id); err != nil {
-			return 0, "", false, err
+		if err != nil {
+			return err
 		}
-		return 0, "", false, tx.Commit()
-	}
-	if _, err = tx.ExecContext(ctx, "UPDATE account_refresh_tokens SET used_at=now() WHERE hash=$1", oldHash); err != nil {
-		return 0, "", false, err
-	}
-	if _, err = tx.ExecContext(ctx, "INSERT INTO account_refresh_tokens(hash,session_id,expires_at) VALUES($1,$2,$3)", newHash, id, expires); err != nil {
-		return 0, "", false, err
-	}
-	if _, err = tx.ExecContext(ctx, "UPDATE account_sessions SET expires_at=$2 WHERE id=$1", id, expires); err != nil {
-		return 0, "", false, err
-	}
-	if err = tx.Commit(); err != nil {
-		return 0, "", false, err
-	}
-	return userID, id, true, nil
+
+		session, err := client.AccountSession.
+			Query().
+			Where(accountsession.IDEQ(token.SessionID)).
+			ForUpdate().
+			Only(ctx)
+		if ent.IsNotFound(err) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+
+		if session.RevokedAt != nil || !session.ExpiresAt.After(now) {
+			return nil
+		}
+
+		if token.UsedAt != nil {
+			_, err = client.AccountSession.
+				UpdateOneID(session.ID).
+				SetRevokedAt(now).
+				Save(ctx)
+			return err
+		}
+
+		if _, err = client.AccountRefreshToken.
+			UpdateOneID(token.ID).
+			SetUsedAt(now).
+			Save(ctx); err != nil {
+			return err
+		}
+
+		if _, err = client.AccountRefreshToken.
+			Create().
+			SetID(newHash).
+			SetSessionID(session.ID).
+			SetExpiresAt(expires).
+			Save(ctx); err != nil {
+			return err
+		}
+
+		if _, err = client.AccountSession.
+			UpdateOneID(session.ID).
+			SetExpiresAt(expires).
+			Save(ctx); err != nil {
+			return err
+		}
+
+		userID = session.UserID
+		sessionID = session.ID
+		rotated = true
+		return nil
+	})
+
+	return userID, sessionID, rotated, err
 }
 
 // CleanupExpired bounds each deletion so cleanup does not create a large transaction.
-func (s *Sessions) CleanupExpired(ctx context.Context) error {
-	if _, err := s.ds.DB().ExecContext(ctx, `DELETE FROM account_refresh_tokens WHERE hash IN (
-		SELECT hash FROM account_refresh_tokens WHERE expires_at <= now()
-		ORDER BY expires_at,hash LIMIT 500 FOR UPDATE SKIP LOCKED
-	)`); err != nil {
+func (r *SessionRepo) CleanupExpired(ctx context.Context) error {
+	return r.ds.WithTx(ctx, func(ctx context.Context) error {
+		client := r.ds.Client(ctx)
+		now := time.Now()
+
+		tokenIDs, err := client.AccountRefreshToken.
+			Query().
+			Where(
+				accountrefreshtoken.ExpiresAtLTE(now),
+			).
+			Order(
+				accountrefreshtoken.ByExpiresAt(),
+				accountrefreshtoken.ByID(),
+			).
+			Limit(500).
+			ForUpdate(
+				sql.WithLockAction(sql.SkipLocked),
+			).
+			IDs(ctx)
+		if err != nil {
+			return err
+		}
+
+		if len(tokenIDs) > 0 {
+			if _, err = client.AccountRefreshToken.
+				Delete().
+				Where(accountrefreshtoken.IDIn(tokenIDs...)).
+				Exec(ctx); err != nil {
+				return err
+			}
+		}
+
+		sessionIDs, err := client.AccountSession.
+			Query().
+			Where(
+				accountsession.Or(
+					accountsession.ExpiresAtLTE(now),
+					accountsession.RevokedAtNotNil(),
+				),
+				accountsession.Not(accountsession.HasRefreshTokens()),
+			).
+			Order(
+				accountsession.ByExpiresAt(),
+				accountsession.ByID(),
+			).
+			Limit(500).
+			ForUpdate(
+				sql.WithLockAction(sql.SkipLocked),
+			).
+			IDs(ctx)
+		if err != nil {
+			return err
+		}
+
+		if len(sessionIDs) == 0 {
+			return nil
+		}
+
+		_, err = client.AccountSession.
+			Delete().
+			Where(accountsession.IDIn(sessionIDs...)).
+			Exec(ctx)
+
 		return err
-	}
-	_, err := s.ds.DB().ExecContext(ctx, `DELETE FROM account_sessions WHERE id IN (
-		SELECT s.id FROM account_sessions s
-		WHERE (s.expires_at <= now() OR s.revoked_at IS NOT NULL)
-		AND NOT EXISTS (SELECT 1 FROM account_refresh_tokens t WHERE t.session_id=s.id)
-		ORDER BY s.expires_at,s.id LIMIT 500 FOR UPDATE OF s SKIP LOCKED
-	)`)
-	return err
+	})
 }
 
-func (s *Sessions) Revoke(ctx context.Context, hash string) error {
-	_, err := s.ds.DB().ExecContext(ctx, `UPDATE account_sessions SET revoked_at=now() WHERE id=(SELECT session_id FROM account_refresh_tokens WHERE hash=$1)`, hash)
+func (r *SessionRepo) Revoke(ctx context.Context, hash string) error {
+	_, err := r.ds.Client(ctx).
+		AccountSession.
+		Update().
+		Where(accountsession.HasRefreshTokensWith(
+			accountrefreshtoken.IDEQ(hash),
+		)).
+		SetRevokedAt(time.Now()).
+		Save(ctx)
+
 	return err
 }

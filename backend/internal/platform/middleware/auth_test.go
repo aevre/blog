@@ -22,7 +22,7 @@ func TestAuthMiddlewareRejectsRefreshToken(t *testing.T) {
 		AccessExpiration:  time.Minute,
 		RefreshExpiration: time.Hour,
 	}}
-	_, refresh, err := jwt.New(cfg.JWT).GenerateAllTokens(1, accountmodel.UserRoleReader, uuid.NewString())
+	_, refresh, err := jwt.New(cfg.JWT).GenerateAllTokens(1, accountmodel.UserRoleReader, uuid.New())
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -8,7 +8,7 @@ import (
 	"blog-server/internal/account/repository"
 	contentservice "blog-server/internal/content/service"
 	linkservice "blog-server/internal/link/service"
-	"blog-server/internal/platform/logging"
+	logger "blog-server/internal/platform/logging"
 	"blog-server/internal/scheduler/jobs"
 )
 
@@ -16,10 +16,10 @@ type Scheduler struct {
 	postService contentservice.PostService
 	linkService linkservice.LinkService
 	log         logger.Logger
-	sessions    *repository.Sessions
+	sessions    *repository.SessionRepo
 }
 
-func NewScheduler(log logger.Logger, postService contentservice.PostService, linkService linkservice.LinkService, sessions *repository.Sessions) *Scheduler {
+func NewScheduler(log logger.Logger, postService contentservice.PostService, linkService linkservice.LinkService, sessions *repository.SessionRepo) *Scheduler {
 	return &Scheduler{postService, linkService, log, sessions}
 }
 

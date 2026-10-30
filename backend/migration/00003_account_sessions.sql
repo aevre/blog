@@ -10,7 +10,9 @@ CREATE TABLE account_refresh_tokens (
     session_id uuid NOT NULL REFERENCES account_sessions(id) ON DELETE CASCADE,
     used_at timestamptz
 );
-CREATE INDEX account_refresh_tokens_session_id ON account_refresh_tokens(session_id);
+CREATE INDEX account_refresh_tokens_session_id ON account_refresh_tokens (
+    session_id
+);
 
 -- +goose Down
 DROP TABLE account_refresh_tokens;
