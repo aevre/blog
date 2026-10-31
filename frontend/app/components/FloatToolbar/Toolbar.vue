@@ -4,7 +4,7 @@ import type { ToolbarConfig, ToolbarItem, ToolbarPanel } from "./types";
 
 interface Props {
   items: ToolbarItem[];
-  config: Required<ToolbarConfig>;
+  config: ToolbarConfig;
   label?: string;
 }
 
@@ -16,12 +16,18 @@ const { items, config, label = "" } = defineProps<Props>();
 const emit = defineEmits<Emits>();
 const activePanel = shallowRef<ToolbarPanel | null>(null);
 const overflowOpen = shallowRef(false);
-const visibleIds = shallowRef<string[]>([]);
-const overflowIds = shallowRef<string[]>([]);
-const shell = shallowRef<HTMLElement | null>(null);
-const measureRow = shallowRef<HTMLElement | null>(null);
+const overflowPanelKey = Symbol("toolbar-overflow");
+const visibleIds = shallowRef<ToolbarItem["id"][]>([]);
+const overflowIds = shallowRef<ToolbarItem["id"][]>([]);
+const shell = useTemplateRef("shell");
+const panelClip = useTemplateRef("panelClip");
+const panelHeight = shallowRef(0);
+const windowWidth = shallowRef<number | null>(null);
 let resizeObserver: ResizeObserver | undefined;
 let resizeFrame = 0;
+
+const iconSize = computed(() => Math.max(12, config.iconSize ?? 19));
+const buttonSize = computed(() => Math.max(40, iconSize.value + 20));
 
 const maxWidth = computed(() => Math.max(240, config.maxWidth ?? 480));
 const gap = computed(() => Math.max(0, config.gap ?? 6));
@@ -29,19 +35,22 @@ const isExpanded = computed(() => Boolean(activePanel.value || overflowOpen.valu
 
 const barWidth = computed(() => {
   const count = visibleItems.value.length + (overflowItems.value.length ? 1 : 0);
-  return 16 + count * 40 + Math.max(0, count - 1) * gap.value;
+  return 16 + count * buttonSize.value + Math.max(0, count - 1) * gap.value;
 });
 
+const availableWidth = computed(() =>
+  Math.min(maxWidth.value, Math.max(0, (windowWidth.value ?? maxWidth.value) - 32)),
+);
 const expandedWidth = computed(() => {
   const requested = activePanel.value?.width ?? 0;
-  const maxExpandedWidth = Math.min(maxWidth.value, Math.max(0, viewportWidth() - 32));
-  return Math.min(Math.max(240, barWidth.value, requested), maxExpandedWidth);
+  return Math.min(Math.max(240, barWidth.value, requested), availableWidth.value);
 });
 
 const shellStyle = computed<CSSProperties>(() => ({
   "--toolbar-gap": `${gap.value}px`,
   "--toolbar-expanded-width": `${expandedWidth.value}px`,
   "--toolbar-max-width": `${maxWidth.value}px`,
+  "--toolbar-button-size": `${buttonSize.value}px`,
   width: isExpanded.value ? "var(--toolbar-expanded-width)" : `${barWidth.value}px`,
 }));
 
@@ -54,11 +63,6 @@ const activePanelProps = computed(() =>
 const visibleItems = computed(() => items.filter((item) => visibleIds.value.includes(item.id)));
 const overflowItems = computed(() => items.filter((item) => overflowIds.value.includes(item.id)));
 
-function viewportWidth() {
-  if (typeof document === "undefined") return maxWidth.value;
-  return document.documentElement.clientWidth;
-}
-
 function scheduleLayout() {
   if (typeof window === "undefined") return;
   cancelAnimationFrame(resizeFrame);
@@ -67,11 +71,13 @@ function scheduleLayout() {
 
 async function calculateLayout() {
   await nextTick();
-  if (!measureRow.value) return;
 
-  const availableWidth = Math.min(maxWidth.value, Math.max(0, viewportWidth() - 32));
+  windowWidth.value = document.documentElement.clientWidth;
   const itemGap = gap.value;
-  const capacity = Math.max(1, Math.floor((availableWidth - 16 + itemGap) / (40 + itemGap)));
+  const capacity = Math.max(
+    1,
+    Math.floor((availableWidth.value - 16 + itemGap) / (buttonSize.value + itemGap)),
+  );
   const candidates = items
     .map((item, index) => ({ item, index }))
     .sort((a, b) => (b.item.priority ?? 0) - (a.item.priority ?? 0) || a.index - b.index);
@@ -121,14 +127,31 @@ function onDocumentPointerDown(event: PointerEvent) {
   if (event.target instanceof Node && !shell.value.contains(event.target)) closePanel();
 }
 
+// 测量内部自然高度，让外层在明确的像素高度之间过渡；异步内容变化也会更新。
+watch(
+  panelClip,
+  (panel, _previous, onCleanup) => {
+    if (!panel) return;
+    const measure = () => {
+      panelHeight.value = panel.offsetHeight;
+    };
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(panel);
+    onCleanup(() => observer.disconnect());
+  },
+  { flush: "post" },
+);
+
 watch(() => items, scheduleLayout, { immediate: true });
-watch(() => [config.maxWidth, config.gap], scheduleLayout);
+watch(() => [config.maxWidth, config.gap, config.iconSize], scheduleLayout);
 
 onMounted(() => {
   scheduleLayout();
   if (typeof ResizeObserver !== "undefined") {
     resizeObserver = new ResizeObserver(scheduleLayout);
-    if (shell.value) resizeObserver.observe(shell.value);
+    resizeObserver.observe(document.documentElement);
   }
   window.addEventListener("resize", scheduleLayout, { passive: true });
   document.addEventListener("keydown", onKeydown);
@@ -148,6 +171,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div
+    v-if="visibleItems.length > 0 || overflowItems.length > 0"
     ref="shell"
     class="floating-toolbar"
     :class="{
@@ -161,9 +185,10 @@ onBeforeUnmount(() => {
     <div
       v-if="visibleItems.length > 0"
       class="floating-toolbar-panel-grid"
+      :style="{ height: `${isExpanded ? panelHeight : 0}px` }"
       :aria-hidden="!isExpanded"
     >
-      <section class="floating-toolbar-panel-clip">
+      <section ref="panelClip" class="floating-toolbar-panel-clip">
         <div class="floating-toolbar-panel-content">
           <header class="floating-toolbar-panel-header">
             <h2 class="floating-toolbar-panel-title">
@@ -180,30 +205,39 @@ onBeforeUnmount(() => {
           </header>
 
           <div class="floating-toolbar-panel-body">
-            <div v-if="overflowOpen" class="floating-toolbar-overflow-list">
-              <button
-                v-for="item in overflowItems"
-                :key="item.id"
-                class="floating-toolbar-overflow-item"
-                type="button"
-                @click="selectOverflowItem(item)"
-              >
-                <Icon
-                  v-if="item.icon"
-                  :name="item.icon"
-                  class="floating-toolbar-icon"
-                  aria-hidden="true"
-                />
-                <span class="floating-toolbar-overflow-label">{{ item.label }}</span>
-              </button>
-            </div>
+            <Transition
+              name="toolbar-panel"
+              @before-enter="(element) => element.removeAttribute('inert')"
+              @before-leave="(element) => element.setAttribute('inert', '')"
+            >
+              <div v-if="isExpanded" :key="overflowOpen ? overflowPanelKey : activePanel?.id">
+                <div v-if="overflowOpen" class="floating-toolbar-overflow-list">
+                  <button
+                    v-for="item in overflowItems"
+                    :key="item.id"
+                    class="floating-toolbar-overflow-item"
+                    type="button"
+                    @click="selectOverflowItem(item)"
+                  >
+                    <Icon
+                      v-if="item.icon"
+                      :size="iconSize"
+                      :name="item.icon"
+                      class="floating-toolbar-icon"
+                      aria-hidden="true"
+                    />
+                    <span class="floating-toolbar-overflow-label">{{ item.label }}</span>
+                  </button>
+                </div>
 
-            <component
-              :is="activeComponent"
-              v-else-if="activePanel"
-              v-bind="activePanelProps"
-              class="floating-toolbar-external-panel"
-            />
+                <component
+                  :is="activeComponent"
+                  v-else-if="activePanel"
+                  v-bind="activePanelProps"
+                  class="floating-toolbar-external-panel"
+                />
+              </div>
+            </Transition>
           </div>
         </div>
       </section>
@@ -221,7 +255,13 @@ onBeforeUnmount(() => {
         :aria-expanded="item.type === 'panel' ? isActive(item) : undefined"
         @click="clickItem(item)"
       >
-        <Icon v-if="item.icon" :name="item.icon" class="floating-toolbar-icon" aria-hidden="true" />
+        <Icon
+          v-if="item.icon"
+          :size="iconSize"
+          :name="item.icon"
+          class="floating-toolbar-icon"
+          aria-hidden="true"
+        />
         <span v-else class="floating-toolbar-fallback-icon" aria-hidden="true">
           {{ item.label.slice(0, 1) }}
         </span>
@@ -240,13 +280,6 @@ onBeforeUnmount(() => {
         <span aria-hidden="true" class="floating-toolbar-more-glyph">•••</span>
       </button>
     </nav>
-
-    <div ref="measureRow" class="floating-toolbar-measure" aria-hidden="true">
-      <span v-for="item in items" :key="item.id" class="floating-toolbar-measure-button">
-        <Icon v-if="item.icon" :name="item.icon" class="floating-toolbar-icon" />
-        <span v-else>{{ item.label.slice(0, 1) }}</span>
-      </span>
-    </div>
   </div>
 </template>
 
@@ -283,14 +316,10 @@ onBeforeUnmount(() => {
 
 .floating-toolbar-panel-grid {
   min-height: 0;
-  max-height: 0;
+  height: 0;
   overflow: hidden;
   background: transparent;
-  transition: max-height 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.is-expanded .floating-toolbar-panel-grid {
-  max-height: min(60vh, 420px);
+  transition: height 230ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .floating-toolbar-panel-clip {
@@ -336,6 +365,7 @@ onBeforeUnmount(() => {
 }
 
 .floating-toolbar-panel-body {
+  position: relative;
   min-height: 0;
   overflow: auto;
   scrollbar-width: none;
@@ -343,6 +373,27 @@ onBeforeUnmount(() => {
 
 .floating-toolbar-panel-body::-webkit-scrollbar {
   display: none;
+}
+
+.toolbar-panel-enter-active,
+.toolbar-panel-leave-active {
+  transition: opacity 230ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* 旧内容退出文档流，测量新内容高度时不会把两份内容相加。 */
+.toolbar-panel-leave-active {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.toolbar-panel-enter-from,
+.toolbar-panel-leave-to {
+  opacity: 0;
 }
 
 .floating-toolbar-close,
@@ -369,8 +420,8 @@ onBeforeUnmount(() => {
 }
 
 .floating-toolbar-button {
-  width: 40px;
-  height: 40px;
+  width: var(--toolbar-button-size);
+  height: var(--toolbar-button-size);
   border-radius: 11px;
   transition:
     background-color 140ms ease,
@@ -417,8 +468,6 @@ onBeforeUnmount(() => {
 }
 
 .floating-toolbar-icon {
-  width: 19px;
-  height: 19px;
   flex: 0 0 auto;
 }
 
@@ -486,7 +535,9 @@ onBeforeUnmount(() => {
   .floating-toolbar,
   .floating-toolbar-panel-grid,
   .floating-toolbar-panel-content,
-  .floating-toolbar-button {
+  .floating-toolbar-button,
+  .toolbar-panel-enter-active,
+  .toolbar-panel-leave-active {
     transition: none;
   }
 }

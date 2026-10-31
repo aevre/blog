@@ -10,7 +10,7 @@ useScrollHandler(100, (over) => (isSticky.value = over));
 
 const toolbar = useToolbar();
 
-toolbar.setItems(["back-top", "rss", "contact", "theme"]);
+toolbar.setItems(["back-top", "rss", "contact", "theme", "to-admin"]);
 </script>
 
 <template>

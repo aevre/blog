@@ -1,29 +1,29 @@
 import { computed, shallowReactive, shallowRef } from "vue";
-import type { ComputedRef } from "vue";
 import { globalItems } from "~/components/FloatToolbar/globalItems";
-import type { ToolbarItem, ToolbarConfig } from "~/components/FloatToolbar/types";
+import type {
+  ToolbarItem,
+  ToolbarConfig,
+  ToolbarManager,
+  ToolbarSelection,
+} from "~/components/FloatToolbar/types";
 
 export type GlobalToolbarItemId = (typeof globalItems)[number]["id"];
 
-export interface ToolbarManager {
-  registry: ComputedRef<ToolbarItem[]>;
-  items: ComputedRef<ToolbarItem[]>;
-  config: ComputedRef<Required<ToolbarConfig>>;
-
-  register(input: ToolbarItem | readonly ToolbarItem[]): () => void;
-  setItems(ids: readonly string[]): void;
-  setConfig(config: ToolbarConfig): void;
-}
+type ToolbarOwner = symbol;
 
 export default defineNuxtPlugin(() => {
   const defaultConfig: Required<ToolbarConfig> = {
     maxWidth: 480,
+    iconSize: 19,
     gap: 8,
   };
 
-  const registrations = shallowReactive(new Map<string, { owner: symbol; item: ToolbarItem }>());
+  const registrations = shallowReactive(
+    new Map<ToolbarItem["id"], { owner: symbol; item: ToolbarItem }>(),
+  );
 
-  const selectedIds = shallowRef<readonly string[]>([]);
+  const selectedIds = shallowRef<readonly ToolbarItem["id"][]>([]);
+  let selectedOwner: ToolbarOwner | undefined;
   const configState = shallowRef({ ...defaultConfig });
 
   const globalOwner = Symbol("global-toolbar");
@@ -51,11 +51,11 @@ export default defineNuxtPlugin(() => {
   function register(input: ToolbarItem | readonly ToolbarItem[]): () => void {
     const batch: readonly ToolbarItem[] = Array.isArray(input) ? input : [input as ToolbarItem];
 
-    const ids = new Set<string>();
+    const ids = new Set<ToolbarItem["id"]>();
 
     for (const item of batch) {
       if (ids.has(item.id) || registrations.has(item.id)) {
-        throw new Error(`[toolbar] Duplicate ID: "${item.id}"`);
+        throw new Error(`[toolbar] Duplicate ID: "${String(item.id)}"`);
       }
 
       ids.add(item.id);
@@ -81,13 +81,31 @@ export default defineNuxtPlugin(() => {
     };
   }
 
+  function getSelection(): ToolbarSelection {
+    return {
+      ids: selectedIds.value,
+      owner: selectedOwner,
+    };
+  }
+
   // 页面菜单在运行时注册，因此这里应使用 string[]。
-  function setItems(ids: readonly (GlobalToolbarItemId | string)[]) {
+  function setItems(
+    ids: readonly (GlobalToolbarItemId | ToolbarItem["id"])[],
+    owner?: ToolbarOwner,
+  ) {
     if (new Set(ids).size !== ids.length) {
       throw new Error("[toolbar] Duplicate IDs in setItems()");
     }
 
     selectedIds.value = [...ids];
+    selectedOwner = owner;
+  }
+
+  function restoreItems(selection: ToolbarSelection, owner: symbol) {
+    if (selectedOwner !== owner) return;
+
+    selectedIds.value = [...selection.ids];
+    selectedOwner = selection.owner;
   }
 
   function setConfig(config: ToolbarConfig) {
@@ -101,8 +119,10 @@ export default defineNuxtPlugin(() => {
     registry,
     items,
     config: computed(() => configState.value),
+    getSelection,
     register,
     setItems,
+    restoreItems,
     setConfig,
   };
 

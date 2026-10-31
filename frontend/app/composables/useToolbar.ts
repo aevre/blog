@@ -2,9 +2,9 @@ import { onScopeDispose } from "vue";
 import type { ToolbarConfig, ToolbarItem } from "~/components/FloatToolbar/types";
 import type { GlobalToolbarItemId } from "~/plugins/toolbar";
 
-type ItemId<T> = T extends { id: infer I extends string } ? I : never;
+type ItemId<T> = T extends { id: infer I extends ToolbarItem["id"] } ? I : never;
 
-type ToolbarApi<Ids extends string> = {
+type ToolbarApi<Ids extends ToolbarItem["id"]> = {
   registry: ReturnType<typeof useNuxtApp>["$toolbar"]["registry"];
   items: ReturnType<typeof useNuxtApp>["$toolbar"]["items"];
   config: ReturnType<typeof useNuxtApp>["$toolbar"]["config"];
@@ -22,7 +22,9 @@ export function useToolbar<const T extends readonly ToolbarItem[] = readonly []>
   const { $toolbar } = useNuxtApp();
   const unregisters = new Set<() => void>();
 
-  const previousSelectedIds = [...$toolbar.items.value.map((i) => i.id)];
+  const owner = Symbol("toolbar-scope");
+  const previousSelection = $toolbar.getSelection();
+  let hasSetItems = false;
 
   function register<const R extends readonly ToolbarItem[]>(
     input: R | R[number],
@@ -43,14 +45,15 @@ export function useToolbar<const T extends readonly ToolbarItem[] = readonly []>
   }
 
   function createToolbar<
-    Ids extends string = GlobalToolbarItemId | ItemId<T[number]>,
+    Ids extends ToolbarItem["id"] = GlobalToolbarItemId | ItemId<T[number]>,
   >(): ToolbarApi<Ids> {
     return {
       registry: $toolbar.registry,
       items: $toolbar.items,
       config: $toolbar.config,
       setItems(ids) {
-        $toolbar.setItems(ids);
+        hasSetItems = true;
+        $toolbar.setItems(ids, owner);
       },
       setConfig(config) {
         $toolbar.setConfig(config);
@@ -78,7 +81,9 @@ export function useToolbar<const T extends readonly ToolbarItem[] = readonly []>
       unregister();
     }
 
-    $toolbar.setItems(previousSelectedIds);
+    if (hasSetItems) {
+      $toolbar.restoreItems(previousSelection, owner);
+    }
   });
 
   return createToolbar();

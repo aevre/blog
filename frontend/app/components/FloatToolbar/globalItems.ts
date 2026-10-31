@@ -45,4 +45,13 @@ export const globalItems = [
     },
     width: 300,
   },
+  {
+    id: "to-admin",
+    type: "action",
+    icon: "iconamoon:settings-fill",
+    label: "tooltip.userSetting",
+    handler: async () => {
+      navigateTo("/admin");
+    },
+  },
 ] as const satisfies readonly ToolbarItem[];

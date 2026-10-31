@@ -1,7 +1,7 @@
 import type { Component } from "vue";
 
 export interface ToolbarItemBase {
-  id: string;
+  id: string | symbol;
   label: string;
   icon: string;
   priority?: number;
@@ -26,9 +26,15 @@ export interface ToolbarPanel extends ToolbarItemBase {
 
 export type ToolbarItem = ToolbarAction | ToolbarPanel;
 
+export interface ToolbarSelection {
+  ids: readonly ToolbarItem["id"][];
+  owner?: symbol;
+}
+
 export interface ToolbarConfig {
   /** 工具栏最大宽度 */
   maxWidth?: number;
+  iconSize?: number;
 
   /** 菜单项之间的间距 */
   gap?: number;
@@ -44,11 +50,15 @@ export interface ToolbarManager {
   /** 当前布局配置 */
   config: ComputedRef<ToolbarConfig>;
 
+  getSelection(): ToolbarSelection;
+
   /** 注册菜单项，返回注销函数 */
-  register(items: ToolbarItem | ToolbarItem[]): () => void;
+  register(items: ToolbarItem | readonly ToolbarItem[]): () => void;
 
   /** 设置当前页面显示的菜单 ID 列表 */
-  setItems(ids: string[]): void;
+  setItems(ids: readonly ToolbarItem["id"][], owner?: symbol): void;
+
+  restoreItems(selection: ToolbarSelection, owner: symbol): void;
 
   /** 覆盖当前布局配置 */
   setConfig(config: ToolbarConfig): void;
