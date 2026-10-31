@@ -131,7 +131,16 @@ export function applyBaseThemeMode(mode: ThemeMode) {
   root.setAttribute("data-theme", mode);
 }
 
-export function withViewTransition(applyFn: () => void, direction: boolean = true) {
+export interface TransitionOption {
+  direction?: boolean;
+  x?: number;
+  y?: number;
+}
+
+export function withViewTransition(
+  applyFn: () => void,
+  option: TransitionOption = { direction: true, x: 0, y: 0 },
+) {
   if (typeof document !== "undefined" && document.startViewTransition) {
     const transition = document.startViewTransition(async () => {
       applyFn();
@@ -142,23 +151,35 @@ export function withViewTransition(applyFn: () => void, direction: boolean = tru
       .then(() => {
         const innerHeight = window.innerHeight;
         const innerWidth = window.innerWidth;
-        const radius = Math.sqrt(innerHeight ** 2 + innerWidth ** 2);
 
-        const clipPath = [`circle(0 at 100% 100%)`, `circle(${radius}px at 100% 100%)`];
+        const x = option.x ?? 0;
+        const y = option.y ?? 0;
 
-        document.documentElement.animate(
+        const radius = Math.max(
+          Math.hypot(x, y),
+          Math.hypot(innerWidth - x, y),
+          Math.hypot(x, innerHeight - y),
+          Math.hypot(innerWidth - x, innerHeight - y),
+        );
+
+        const clipPath = [`circle(0 at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`];
+
+        const animation = document.documentElement.animate(
           {
-            clipPath: direction ? clipPath : [...clipPath].reverse(),
+            clipPath: option.direction ? clipPath : [...clipPath].reverse(),
           },
           {
             duration: 400,
             easing: "ease-in",
             fill: "both",
-            pseudoElement: direction
+            pseudoElement: option.direction
               ? "::view-transition-new(root)"
               : "::view-transition-old(root)",
           },
         );
+
+        const cleanup = () => animation.cancel();
+        void transition.finished.then(cleanup, cleanup);
       })
       .catch(console.warn);
   } else {

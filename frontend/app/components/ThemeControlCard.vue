@@ -17,8 +17,8 @@ const isDark = computed(() => {
   return mode.value === "dark";
 });
 
-const setThemeMode = (mode: ThemeMode) => {
-  useThemeStore().setMode(mode);
+const setThemeMode = (event: PointerEvent, mode: ThemeMode) => {
+  useThemeStore().setMode(mode, event.x, event.y);
 };
 
 const setPrimaryColor = (primaryColor: string) => {
@@ -54,11 +54,17 @@ onMounted(() => {
     <div v-if="show" ref="themeControlCard" class="theme-control-card">
       <p class="title">{{ $ts("themeControl.themeMode") }}</p>
       <div :class="{ 'buttons-track': true, dark: isDark }">
-        <button :class="{ 'buttons-item': true, active: !isDark }" @click="setThemeMode('light')">
+        <button
+          :class="{ 'buttons-item': true, active: !isDark }"
+          @click="(event) => setThemeMode(event, 'light')"
+        >
           <Icon name="streamline-plump-color:sun" :size="20" />
           {{ $ts("themeControl.light") }}
         </button>
-        <button :class="{ 'buttons-item': true, active: isDark }" @click="setThemeMode('dark')">
+        <button
+          :class="{ 'buttons-item': true, active: isDark }"
+          @click="(event) => setThemeMode(event, 'dark')"
+        >
           <Icon name="streamline-plump-color:moon-stars" :size="20" />
           {{ $ts("themeControl.dark") }}
         </button>
@@ -82,7 +88,7 @@ onMounted(() => {
         />
       </div>
       <p class="title">{{ $ts("themeControl.language") }}</p>
-      <InputSelect v-model:value="localeRef" :options />
+      <InputSelect v-model:value="localeRef" :options style="width: 100%" />
     </div>
   </Transition>
 </template>
