@@ -10,7 +10,13 @@ definePageMeta({
 const route = useRoute();
 const id = computed<number>(() => Number(route.params.id) || -1);
 
-const { data } = await useApiFetch<ApiResponse<PostAdminDetail>>(`/admin/posts/${id.value}`);
+const { data } = await useApiFetch<ApiResponse<PostAdminDetail>>(
+  () => (id.value > 0 ? `/admin/posts/${id.value}` : ""),
+  {
+    immediate: id.value > 0,
+    watch: [id],
+  },
+);
 
 // const { get } = useClientApi();
 
