@@ -27,6 +27,7 @@ runs:
         host: ${{ inputs.ssh-host }}
         username: ${{ inputs.ssh-username }}
         key: ${{ inputs.ssh-private-key }}
+        debug: false
         script: |
           set -euo pipefail
 
