@@ -265,16 +265,14 @@ ensure_cert() {
   local s
   for s in "$@"; do san_args+=(-d "$s"); done
   if [ -f "$live/fullchain.pem" ]; then
-    echo "证书已存在，尝试续期（未到窗口则跳过）：./deploy/certbot.sh renew"
-    ./deploy/certbot.sh renew || echo "WARN: 证书续期未执行（可能未到窗口或失败），详见上方输出" >&2
+    echo "证书已存在，项目模式续期：./deploy/certbot.sh renew"
+    ./deploy/certbot.sh renew
   else
     echo "未找到证书，自动签发 $domain ${san_args[*]:-}：./deploy/certbot.sh certonly ..."
     if [ ${#san_args[@]} -gt 0 ]; then
-      ./deploy/certbot.sh certonly -d "$domain" "${san_args[@]}" ||
-        echo "WARN: 自动签发失败，站点暂以 HTTP 提供（请检查 80 端口公网可达性与 certbot 安装）。" >&2
+      ./deploy/certbot.sh certonly -d "$domain" "${san_args[@]}"
     else
-      ./deploy/certbot.sh certonly -d "$domain" ||
-        echo "WARN: 自动签发失败，站点暂以 HTTP 提供（请检查 80 端口公网可达性与 certbot 安装）。" >&2
+      ./deploy/certbot.sh certonly -d "$domain"
     fi
   fi
 }
@@ -334,14 +332,13 @@ if [ "$NGINX_TLS_REQ" = "https" ] && [ "$NGINX_TLS_AUTO" = "on" ]; then
   if [ -n "$issue_list" ]; then
     echo "存在缺失证书（${issue_list}），先以 HTTP 启动 nginx 提供 ACME 挑战，随后签发..."
     gen_nginx_conf http
-    nginx_cert_up || true
+    nginx_cert_up
     if wait_acme_ready; then
       for d in $issue_list; do
-        # 签发前清掉残留的 live/archive/renewal，否则 certbot 认为证书已存在而拒绝签发或自增编号重复签发。
-        rm -rf "deploy/letsencrypt/etc/live/$d" \
-          "deploy/letsencrypt/etc/archive/$d" 2>/dev/null || true
-        rm -f "deploy/letsencrypt/etc/renewal/$d.conf" \
-          "deploy/letsencrypt/etc/renewal/$d-"*.conf 2>/dev/null || true
+        if [ -e "deploy/letsencrypt/etc/live/$d" ] || [ -e "deploy/letsencrypt/etc/archive/$d" ] || [ -e "deploy/letsencrypt/etc/renewal/$d.conf" ]; then
+          echo "ERROR: $d 存在不完整或冲突的 Certbot 状态；为保护证书未自动删除，请检查 deploy/letsencrypt/etc。" >&2
+          exit 1
+        fi
         if [ "$d" = "$NGINX_SERVER_NAME" ]; then
           ensure_cert "$NGINX_SERVER_NAME"
         else
@@ -349,7 +346,7 @@ if [ "$NGINX_TLS_REQ" = "https" ] && [ "$NGINX_TLS_AUTO" = "on" ]; then
         fi
       done
       if [ -n "$renew_needed" ]; then
-        ./deploy/certbot.sh renew || echo "WARN: 证书续期未执行（可能未到窗口或失败），详见上方输出" >&2
+        ./deploy/certbot.sh renew
       fi
     else
       echo "ERROR: 80 端口不可达，ACME HTTP-01 挑战无法完成，证书无法签发。" >&2
@@ -359,7 +356,7 @@ if [ "$NGINX_TLS_REQ" = "https" ] && [ "$NGINX_TLS_AUTO" = "on" ]; then
     nginx_cert_rm
   elif [ -n "$renew_needed" ]; then
     echo "证书临近过期，执行续期（renew 仅续期已到窗口的证书）..."
-    ./deploy/certbot.sh renew || echo "WARN: 证书续期未执行（可能未到窗口或失败），详见上方输出" >&2
+    ./deploy/certbot.sh renew
   else
     echo "证书有效，跳过签发/续期。"
   fi

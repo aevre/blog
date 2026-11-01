@@ -8,11 +8,13 @@ cd "$HOME/projects/blog"
 
 if [[ "$TARGET" == "backend" || "$TARGET" == "all" ]] && [ -f backend.tar ]; then
   echo "Loading backend image..."
-  podman load -i backend.tar && rm -f backend.tar
+  podman load -i backend.tar \
+    2> >(awk '/^(Getting image source signatures|Copying blob |Copying config |Writing manifest to image destination)/ { print; next } { print > "/dev/stderr" }') && rm -f backend.tar
 fi
 if [[ "$TARGET" == "frontend" || "$TARGET" == "all" ]] && [ -f frontend.tar ]; then
   echo "Loading frontend image..."
-  podman load -i frontend.tar && rm -f frontend.tar
+  podman load -i frontend.tar \
+    2> >(awk '/^(Getting image source signatures|Copying blob |Copying config |Writing manifest to image destination)/ { print; next } { print > "/dev/stderr" }') && rm -f frontend.tar
 fi
 
 if [ ! -s .env ]; then
@@ -87,9 +89,9 @@ echo "部署参数: target=$TARGET http=$HTTP_PORT https=$HTTPS_PORT rootless=$R
 # 统一过滤，仅保留真实报错与最终状态，便于 CI 日志定位。
 pod_compose_filter() {
   awk '
-    /^>>>> Executing external compose provider/ { next }
-    /^podman-compose version:/ { next }
-    /^using podman version:/ { next }
+    /^[[:space:]]*>>>> Executing external compose provider/ { next }
+    /^[[:space:]]*podman-compose version:/ { next }
+    /^[[:space:]]*using podman version:/ { next }
     /^\[.podman., .(ps|volume|network|--version)/ { next }
     # merged config 是一整段 JSON，用花括号深度判断，直到回到顶层 } 才结束，
     # 避免把内部嵌套的 } 误判为结束。
@@ -176,6 +178,11 @@ BACKEND_VARS='$APP_NAME $APP_DOMAIN $DB_HOST $DB_PORT $DB_USER $DB_PASSWORD $JWT
 echo "渲染后端配置 → deploy/runtime/backend/config.toml"
 envsubst "$BACKEND_VARS" <config/backend_config.toml >deploy/runtime/backend/config.toml
 
+# 过滤 Certbot 的正常日志路径提示；真正的错误仍保留在 stderr。
+certbot_run() {
+  "$@" 2> >(sed '/^[[:space:]]*Saving debug log to /d' >&2)
+}
+
 # 签发/续期单个证书；首个参数为证书主域名，其后为额外 SAN 域名。
 ensure_cert() {
   local domain="$1"
@@ -185,16 +192,14 @@ ensure_cert() {
   local s
   for s in "$@"; do san_args+=(-d "$s"); done
   if [ -f "$live/fullchain.pem" ]; then
-    echo "证书已存在，尝试续期（未到窗口则跳过）：./deploy/certbot.sh renew"
-    ./deploy/certbot.sh renew || echo "WARN: 证书续期未执行（可能未到窗口或失败），详见上方输出" >&2
+    echo "证书已存在，项目模式续期：./deploy/certbot.sh renew"
+    certbot_run ./deploy/certbot.sh renew
   else
     echo "未找到证书，自动签发 $domain ${san_args[*]:-}：./deploy/certbot.sh certonly ..."
     if [ ${#san_args[@]} -gt 0 ]; then
-      ./deploy/certbot.sh certonly -d "$domain" "${san_args[@]}" ||
-        echo "WARN: 自动签发失败，站点暂以 HTTP 提供（请检查 80 端口公网可达性与 certbot 安装）。" >&2
+      certbot_run ./deploy/certbot.sh certonly -d "$domain" "${san_args[@]}"
     else
-      ./deploy/certbot.sh certonly -d "$domain" ||
-        echo "WARN: 自动签发失败，站点暂以 HTTP 提供（请检查 80 端口公网可达性与 certbot 安装）。" >&2
+      certbot_run ./deploy/certbot.sh certonly -d "$domain"
     fi
   fi
 }
@@ -266,14 +271,13 @@ if [ "$NGINX_TLS_REQ" = "https" ] && [ "$NGINX_TLS_AUTO" = "on" ]; then
   if [ -n "$issue_list" ]; then
     echo "存在缺失证书（${issue_list}），先以 HTTP 启动 nginx 提供 ACME 挑战，随后签发..."
     render_nginx_conf http
-    pod_compose up -d nginx || true
+    pod_compose up -d nginx
     if wait_acme_ready; then
       for d in $issue_list; do
-        # 签发前清掉残留的 live/archive/renewal，否则 certbot 认为证书已存在而拒绝签发或自增编号重复签发。
-        rm -rf "deploy/letsencrypt/etc/live/$d" \
-          "deploy/letsencrypt/etc/archive/$d" 2>/dev/null || true
-        rm -f "deploy/letsencrypt/etc/renewal/$d.conf" \
-          "deploy/letsencrypt/etc/renewal/$d-"*.conf 2>/dev/null || true
+        if [ -e "deploy/letsencrypt/etc/live/$d" ] || [ -e "deploy/letsencrypt/etc/archive/$d" ] || [ -e "deploy/letsencrypt/etc/renewal/$d.conf" ]; then
+          echo "ERROR: $d 存在不完整或冲突的 Certbot 状态；为保护证书未自动删除，请检查 deploy/letsencrypt/etc。" >&2
+          exit 1
+        fi
         if [ "$d" = "$NGINX_SERVER_NAME" ]; then
           ensure_cert "$NGINX_SERVER_NAME"
         else
@@ -281,7 +285,7 @@ if [ "$NGINX_TLS_REQ" = "https" ] && [ "$NGINX_TLS_AUTO" = "on" ]; then
         fi
       done
       if [ -n "$renew_needed" ]; then
-        ./deploy/certbot.sh renew || echo "WARN: 证书续期未执行（可能未到窗口或失败），详见上方输出" >&2
+        certbot_run ./deploy/certbot.sh renew
       fi
     else
       echo "ERROR: 80 端口不可达，ACME HTTP-01 挑战无法完成，证书无法签发。" >&2
@@ -291,7 +295,7 @@ if [ "$NGINX_TLS_REQ" = "https" ] && [ "$NGINX_TLS_AUTO" = "on" ]; then
     podman rm -f blog_nginx >/dev/null 2>&1 || true
   elif [ -n "$renew_needed" ]; then
     echo "证书临近过期，执行续期（renew 仅续期已到窗口的证书）..."
-    ./deploy/certbot.sh renew || echo "WARN: 证书续期未执行（可能未到窗口或失败），详见上方输出" >&2
+    certbot_run ./deploy/certbot.sh renew
   else
     echo "证书有效，跳过签发/续期。"
   fi
@@ -308,7 +312,7 @@ if [ "$NGINX_TLS_REQ" = "https" ]; then
       cat >&2 <<EOF
 WARN: NGINX_TLS=https 但证书 $CERT_DIR 不存在，临时回退到 HTTP 模板。
       请用 deploy/certbot.sh 以部署用户身份签发/导入证书（证书归部署用户所有，容器可直接读取）：
-        sudo ./deploy/certbot.sh certonly --webroot -w /var/www/certbot -d ${NGINX_SERVER_NAME}
+        ./deploy/certbot.sh certonly -d ${NGINX_SERVER_NAME}
         # 或把宿主 /etc/letsencrypt 中已有的证书一次性导入项目目录：
         sudo ./deploy/certbot.sh import ${NGINX_SERVER_NAME}
 EOF
@@ -370,7 +374,7 @@ all)
   pod_compose up -d postgres redis
   wait_postgres || exit 1
   echo "启动 backend / frontend"
-  pod_compose up -d ackend frontend
+  pod_compose up -d backend frontend
   ;;
 esac
 
@@ -384,6 +388,6 @@ done
 
 echo "拉起反向代理 nginx 并 reload"
 pod_compose up -d nginx
-pod_compose exec nginx nginx -s reload >/dev/null 2>&1 || true
+pod_compose exec nginx nginx -s reload >/dev/null 2>&1
 
 echo "Deployed: $TARGET"
