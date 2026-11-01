@@ -15,6 +15,8 @@ const items = computed<ToolbarItem[]>(() =>
     })),
 );
 
+const scrollCollapsed = ref(false);
+
 function handleAction(item: Extract<ToolbarItem, { type: "action" }>) {
   const context: ToolbarContext = {
     notify: (msg, options) => {
@@ -24,8 +26,56 @@ function handleAction(item: Extract<ToolbarItem, { type: "action" }>) {
   };
   void item.handler(context);
 }
+
+let lastY = 0;
+let distance = 0;
+
+watch(scrollCollapsed, () => {
+  distance = 0;
+});
+
+function getScrollY() {
+  const maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+
+  return Math.min(maxY, Math.max(0, window.scrollY));
+}
+
+function handleScroll() {
+  const y = getScrollY();
+  const delta = y - lastY;
+  lastY = y;
+
+  if (y <= 64) {
+    scrollCollapsed.value = false;
+    distance = 0;
+    return;
+  }
+
+  if (delta === 0) return;
+
+  distance = Math.sign(delta) === Math.sign(distance) ? distance + delta : delta;
+
+  if (Math.abs(distance) >= 12) {
+    scrollCollapsed.value = distance > 0;
+    distance = 0;
+  }
+}
+
+onMounted(() => {
+  lastY = getScrollY();
+  window.addEventListener("scroll", handleScroll, { passive: true });
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("scroll", handleScroll);
+});
 </script>
 
 <template>
-  <FloatToolbar :items="items" :config="toolbar.config.value" @action="handleAction" />
+  <FloatToolbar
+    v-model:collapsed="scrollCollapsed"
+    :items="items"
+    :config="toolbar.config.value"
+    @action="handleAction"
+  />
 </template>
