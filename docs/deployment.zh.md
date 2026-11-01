@@ -240,7 +240,7 @@ bash deploy/remote-deploy.sh all    # CI 服务器侧部署
 sudo ./deploy/certbot.sh import blog.example.com     # 从宿主 /etc/letsencrypt 导入
 ```
 
-`deploy/certbot.sh` 以部署用户身份运行 certbot，证书存放在项目目录 `deploy/letsencrypt/etc/{live,archive,renewal}/`，归部署用户所有，nginx 容器可直接读取，无需事后改属主或复制。未显式指定 `-w` 时，脚本自动使用项目内挑战目录，挂载到容器 `/var/www/certbot`；未指定邮箱时，脚本读取 `.env` 的 `EMAIL_FROM` 或 `CERTBOT_EMAIL`，并自动带上 `--agree-tos --no-eff-email --non-interactive`。
+`deploy/certbot.sh` 默认以部署用户身份运行项目模式 certbot，证书存放在项目目录 `deploy/letsencrypt/etc/{live,archive,renewal}/`，归部署用户所有，nginx 容器可直接读取。未显式指定 Webroot 时，脚本使用宿主机绝对路径 `deploy/acme`，该目录映射到容器内的 `/var/www/certbot`；项目模式拒绝把容器路径作为宿主 Webroot。未指定邮箱时，脚本读取 `.env` 的 `EMAIL_FROM` 或 `CERTBOT_EMAIL`，并自动带上 `--agree-tos --no-eff-email --non-interactive`。
 
 `certbot.sh` 支持 `CERT_MODE` 环境变量：`project`（默认，项目内目录，容器模式用）与 `system`（`/etc/letsencrypt`，root 拥有、由系统 certbot 管理，供自行部署后在目标机以系统 certbot 手动签发证书使用）。`import` 子命令仅 `project` 模式有意义。
 
@@ -254,7 +254,7 @@ rootless 配合高位端口（如 8080）时，Let's Encrypt 访问的是 80 端
 
 ### 证书状态异常的恢复
 
-自动签发时发现 `live/<域名>` 缺失但 `archive/<域名>` 仍在，或 `renewal/<域名>.conf` 为空，即签发中途失败留下的残缺配置，certbot 会认为该证书已存在而拒绝签发。重新运行部署脚本即可：清理逻辑会在签发前删除对应域名的 `live`、`archive`、`renewal` 残留，再以全新身份签发。需要手动清理时删除下列路径后重新部署：
+自动签发时发现 `live/<域名>` 缺失但 `archive/<域名>` 仍在，或 `renewal/<域名>.conf` 为空，即签发中途失败留下的残缺配置。部署脚本不会自动删除这些状态，而是停止并提示检查，以保护历史 archive 和私钥。确认备份后需要手工清理时，再删除下列路径并重新部署：
 
 ```bash
 rm -rf deploy/letsencrypt/etc/live/<域名> deploy/letsencrypt/etc/archive/<域名>

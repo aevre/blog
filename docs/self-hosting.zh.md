@@ -92,7 +92,7 @@ Nuxt SSR 以 `node` 运行，目标机需装 Node.js（版本同构建，见 `fr
 
 ### 6. 证书（三选一）
 
-- 自动签发：`certbot certonly -d <域名> --webroot -w /var/www/certbot`
+- 自动签发：`CERT_MODE=system ./deploy/certbot.sh certonly -d <域名>`（系统模式使用宿主机 `/var/www/certbot`）
 - 已有证书：把 `fullchain.pem` / `privkey.pem` 放到对应路径
 - 用脚本：`CERT_MODE=system ./deploy/certbot.sh certonly -d <域名>`（系统 `/etc/letsencrypt` 模式）
 

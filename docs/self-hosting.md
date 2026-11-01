@@ -83,7 +83,7 @@ Nuxt SSR runs with `node`; the target machine needs Node.js installed (same vers
 
 ### 6. Certificate (choose one of three)
 
-- Automatic issuance: `certbot certonly -d <domain> --webroot -w /var/www/certbot`
+- Automatic issuance: `CERT_MODE=system ./deploy/certbot.sh certonly -d <domain>` (system mode uses the host `/var/www/certbot`)
 - Existing certificate: put `fullchain.pem` / `privkey.pem` at the corresponding paths
 - With the script: `CERT_MODE=system ./deploy/certbot.sh certonly -d <domain>` (system `/etc/letsencrypt` mode)
 

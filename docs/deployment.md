@@ -217,7 +217,7 @@ Equivalent manual issue / renew commands:
 sudo ./deploy/certbot.sh import blog.example.com     # import from host /etc/letsencrypt
 ```
 
-`deploy/certbot.sh` runs certbot as the deploy user; certificates are stored in the project directory `deploy/letsencrypt/etc/{live,archive,renewal}/`, owned by the deploy user, so the nginx container can read them directly without later chown or copy. When `-w` is not explicitly given, the script auto-uses the in-project challenge directory, mounted into the container at `/var/www/certbot`; when no email is given, the script reads `EMAIL_FROM` or `CERTBOT_EMAIL` from `.env` and automatically adds `--agree-tos --no-eff-email --non-interactive`.
+`deploy/certbot.sh` runs Certbot as the deploy user by default; certificates are stored in the project directory `deploy/letsencrypt/etc/{live,archive,renewal}/`, owned by the deploy user, so the Nginx container can read them directly. When no Webroot is given, the wrapper uses the absolute host path `deploy/acme`, which is mounted into the container as `/var/www/certbot`; project mode rejects the container path as a host Webroot. When no email is given, the script reads `EMAIL_FROM` or `CERTBOT_EMAIL` from `.env` and automatically adds `--agree-tos --no-eff-email --non-interactive`.
 
 `certbot.sh` supports the `CERT_MODE` environment variable: `project` (default, in-project directory, for container mode) and `system` (`/etc/letsencrypt`, owned by root and managed by the system certbot, for manually issuing certificates with the system certbot after self-hosting). The `import` subcommand only makes sense in `project` mode.
 
@@ -231,7 +231,7 @@ When rootless is paired with high ports (e.g. 8080), Let's Encrypt reaches port 
 
 ### Recovering from abnormal certificate state
 
-During automatic issuance, if `live/<domain>` is missing but `archive/<domain>` still exists, or `renewal/<domain>.conf` is empty, that is a leftover broken config from a mid-issuance failure — certbot thinks the certificate already exists and refuses to issue. Re-running the deploy script fixes it: the cleanup logic deletes the `live`, `archive`, and `renewal` leftovers for that domain before issuance, then issues fresh. To clean manually, delete the following paths and redeploy:
+During automatic issuance, if `live/<domain>` is missing but `archive/<domain>` still exists, or `renewal/<domain>.conf` is empty, that is a leftover broken config from a mid-issuance failure — Certbot thinks the certificate already exists and refuses to issue. The deploy script stops without deleting these files, protecting historical archives and private keys. After making a backup and checking the state, clean it manually and redeploy:
 
 ```bash
 rm -rf deploy/letsencrypt/etc/live/<domain> deploy/letsencrypt/etc/archive/<domain>
