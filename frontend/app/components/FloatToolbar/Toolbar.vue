@@ -14,7 +14,13 @@ interface Emits {
 
 const { items, config, label = "" } = defineProps<Props>();
 const emit = defineEmits<Emits>();
-const activePanel = shallowRef<ToolbarPanel | null>(null);
+const activePanelId = shallowRef<ToolbarItem["id"] | null>(null);
+const activePanel = computed(() =>
+  items.find(
+    (item): item is ToolbarPanel => item.type === "panel" && item.id === activePanelId.value,
+  ),
+);
+
 const overflowOpen = shallowRef(false);
 const overflowPanelKey = Symbol("toolbar-overflow");
 const visibleIds = shallowRef<ToolbarItem["id"][]>([]);
@@ -51,6 +57,7 @@ const shellStyle = computed<CSSProperties>(() => ({
   "--toolbar-expanded-width": `${expandedWidth.value}px`,
   "--toolbar-max-width": `${maxWidth.value}px`,
   "--toolbar-button-size": `${buttonSize.value}px`,
+  "--toolbar-icon-size": `${iconSize.value}px`,
   width: isExpanded.value ? "var(--toolbar-expanded-width)" : `${barWidth.value}px`,
 }));
 
@@ -70,18 +77,23 @@ function scheduleLayout() {
 }
 
 async function calculateLayout() {
-  await nextTick();
+  // await nextTick();
 
   windowWidth.value = document.documentElement.clientWidth;
-  const itemGap = gap.value;
-  const capacity = Math.max(
-    1,
-    Math.floor((availableWidth.value - 16 + itemGap) / (buttonSize.value + itemGap)),
-  );
+  const available = availableWidth.value;
+
   const candidates = items
     .map((item, index) => ({ item, index }))
     .sort((a, b) => (b.item.priority ?? 0) - (a.item.priority ?? 0) || a.index - b.index);
-  const visibleCapacity = candidates.length > capacity ? Math.max(1, capacity - 1) : capacity;
+
+  const capacity = Math.max(
+    1,
+    Math.floor((available - 16 + gap.value) / (buttonSize.value + gap.value)),
+  );
+
+  const needOverflow = candidates.length > capacity;
+  const visibleCapacity = needOverflow ? Math.max(0, capacity - 1) : capacity;
+
   const visibleSet = new Set(candidates.slice(0, visibleCapacity).map(({ item }) => item.id));
 
   visibleIds.value = items.filter((item) => visibleSet.has(item.id)).map((item) => item.id);
@@ -89,32 +101,26 @@ async function calculateLayout() {
 }
 
 function isActive(item: ToolbarItem) {
-  return item.type === "panel" && activePanel.value?.id === item.id && !overflowOpen.value;
+  return item.type === "panel" && activePanelId.value === item.id && !overflowOpen.value;
 }
 
 function clickItem(item: ToolbarItem) {
   if (item.type === "action") {
     emit("action", item);
-    overflowOpen.value = false;
+    closePanel();
     return;
   }
-  overflowOpen.value = false;
-  activePanel.value = activePanel.value?.id === item.id ? null : item;
-}
-
-function selectOverflowItem(item: ToolbarItem) {
-  if (item.type === "action") emit("action", item);
-  else activePanel.value = item;
+  activePanelId.value = activePanelId.value === item.id && !overflowOpen.value ? null : item.id;
   overflowOpen.value = false;
 }
 
 function toggleOverflow() {
-  activePanel.value = null;
+  activePanelId.value = null;
   overflowOpen.value = !overflowOpen.value;
 }
 
 function closePanel() {
-  activePanel.value = null;
+  activePanelId.value = null;
   overflowOpen.value = false;
 }
 
@@ -127,24 +133,31 @@ function onDocumentPointerDown(event: PointerEvent) {
   if (event.target instanceof Node && !shell.value.contains(event.target)) closePanel();
 }
 
+function observePanelHeight(element: HTMLElement, onCleanup: (cleanup: () => void) => void) {
+  const measure = () => {
+    panelHeight.value = element.offsetHeight;
+  };
+
+  measure();
+
+  if (typeof ResizeObserver === "undefined") return;
+  const observer = new ResizeObserver(measure);
+  observer.observe(element);
+  onCleanup(() => observer.disconnect());
+}
+
 // 测量内部自然高度，让外层在明确的像素高度之间过渡；异步内容变化也会更新。
 watch(
   panelClip,
   (panel, _previous, onCleanup) => {
-    if (!panel) return;
-    const measure = () => {
-      panelHeight.value = panel.offsetHeight;
-    };
-    measure();
-    if (typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(measure);
-    observer.observe(panel);
-    onCleanup(() => observer.disconnect());
+    if (panel) observePanelHeight(panel, onCleanup);
   },
   { flush: "post" },
 );
 
-watch(() => items, scheduleLayout, { immediate: true });
+watch(() => items.map(({ id, priority, label }) => [id, priority, label]), scheduleLayout, {
+  immediate: true,
+});
 watch(() => [config.maxWidth, config.gap, config.iconSize], scheduleLayout);
 
 onMounted(() => {
@@ -153,17 +166,13 @@ onMounted(() => {
     resizeObserver = new ResizeObserver(scheduleLayout);
     resizeObserver.observe(document.documentElement);
   }
-  window.addEventListener("resize", scheduleLayout, { passive: true });
   document.addEventListener("keydown", onKeydown);
   document.addEventListener("pointerdown", onDocumentPointerDown);
 });
 
 onBeforeUnmount(() => {
   resizeObserver?.disconnect();
-  if (typeof window !== "undefined") {
-    window.removeEventListener("resize", scheduleLayout);
-    cancelAnimationFrame(resizeFrame);
-  }
+  cancelAnimationFrame(resizeFrame);
   document.removeEventListener("keydown", onKeydown);
   document.removeEventListener("pointerdown", onDocumentPointerDown);
 });
@@ -217,7 +226,7 @@ onBeforeUnmount(() => {
                     :key="item.id"
                     class="floating-toolbar-overflow-item"
                     type="button"
-                    @click="selectOverflowItem(item)"
+                    @click="clickItem(item)"
                   >
                     <Icon
                       v-if="item.icon"
@@ -226,6 +235,9 @@ onBeforeUnmount(() => {
                       class="floating-toolbar-icon"
                       aria-hidden="true"
                     />
+                    <span v-else class="floating-toolbar-fallback-icon" aria-hidden="true">
+                      {{ item.label.slice(0, 1) }}
+                    </span>
                     <span class="floating-toolbar-overflow-label">{{ item.label }}</span>
                   </button>
                 </div>
@@ -286,7 +298,6 @@ onBeforeUnmount(() => {
 <style scoped>
 .floating-toolbar {
   --toolbar-surface: rgb(255 255 255 / 58%);
-  --toolbar-panel-surface: rgb(246 245 244 / 46%);
 
   position: fixed;
   z-index: 1000;
@@ -332,6 +343,7 @@ onBeforeUnmount(() => {
 .floating-toolbar-panel-content {
   display: flex;
   min-height: 0;
+  min-width: max-content;
   flex-direction: column;
   padding: 14px 14px 12px;
   opacity: 0;
@@ -369,6 +381,7 @@ onBeforeUnmount(() => {
   min-height: 0;
   overflow: auto;
   scrollbar-width: none;
+  overscroll-behavior: contain;
 }
 
 .floating-toolbar-panel-body::-webkit-scrollbar {
@@ -431,8 +444,8 @@ onBeforeUnmount(() => {
 
 .floating-toolbar-overflow-item {
   display: flex;
-  align-items: center;
   gap: 9px;
+  align-items: center;
   min-width: 0;
   padding: 10px;
   color: inherit;
@@ -472,8 +485,12 @@ onBeforeUnmount(() => {
 }
 
 .floating-toolbar-fallback-icon {
-  font-size: 15px;
+  --toolbar-fallback-icon-size: calc(var(--toolbar-icon-size) - 6px);
+
+  font-size: var(--toolbar-fallback-icon-size);
   font-weight: 600;
+  display: inline-block;
+  line-height: var(--toolbar-fallback-icon-size);
 }
 
 .floating-toolbar-more-glyph {
@@ -504,31 +521,8 @@ onBeforeUnmount(() => {
   max-width: 100%;
 }
 
-.floating-toolbar-measure {
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: flex;
-  gap: var(--toolbar-gap);
-  width: max-content;
-  height: 0;
-  overflow: hidden;
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.floating-toolbar-measure-button {
-  display: inline-flex;
-  width: 40px;
-  height: 40px;
-  flex: 0 0 40px;
-  align-items: center;
-  justify-content: center;
-}
-
 [data-theme="dark"] .floating-toolbar {
   --toolbar-surface: rgb(34 34 38 / 62%);
-  --toolbar-panel-surface: rgb(26 26 30 / 50%);
 }
 
 @media (prefers-reduced-motion: reduce) {
