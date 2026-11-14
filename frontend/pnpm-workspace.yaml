@@ -1,6 +1,7 @@
 allowBuilds:
   "@parcel/watcher": true
   esbuild: true
+  nuxt-i18n-micro: true
   sharp: true
   unrs-resolver: true
 onlyBuiltDependencies:
