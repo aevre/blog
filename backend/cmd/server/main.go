@@ -61,6 +61,7 @@ func applicationOptions() fx.Option {
 		fx.Invoke(
 			runServerLifecycle,
 		),
+		fx.WithLogger(logger.NewFxLogger),
 	)
 }
 
