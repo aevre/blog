@@ -185,11 +185,11 @@ func init() {
 	// system.DefaultInitialized holds the default value on creation for the initialized field.
 	system.DefaultInitialized = systemDescInitialized.Default.(bool)
 	// systemDescCreatedAt is the schema descriptor for created_at field.
-	systemDescCreatedAt := systemFields[3].Descriptor()
+	systemDescCreatedAt := systemFields[4].Descriptor()
 	// system.DefaultCreatedAt holds the default value on creation for the created_at field.
 	system.DefaultCreatedAt = systemDescCreatedAt.Default.(func() time.Time)
 	// systemDescUpdatedAt is the schema descriptor for updated_at field.
-	systemDescUpdatedAt := systemFields[4].Descriptor()
+	systemDescUpdatedAt := systemFields[5].Descriptor()
 	// system.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	system.DefaultUpdatedAt = systemDescUpdatedAt.Default.(func() time.Time)
 	// systemDescID is the schema descriptor for id field.

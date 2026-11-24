@@ -1,5 +1,5 @@
-// Package setupmodel defines site setup domain data.
-package setupmodel
+// Package bootstrapmodel defines site setup domain data.
+package bootstrapmodel
 
 import "time"
 

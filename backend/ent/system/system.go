@@ -15,6 +15,8 @@ const (
 	FieldID = "id"
 	// FieldInitialized holds the string denoting the initialized field in the database.
 	FieldInitialized = "initialized"
+	// FieldBootstrapTokenHash holds the string denoting the bootstrap_token_hash field in the database.
+	FieldBootstrapTokenHash = "bootstrap_token_hash"
 	// FieldInitializedAt holds the string denoting the initialized_at field in the database.
 	FieldInitializedAt = "initialized_at"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
@@ -29,6 +31,7 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldInitialized,
+	FieldBootstrapTokenHash,
 	FieldInitializedAt,
 	FieldCreatedAt,
 	FieldUpdatedAt,
@@ -66,6 +69,11 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 // ByInitialized orders the results by the initialized field.
 func ByInitialized(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldInitialized, opts...).ToFunc()
+}
+
+// ByBootstrapTokenHash orders the results by the bootstrap_token_hash field.
+func ByBootstrapTokenHash(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBootstrapTokenHash, opts...).ToFunc()
 }
 
 // ByInitializedAt orders the results by the initialized_at field.

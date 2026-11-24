@@ -257,6 +257,7 @@ var (
 	SystemsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "initialized", Type: field.TypeBool, Default: false},
+		{Name: "bootstrap_token_hash", Type: field.TypeString, Nullable: true},
 		{Name: "initialized_at", Type: field.TypeTime, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},

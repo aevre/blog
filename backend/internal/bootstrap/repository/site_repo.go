@@ -6,15 +6,15 @@ import (
 	"time"
 
 	"blog-server/ent/site"
+	bootstrapmodel "blog-server/internal/bootstrap/model"
 	"blog-server/internal/platform/database"
-	setupmodel "blog-server/internal/setup/model"
 	"blog-server/internal/shared/errx"
 )
 
 type SiteRepo interface {
-	Create(ctx context.Context, site *setupmodel.Site) error
-	Get(ctx context.Context) (*setupmodel.Site, error)
-	Update(ctx context.Context, site *setupmodel.Site) error
+	Create(ctx context.Context, site *bootstrapmodel.Site) error
+	Get(ctx context.Context) (*bootstrapmodel.Site, error)
+	Update(ctx context.Context, site *bootstrapmodel.Site) error
 }
 
 type siteRepo struct {
@@ -27,7 +27,7 @@ func NewSiteRepo(ds *database.DataStore) SiteRepo {
 	}
 }
 
-func (r *siteRepo) Create(ctx context.Context, site *setupmodel.Site) error {
+func (r *siteRepo) Create(ctx context.Context, site *bootstrapmodel.Site) error {
 	_, err := r.ds.Client(ctx).Site.
 		Create().
 		SetID(1).
@@ -45,7 +45,7 @@ func (r *siteRepo) Create(ctx context.Context, site *setupmodel.Site) error {
 	return nil
 }
 
-func (r *siteRepo) Get(ctx context.Context) (*setupmodel.Site, error) {
+func (r *siteRepo) Get(ctx context.Context) (*bootstrapmodel.Site, error) {
 	s, err := r.ds.Client(ctx).Site.
 		Query().
 		Where(site.IDEQ(1)).
@@ -54,7 +54,7 @@ func (r *siteRepo) Get(ctx context.Context) (*setupmodel.Site, error) {
 		return nil, errx.New(errx.CodeInternalError, err)
 	}
 
-	return &setupmodel.Site{
+	return &bootstrapmodel.Site{
 		Name:        s.Name,
 		Logo:        &s.Logo,
 		Greeting:    &s.Greeting,
@@ -63,7 +63,7 @@ func (r *siteRepo) Get(ctx context.Context) (*setupmodel.Site, error) {
 	}, nil
 }
 
-func (r *siteRepo) Update(ctx context.Context, site *setupmodel.Site) error {
+func (r *siteRepo) Update(ctx context.Context, site *bootstrapmodel.Site) error {
 	_, err := r.ds.Client(ctx).Site.
 		UpdateOneID(1).
 		SetName(site.Name).

@@ -59,6 +59,11 @@ func Initialized(v bool) predicate.System {
 	return predicate.System(sql.FieldEQ(FieldInitialized, v))
 }
 
+// BootstrapTokenHash applies equality check predicate on the "bootstrap_token_hash" field. It's identical to BootstrapTokenHashEQ.
+func BootstrapTokenHash(v string) predicate.System {
+	return predicate.System(sql.FieldEQ(FieldBootstrapTokenHash, v))
+}
+
 // InitializedAt applies equality check predicate on the "initialized_at" field. It's identical to InitializedAtEQ.
 func InitializedAt(v time.Time) predicate.System {
 	return predicate.System(sql.FieldEQ(FieldInitializedAt, v))
@@ -82,6 +87,81 @@ func InitializedEQ(v bool) predicate.System {
 // InitializedNEQ applies the NEQ predicate on the "initialized" field.
 func InitializedNEQ(v bool) predicate.System {
 	return predicate.System(sql.FieldNEQ(FieldInitialized, v))
+}
+
+// BootstrapTokenHashEQ applies the EQ predicate on the "bootstrap_token_hash" field.
+func BootstrapTokenHashEQ(v string) predicate.System {
+	return predicate.System(sql.FieldEQ(FieldBootstrapTokenHash, v))
+}
+
+// BootstrapTokenHashNEQ applies the NEQ predicate on the "bootstrap_token_hash" field.
+func BootstrapTokenHashNEQ(v string) predicate.System {
+	return predicate.System(sql.FieldNEQ(FieldBootstrapTokenHash, v))
+}
+
+// BootstrapTokenHashIn applies the In predicate on the "bootstrap_token_hash" field.
+func BootstrapTokenHashIn(vs ...string) predicate.System {
+	return predicate.System(sql.FieldIn(FieldBootstrapTokenHash, vs...))
+}
+
+// BootstrapTokenHashNotIn applies the NotIn predicate on the "bootstrap_token_hash" field.
+func BootstrapTokenHashNotIn(vs ...string) predicate.System {
+	return predicate.System(sql.FieldNotIn(FieldBootstrapTokenHash, vs...))
+}
+
+// BootstrapTokenHashGT applies the GT predicate on the "bootstrap_token_hash" field.
+func BootstrapTokenHashGT(v string) predicate.System {
+	return predicate.System(sql.FieldGT(FieldBootstrapTokenHash, v))
+}
+
+// BootstrapTokenHashGTE applies the GTE predicate on the "bootstrap_token_hash" field.
+func BootstrapTokenHashGTE(v string) predicate.System {
+	return predicate.System(sql.FieldGTE(FieldBootstrapTokenHash, v))
+}
+
+// BootstrapTokenHashLT applies the LT predicate on the "bootstrap_token_hash" field.
+func BootstrapTokenHashLT(v string) predicate.System {
+	return predicate.System(sql.FieldLT(FieldBootstrapTokenHash, v))
+}
+
+// BootstrapTokenHashLTE applies the LTE predicate on the "bootstrap_token_hash" field.
+func BootstrapTokenHashLTE(v string) predicate.System {
+	return predicate.System(sql.FieldLTE(FieldBootstrapTokenHash, v))
+}
+
+// BootstrapTokenHashContains applies the Contains predicate on the "bootstrap_token_hash" field.
+func BootstrapTokenHashContains(v string) predicate.System {
+	return predicate.System(sql.FieldContains(FieldBootstrapTokenHash, v))
+}
+
+// BootstrapTokenHashHasPrefix applies the HasPrefix predicate on the "bootstrap_token_hash" field.
+func BootstrapTokenHashHasPrefix(v string) predicate.System {
+	return predicate.System(sql.FieldHasPrefix(FieldBootstrapTokenHash, v))
+}
+
+// BootstrapTokenHashHasSuffix applies the HasSuffix predicate on the "bootstrap_token_hash" field.
+func BootstrapTokenHashHasSuffix(v string) predicate.System {
+	return predicate.System(sql.FieldHasSuffix(FieldBootstrapTokenHash, v))
+}
+
+// BootstrapTokenHashIsNil applies the IsNil predicate on the "bootstrap_token_hash" field.
+func BootstrapTokenHashIsNil() predicate.System {
+	return predicate.System(sql.FieldIsNull(FieldBootstrapTokenHash))
+}
+
+// BootstrapTokenHashNotNil applies the NotNil predicate on the "bootstrap_token_hash" field.
+func BootstrapTokenHashNotNil() predicate.System {
+	return predicate.System(sql.FieldNotNull(FieldBootstrapTokenHash))
+}
+
+// BootstrapTokenHashEqualFold applies the EqualFold predicate on the "bootstrap_token_hash" field.
+func BootstrapTokenHashEqualFold(v string) predicate.System {
+	return predicate.System(sql.FieldEqualFold(FieldBootstrapTokenHash, v))
+}
+
+// BootstrapTokenHashContainsFold applies the ContainsFold predicate on the "bootstrap_token_hash" field.
+func BootstrapTokenHashContainsFold(v string) predicate.System {
+	return predicate.System(sql.FieldContainsFold(FieldBootstrapTokenHash, v))
 }
 
 // InitializedAtEQ applies the EQ predicate on the "initialized_at" field.

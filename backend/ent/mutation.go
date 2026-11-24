@@ -7467,17 +7467,18 @@ func (m *SiteMutation) ResetEdge(name string) error {
 // SystemMutation represents an operation that mutates the System nodes in the graph.
 type SystemMutation struct {
 	config
-	op             Op
-	typ            string
-	id             *int
-	initialized    *bool
-	initialized_at *time.Time
-	created_at     *time.Time
-	updated_at     *time.Time
-	clearedFields  map[string]struct{}
-	done           bool
-	oldValue       func(context.Context) (*System, error)
-	predicates     []predicate.System
+	op                   Op
+	typ                  string
+	id                   *int
+	initialized          *bool
+	bootstrap_token_hash *string
+	initialized_at       *time.Time
+	created_at           *time.Time
+	updated_at           *time.Time
+	clearedFields        map[string]struct{}
+	done                 bool
+	oldValue             func(context.Context) (*System, error)
+	predicates           []predicate.System
 }
 
 var _ ent.Mutation = (*SystemMutation)(nil)
@@ -7618,6 +7619,55 @@ func (m *SystemMutation) OldInitialized(ctx context.Context) (v bool, err error)
 // ResetInitialized resets all changes to the "initialized" field.
 func (m *SystemMutation) ResetInitialized() {
 	m.initialized = nil
+}
+
+// SetBootstrapTokenHash sets the "bootstrap_token_hash" field.
+func (m *SystemMutation) SetBootstrapTokenHash(s string) {
+	m.bootstrap_token_hash = &s
+}
+
+// BootstrapTokenHash returns the value of the "bootstrap_token_hash" field in the mutation.
+func (m *SystemMutation) BootstrapTokenHash() (r string, exists bool) {
+	v := m.bootstrap_token_hash
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBootstrapTokenHash returns the old "bootstrap_token_hash" field's value of the System entity.
+// If the System object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SystemMutation) OldBootstrapTokenHash(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBootstrapTokenHash is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBootstrapTokenHash requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBootstrapTokenHash: %w", err)
+	}
+	return oldValue.BootstrapTokenHash, nil
+}
+
+// ClearBootstrapTokenHash clears the value of the "bootstrap_token_hash" field.
+func (m *SystemMutation) ClearBootstrapTokenHash() {
+	m.bootstrap_token_hash = nil
+	m.clearedFields[system.FieldBootstrapTokenHash] = struct{}{}
+}
+
+// BootstrapTokenHashCleared returns if the "bootstrap_token_hash" field was cleared in this mutation.
+func (m *SystemMutation) BootstrapTokenHashCleared() bool {
+	_, ok := m.clearedFields[system.FieldBootstrapTokenHash]
+	return ok
+}
+
+// ResetBootstrapTokenHash resets all changes to the "bootstrap_token_hash" field.
+func (m *SystemMutation) ResetBootstrapTokenHash() {
+	m.bootstrap_token_hash = nil
+	delete(m.clearedFields, system.FieldBootstrapTokenHash)
 }
 
 // SetInitializedAt sets the "initialized_at" field.
@@ -7775,9 +7825,12 @@ func (m *SystemMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *SystemMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 5)
 	if m.initialized != nil {
 		fields = append(fields, system.FieldInitialized)
+	}
+	if m.bootstrap_token_hash != nil {
+		fields = append(fields, system.FieldBootstrapTokenHash)
 	}
 	if m.initialized_at != nil {
 		fields = append(fields, system.FieldInitializedAt)
@@ -7798,6 +7851,8 @@ func (m *SystemMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case system.FieldInitialized:
 		return m.Initialized()
+	case system.FieldBootstrapTokenHash:
+		return m.BootstrapTokenHash()
 	case system.FieldInitializedAt:
 		return m.InitializedAt()
 	case system.FieldCreatedAt:
@@ -7815,6 +7870,8 @@ func (m *SystemMutation) OldField(ctx context.Context, name string) (ent.Value, 
 	switch name {
 	case system.FieldInitialized:
 		return m.OldInitialized(ctx)
+	case system.FieldBootstrapTokenHash:
+		return m.OldBootstrapTokenHash(ctx)
 	case system.FieldInitializedAt:
 		return m.OldInitializedAt(ctx)
 	case system.FieldCreatedAt:
@@ -7836,6 +7893,13 @@ func (m *SystemMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetInitialized(v)
+		return nil
+	case system.FieldBootstrapTokenHash:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBootstrapTokenHash(v)
 		return nil
 	case system.FieldInitializedAt:
 		v, ok := value.(time.Time)
@@ -7888,6 +7952,9 @@ func (m *SystemMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *SystemMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(system.FieldBootstrapTokenHash) {
+		fields = append(fields, system.FieldBootstrapTokenHash)
+	}
 	if m.FieldCleared(system.FieldInitializedAt) {
 		fields = append(fields, system.FieldInitializedAt)
 	}
@@ -7905,6 +7972,9 @@ func (m *SystemMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *SystemMutation) ClearField(name string) error {
 	switch name {
+	case system.FieldBootstrapTokenHash:
+		m.ClearBootstrapTokenHash()
+		return nil
 	case system.FieldInitializedAt:
 		m.ClearInitializedAt()
 		return nil
@@ -7918,6 +7988,9 @@ func (m *SystemMutation) ResetField(name string) error {
 	switch name {
 	case system.FieldInitialized:
 		m.ResetInitialized()
+		return nil
+	case system.FieldBootstrapTokenHash:
+		m.ResetBootstrapTokenHash()
 		return nil
 	case system.FieldInitializedAt:
 		m.ResetInitializedAt()

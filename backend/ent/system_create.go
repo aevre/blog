@@ -36,6 +36,20 @@ func (_c *SystemCreate) SetNillableInitialized(v *bool) *SystemCreate {
 	return _c
 }
 
+// SetBootstrapTokenHash sets the "bootstrap_token_hash" field.
+func (_c *SystemCreate) SetBootstrapTokenHash(v string) *SystemCreate {
+	_c.mutation.SetBootstrapTokenHash(v)
+	return _c
+}
+
+// SetNillableBootstrapTokenHash sets the "bootstrap_token_hash" field if the given value is not nil.
+func (_c *SystemCreate) SetNillableBootstrapTokenHash(v *string) *SystemCreate {
+	if v != nil {
+		_c.SetBootstrapTokenHash(*v)
+	}
+	return _c
+}
+
 // SetInitializedAt sets the "initialized_at" field.
 func (_c *SystemCreate) SetInitializedAt(v time.Time) *SystemCreate {
 	_c.mutation.SetInitializedAt(v)
@@ -193,6 +207,10 @@ func (_c *SystemCreate) createSpec() (*System, *sqlgraph.CreateSpec) {
 		_spec.SetField(system.FieldInitialized, field.TypeBool, value)
 		_node.Initialized = value
 	}
+	if value, ok := _c.mutation.BootstrapTokenHash(); ok {
+		_spec.SetField(system.FieldBootstrapTokenHash, field.TypeString, value)
+		_node.BootstrapTokenHash = &value
+	}
 	if value, ok := _c.mutation.InitializedAt(); ok {
 		_spec.SetField(system.FieldInitializedAt, field.TypeTime, value)
 		_node.InitializedAt = value
@@ -266,6 +284,24 @@ func (u *SystemUpsert) SetInitialized(v bool) *SystemUpsert {
 // UpdateInitialized sets the "initialized" field to the value that was provided on create.
 func (u *SystemUpsert) UpdateInitialized() *SystemUpsert {
 	u.SetExcluded(system.FieldInitialized)
+	return u
+}
+
+// SetBootstrapTokenHash sets the "bootstrap_token_hash" field.
+func (u *SystemUpsert) SetBootstrapTokenHash(v string) *SystemUpsert {
+	u.Set(system.FieldBootstrapTokenHash, v)
+	return u
+}
+
+// UpdateBootstrapTokenHash sets the "bootstrap_token_hash" field to the value that was provided on create.
+func (u *SystemUpsert) UpdateBootstrapTokenHash() *SystemUpsert {
+	u.SetExcluded(system.FieldBootstrapTokenHash)
+	return u
+}
+
+// ClearBootstrapTokenHash clears the value of the "bootstrap_token_hash" field.
+func (u *SystemUpsert) ClearBootstrapTokenHash() *SystemUpsert {
+	u.SetNull(system.FieldBootstrapTokenHash)
 	return u
 }
 
@@ -370,6 +406,27 @@ func (u *SystemUpsertOne) SetInitialized(v bool) *SystemUpsertOne {
 func (u *SystemUpsertOne) UpdateInitialized() *SystemUpsertOne {
 	return u.Update(func(s *SystemUpsert) {
 		s.UpdateInitialized()
+	})
+}
+
+// SetBootstrapTokenHash sets the "bootstrap_token_hash" field.
+func (u *SystemUpsertOne) SetBootstrapTokenHash(v string) *SystemUpsertOne {
+	return u.Update(func(s *SystemUpsert) {
+		s.SetBootstrapTokenHash(v)
+	})
+}
+
+// UpdateBootstrapTokenHash sets the "bootstrap_token_hash" field to the value that was provided on create.
+func (u *SystemUpsertOne) UpdateBootstrapTokenHash() *SystemUpsertOne {
+	return u.Update(func(s *SystemUpsert) {
+		s.UpdateBootstrapTokenHash()
+	})
+}
+
+// ClearBootstrapTokenHash clears the value of the "bootstrap_token_hash" field.
+func (u *SystemUpsertOne) ClearBootstrapTokenHash() *SystemUpsertOne {
+	return u.Update(func(s *SystemUpsert) {
+		s.ClearBootstrapTokenHash()
 	})
 }
 
@@ -647,6 +704,27 @@ func (u *SystemUpsertBulk) SetInitialized(v bool) *SystemUpsertBulk {
 func (u *SystemUpsertBulk) UpdateInitialized() *SystemUpsertBulk {
 	return u.Update(func(s *SystemUpsert) {
 		s.UpdateInitialized()
+	})
+}
+
+// SetBootstrapTokenHash sets the "bootstrap_token_hash" field.
+func (u *SystemUpsertBulk) SetBootstrapTokenHash(v string) *SystemUpsertBulk {
+	return u.Update(func(s *SystemUpsert) {
+		s.SetBootstrapTokenHash(v)
+	})
+}
+
+// UpdateBootstrapTokenHash sets the "bootstrap_token_hash" field to the value that was provided on create.
+func (u *SystemUpsertBulk) UpdateBootstrapTokenHash() *SystemUpsertBulk {
+	return u.Update(func(s *SystemUpsert) {
+		s.UpdateBootstrapTokenHash()
+	})
+}
+
+// ClearBootstrapTokenHash clears the value of the "bootstrap_token_hash" field.
+func (u *SystemUpsertBulk) ClearBootstrapTokenHash() *SystemUpsertBulk {
+	return u.Update(func(s *SystemUpsert) {
+		s.ClearBootstrapTokenHash()
 	})
 }
 

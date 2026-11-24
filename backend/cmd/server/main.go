@@ -10,6 +10,7 @@ import (
 	"blog-server/internal/account"
 	"blog-server/internal/api"
 	"blog-server/internal/authz"
+	"blog-server/internal/bootstrap"
 	"blog-server/internal/content"
 	linkfeature "blog-server/internal/link"
 	"blog-server/internal/platform/cache"
@@ -18,7 +19,6 @@ import (
 	logger "blog-server/internal/platform/logging"
 	"blog-server/internal/platform/middleware"
 	"blog-server/internal/scheduler"
-	"blog-server/internal/setup"
 	"blog-server/internal/shared/validatorx"
 	"blog-server/internal/summary"
 	"blog-server/migration"
@@ -48,7 +48,7 @@ func applicationOptions() fx.Option {
 			account.Module(),
 			content.Module(),
 			linkfeature.Module(),
-			setup.Module(),
+			bootstrap.Module(),
 			summary.Module(),
 			api.Module(),
 			scheduler.Module(),

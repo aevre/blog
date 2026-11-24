@@ -20,6 +20,9 @@ func (System) Fields() []ent.Field {
 			Immutable(),
 		field.Bool("initialized").
 			Default(false),
+		field.String("bootstrap_token_hash").
+			Optional().
+			Nillable(),
 		field.Time("initialized_at").
 			Optional(),
 		field.Time("created_at").

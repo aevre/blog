@@ -4,11 +4,11 @@ import (
 	"testing"
 
 	accounthandler "blog-server/internal/account/handler"
+	bootstraphandler "blog-server/internal/bootstrap/handler"
 	contenthandler "blog-server/internal/content/handler"
 	linkhandler "blog-server/internal/link/handler"
 	"blog-server/internal/platform/config"
 	"blog-server/internal/platform/middleware"
-	setuphandler "blog-server/internal/setup/handler"
 	summaryhandler "blog-server/internal/summary/handler"
 
 	"github.com/labstack/echo/v5"
@@ -19,11 +19,11 @@ func TestExistingRoutes(t *testing.T) {
 	RegisterRoutes(e, Handlers{
 		Auth: accounthandler.NewAuthHandler(nil, nil, nil), User: accounthandler.NewUserHandler(nil),
 		Post: contenthandler.NewPostHandler(nil, nil), Rss: contenthandler.NewRssHandler(nil),
-		Link: linkhandler.NewLinkHandler(nil, nil), Setup: setuphandler.NewSetupHandler(nil, nil), Model: summaryhandler.NewModelHandler(nil, nil),
+		Link: linkhandler.NewLinkHandler(nil, nil), Bootstrap: bootstraphandler.NewBootstrapHandler(nil, nil), Model: summaryhandler.NewModelHandler(nil, nil),
 	}, middleware.NewAuthMiddleware(&config.Config{}))
 	for _, r := range []struct{ method, path string }{
-		{"GET", "/setup"},
-		{"POST", "/setup"},
+		{"GET", "/bootstrap"},
+		{"POST", "/bootstrap"},
 		{"POST", "/auth/captcha"},
 		{"POST", "/auth/register"},
 		{"POST", "/auth/login"},

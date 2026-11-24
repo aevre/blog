@@ -43,6 +43,26 @@ func (_u *SystemUpdate) SetNillableInitialized(v *bool) *SystemUpdate {
 	return _u
 }
 
+// SetBootstrapTokenHash sets the "bootstrap_token_hash" field.
+func (_u *SystemUpdate) SetBootstrapTokenHash(v string) *SystemUpdate {
+	_u.mutation.SetBootstrapTokenHash(v)
+	return _u
+}
+
+// SetNillableBootstrapTokenHash sets the "bootstrap_token_hash" field if the given value is not nil.
+func (_u *SystemUpdate) SetNillableBootstrapTokenHash(v *string) *SystemUpdate {
+	if v != nil {
+		_u.SetBootstrapTokenHash(*v)
+	}
+	return _u
+}
+
+// ClearBootstrapTokenHash clears the value of the "bootstrap_token_hash" field.
+func (_u *SystemUpdate) ClearBootstrapTokenHash() *SystemUpdate {
+	_u.mutation.ClearBootstrapTokenHash()
+	return _u
+}
+
 // SetInitializedAt sets the "initialized_at" field.
 func (_u *SystemUpdate) SetInitializedAt(v time.Time) *SystemUpdate {
 	_u.mutation.SetInitializedAt(v)
@@ -141,6 +161,12 @@ func (_u *SystemUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.Initialized(); ok {
 		_spec.SetField(system.FieldInitialized, field.TypeBool, value)
 	}
+	if value, ok := _u.mutation.BootstrapTokenHash(); ok {
+		_spec.SetField(system.FieldBootstrapTokenHash, field.TypeString, value)
+	}
+	if _u.mutation.BootstrapTokenHashCleared() {
+		_spec.ClearField(system.FieldBootstrapTokenHash, field.TypeString)
+	}
 	if value, ok := _u.mutation.InitializedAt(); ok {
 		_spec.SetField(system.FieldInitializedAt, field.TypeTime, value)
 	}
@@ -186,6 +212,26 @@ func (_u *SystemUpdateOne) SetNillableInitialized(v *bool) *SystemUpdateOne {
 	if v != nil {
 		_u.SetInitialized(*v)
 	}
+	return _u
+}
+
+// SetBootstrapTokenHash sets the "bootstrap_token_hash" field.
+func (_u *SystemUpdateOne) SetBootstrapTokenHash(v string) *SystemUpdateOne {
+	_u.mutation.SetBootstrapTokenHash(v)
+	return _u
+}
+
+// SetNillableBootstrapTokenHash sets the "bootstrap_token_hash" field if the given value is not nil.
+func (_u *SystemUpdateOne) SetNillableBootstrapTokenHash(v *string) *SystemUpdateOne {
+	if v != nil {
+		_u.SetBootstrapTokenHash(*v)
+	}
+	return _u
+}
+
+// ClearBootstrapTokenHash clears the value of the "bootstrap_token_hash" field.
+func (_u *SystemUpdateOne) ClearBootstrapTokenHash() *SystemUpdateOne {
+	_u.mutation.ClearBootstrapTokenHash()
 	return _u
 }
 
@@ -316,6 +362,12 @@ func (_u *SystemUpdateOne) sqlSave(ctx context.Context) (_node *System, err erro
 	}
 	if value, ok := _u.mutation.Initialized(); ok {
 		_spec.SetField(system.FieldInitialized, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.BootstrapTokenHash(); ok {
+		_spec.SetField(system.FieldBootstrapTokenHash, field.TypeString, value)
+	}
+	if _u.mutation.BootstrapTokenHashCleared() {
+		_spec.ClearField(system.FieldBootstrapTokenHash, field.TypeString)
 	}
 	if value, ok := _u.mutation.InitializedAt(); ok {
 		_spec.SetField(system.FieldInitializedAt, field.TypeTime, value)

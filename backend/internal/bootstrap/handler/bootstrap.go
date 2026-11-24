@@ -1,8 +1,8 @@
-// Package handler exposes initial setup HTTP endpoints and DTOs.
+// Package handler exposes initial HTTP endpoints and DTOs.
 package handler
 
 import (
-	"blog-server/internal/setup/service"
+	"blog-server/internal/bootstrap/service"
 	"blog-server/internal/shared/errx"
 	"blog-server/internal/shared/httpx"
 	"blog-server/internal/shared/validatorx"
@@ -10,23 +10,23 @@ import (
 	"github.com/labstack/echo/v5"
 )
 
-type SetupHandler interface {
+type BootstrapHandler interface {
 	Status(c *echo.Context) error
 	Initialize(c *echo.Context) error
 }
 
-type setupHandler struct {
-	svc      service.SetupService
+type bootstrapHandler struct {
+	svc      service.BootstrapService
 	validate validatorx.Validator
 }
 
-func NewSetupHandler(svc service.SetupService, validate validatorx.Validator) SetupHandler {
-	return &setupHandler{
+func NewBootstrapHandler(svc service.BootstrapService, validate validatorx.Validator) BootstrapHandler {
+	return &bootstrapHandler{
 		svc, validate,
 	}
 }
 
-func (h *setupHandler) Initialize(c *echo.Context) error {
+func (h *bootstrapHandler) Initialize(c *echo.Context) error {
 	req := new(InitializeReq)
 	if err := c.Bind(req); err != nil {
 		return errx.New(errx.CodeInvalidParam, err)
@@ -44,6 +44,7 @@ func (h *setupHandler) Initialize(c *echo.Context) error {
 		Logo:        req.Logo,
 		Greeting:    req.Greeting,
 		Description: req.Description,
+		Token:       req.Token,
 	}
 
 	err := h.svc.Initialize(c.Request().Context(), input)
@@ -58,7 +59,7 @@ func (h *setupHandler) Initialize(c *echo.Context) error {
 	})
 }
 
-func (h *setupHandler) Status(c *echo.Context) error {
+func (h *bootstrapHandler) Status(c *echo.Context) error {
 	initialized, err := h.svc.Status(c.Request().Context())
 	if err != nil {
 		return err
@@ -71,8 +72,8 @@ func (h *setupHandler) Status(c *echo.Context) error {
 	})
 }
 
-func RegisterSetupRouter(r *echo.Group, h SetupHandler) {
-	group := r.Group("/setup")
+func RegisterBootstrapRouter(r *echo.Group, h BootstrapHandler) {
+	group := r.Group("/bootstrap")
 	group.GET("", h.Status)
 	group.POST("", h.Initialize)
 }

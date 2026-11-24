@@ -12,6 +12,8 @@ import (
 type SystemRepo interface {
 	IsInitialized(ctx context.Context) (bool, error)
 	IsInitializedForUpdate(ctx context.Context) (bool, error)
+	BootstrapTokenHash(ctx context.Context) (*string, error)
+	SetBootstrapTokenHash(ctx context.Context, hash string) error
 	MarkInitialized(ctx context.Context, initializedAt time.Time) error
 }
 
@@ -50,11 +52,37 @@ func (r *systemRepo) IsInitializedForUpdate(ctx context.Context) (bool, error) {
 	return s.Initialized, nil
 }
 
+func (r *systemRepo) BootstrapTokenHash(ctx context.Context) (*string, error) {
+	s, err := r.ds.Client(ctx).System.
+		Query().
+		Where(system.IDEQ(1)).
+		Only(ctx)
+	if err != nil {
+		return nil, errx.New(errx.CodeInternalError, err)
+	}
+
+	return s.BootstrapTokenHash, nil
+}
+
+func (r *systemRepo) SetBootstrapTokenHash(ctx context.Context, hash string) error {
+	_, err := r.ds.Client(ctx).System.
+		UpdateOneID(1).
+		SetBootstrapTokenHash(hash).
+		SetUpdatedAt(time.Now()).
+		Save(ctx)
+	if err != nil {
+		return errx.New(errx.CodeInternalError, err)
+	}
+
+	return nil
+}
+
 func (r *systemRepo) MarkInitialized(ctx context.Context, initializedAt time.Time) error {
 	_, err := r.ds.Client(ctx).System.
 		UpdateOneID(1).
 		SetInitialized(true).
 		SetInitializedAt(initializedAt).
+		SetNillableBootstrapTokenHash(nil).
 		SetUpdatedAt(time.Now()).
 		Save(ctx)
 	if err != nil {

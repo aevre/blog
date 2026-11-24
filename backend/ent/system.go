@@ -19,6 +19,8 @@ type System struct {
 	ID int `json:"id,omitempty"`
 	// Initialized holds the value of the "initialized" field.
 	Initialized bool `json:"initialized,omitempty"`
+	// BootstrapTokenHash holds the value of the "bootstrap_token_hash" field.
+	BootstrapTokenHash *string `json:"bootstrap_token_hash,omitempty"`
 	// InitializedAt holds the value of the "initialized_at" field.
 	InitializedAt time.Time `json:"initialized_at,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
@@ -37,6 +39,8 @@ func (*System) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case system.FieldID:
 			values[i] = new(sql.NullInt64)
+		case system.FieldBootstrapTokenHash:
+			values[i] = new(sql.NullString)
 		case system.FieldInitializedAt, system.FieldCreatedAt, system.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		default:
@@ -65,6 +69,13 @@ func (_m *System) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field initialized", values[i])
 			} else if value.Valid {
 				_m.Initialized = value.Bool
+			}
+		case system.FieldBootstrapTokenHash:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field bootstrap_token_hash", values[i])
+			} else if value.Valid {
+				_m.BootstrapTokenHash = new(string)
+				*_m.BootstrapTokenHash = value.String
 			}
 		case system.FieldInitializedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -122,6 +133,11 @@ func (_m *System) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("initialized=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Initialized))
+	builder.WriteString(", ")
+	if v := _m.BootstrapTokenHash; v != nil {
+		builder.WriteString("bootstrap_token_hash=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	builder.WriteString("initialized_at=")
 	builder.WriteString(_m.InitializedAt.Format(time.ANSIC))

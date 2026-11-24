@@ -9,4 +9,5 @@ type InitializeReq struct {
 	Logo            string `json:"logo" validate:"omitempty,url,max=2048"`
 	Greeting        string `json:"greeting" validate:"omitempty,max=255"`
 	Description     string `json:"description" validate:"omitempty,max=1000"`
+	Token           string `json:"token" validate:"required"`
 }
