@@ -26,3 +26,17 @@ func Up(ctx context.Context, db *sql.DB) error {
 
 	return nil
 }
+
+func Down(ctx context.Context, db *sql.DB) error {
+	goose.SetBaseFS(migrations)
+
+	if err := goose.SetDialect("postgres"); err != nil {
+		return fmt.Errorf("set migration dialect: %w", err)
+	}
+
+	if err := goose.DownContext(ctx, db, "."); err != nil {
+		return fmt.Errorf("run migrations: %w", err)
+	}
+
+	return nil
+}
