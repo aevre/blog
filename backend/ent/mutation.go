@@ -1640,26 +1640,28 @@ func (m *CommentMutation) ResetEdge(name string) error {
 // LinkMutation represents an operation that mutates the Link nodes in the graph.
 type LinkMutation struct {
 	config
-	op              Op
-	typ             string
-	id              *uint
-	created_at      *time.Time
-	updated_at      *time.Time
-	deleted_at      *time.Time
-	description     *string
-	enabled         *bool
-	name            *string
-	sort_order      *int
-	addsort_order   *int
-	url             *string
-	avatar          *string
-	status          *linkmodel.LinkStatus
-	clearedFields   map[string]struct{}
-	category        *uint
-	clearedcategory bool
-	done            bool
-	oldValue        func(context.Context) (*Link, error)
-	predicates      []predicate.Link
+	op               Op
+	typ              string
+	id               *uint
+	created_at       *time.Time
+	updated_at       *time.Time
+	deleted_at       *time.Time
+	description      *string
+	enabled          *bool
+	name             *string
+	sort_order       *int
+	addsort_order    *int
+	url              *string
+	avatar           *string
+	status           *linkmodel.LinkStatus
+	clearedFields    map[string]struct{}
+	category         *uint
+	clearedcategory  bool
+	submitter        *uint
+	clearedsubmitter bool
+	done             bool
+	oldValue         func(context.Context) (*Link, error)
+	predicates       []predicate.Link
 }
 
 var _ ent.Mutation = (*LinkMutation)(nil)
@@ -2149,6 +2151,42 @@ func (m *LinkMutation) ResetAvatar() {
 	delete(m.clearedFields, link.FieldAvatar)
 }
 
+// SetSubmitterID sets the "submitter_id" field.
+func (m *LinkMutation) SetSubmitterID(u uint) {
+	m.submitter = &u
+}
+
+// SubmitterID returns the value of the "submitter_id" field in the mutation.
+func (m *LinkMutation) SubmitterID() (r uint, exists bool) {
+	v := m.submitter
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSubmitterID returns the old "submitter_id" field's value of the Link entity.
+// If the Link object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LinkMutation) OldSubmitterID(ctx context.Context) (v uint, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSubmitterID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSubmitterID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSubmitterID: %w", err)
+	}
+	return oldValue.SubmitterID, nil
+}
+
+// ResetSubmitterID resets all changes to the "submitter_id" field.
+func (m *LinkMutation) ResetSubmitterID() {
+	m.submitter = nil
+}
+
 // SetStatus sets the "status" field.
 func (m *LinkMutation) SetStatus(ls linkmodel.LinkStatus) {
 	m.status = &ls
@@ -2261,6 +2299,33 @@ func (m *LinkMutation) ResetCategory() {
 	m.clearedcategory = false
 }
 
+// ClearSubmitter clears the "submitter" edge to the User entity.
+func (m *LinkMutation) ClearSubmitter() {
+	m.clearedsubmitter = true
+	m.clearedFields[link.FieldSubmitterID] = struct{}{}
+}
+
+// SubmitterCleared reports if the "submitter" edge to the User entity was cleared.
+func (m *LinkMutation) SubmitterCleared() bool {
+	return m.clearedsubmitter
+}
+
+// SubmitterIDs returns the "submitter" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// SubmitterID instead. It exists only for internal usage by the builders.
+func (m *LinkMutation) SubmitterIDs() (ids []uint) {
+	if id := m.submitter; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetSubmitter resets all changes to the "submitter" edge.
+func (m *LinkMutation) ResetSubmitter() {
+	m.submitter = nil
+	m.clearedsubmitter = false
+}
+
 // Where appends a list predicates to the LinkMutation builder.
 func (m *LinkMutation) Where(ps ...predicate.Link) {
 	m.predicates = append(m.predicates, ps...)
@@ -2295,7 +2360,7 @@ func (m *LinkMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *LinkMutation) Fields() []string {
-	fields := make([]string, 0, 11)
+	fields := make([]string, 0, 12)
 	if m.created_at != nil {
 		fields = append(fields, link.FieldCreatedAt)
 	}
@@ -2322,6 +2387,9 @@ func (m *LinkMutation) Fields() []string {
 	}
 	if m.avatar != nil {
 		fields = append(fields, link.FieldAvatar)
+	}
+	if m.submitter != nil {
+		fields = append(fields, link.FieldSubmitterID)
 	}
 	if m.status != nil {
 		fields = append(fields, link.FieldStatus)
@@ -2355,6 +2423,8 @@ func (m *LinkMutation) Field(name string) (ent.Value, bool) {
 		return m.URL()
 	case link.FieldAvatar:
 		return m.Avatar()
+	case link.FieldSubmitterID:
+		return m.SubmitterID()
 	case link.FieldStatus:
 		return m.Status()
 	case link.FieldCategoryID:
@@ -2386,6 +2456,8 @@ func (m *LinkMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldURL(ctx)
 	case link.FieldAvatar:
 		return m.OldAvatar(ctx)
+	case link.FieldSubmitterID:
+		return m.OldSubmitterID(ctx)
 	case link.FieldStatus:
 		return m.OldStatus(ctx)
 	case link.FieldCategoryID:
@@ -2461,6 +2533,13 @@ func (m *LinkMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetAvatar(v)
+		return nil
+	case link.FieldSubmitterID:
+		v, ok := value.(uint)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSubmitterID(v)
 		return nil
 	case link.FieldStatus:
 		v, ok := value.(linkmodel.LinkStatus)
@@ -2594,6 +2673,9 @@ func (m *LinkMutation) ResetField(name string) error {
 	case link.FieldAvatar:
 		m.ResetAvatar()
 		return nil
+	case link.FieldSubmitterID:
+		m.ResetSubmitterID()
+		return nil
 	case link.FieldStatus:
 		m.ResetStatus()
 		return nil
@@ -2606,9 +2688,12 @@ func (m *LinkMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *LinkMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.category != nil {
 		edges = append(edges, link.EdgeCategory)
+	}
+	if m.submitter != nil {
+		edges = append(edges, link.EdgeSubmitter)
 	}
 	return edges
 }
@@ -2621,13 +2706,17 @@ func (m *LinkMutation) AddedIDs(name string) []ent.Value {
 		if id := m.category; id != nil {
 			return []ent.Value{*id}
 		}
+	case link.EdgeSubmitter:
+		if id := m.submitter; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *LinkMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	return edges
 }
 
@@ -2639,9 +2728,12 @@ func (m *LinkMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *LinkMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.clearedcategory {
 		edges = append(edges, link.EdgeCategory)
+	}
+	if m.clearedsubmitter {
+		edges = append(edges, link.EdgeSubmitter)
 	}
 	return edges
 }
@@ -2652,6 +2744,8 @@ func (m *LinkMutation) EdgeCleared(name string) bool {
 	switch name {
 	case link.EdgeCategory:
 		return m.clearedcategory
+	case link.EdgeSubmitter:
+		return m.clearedsubmitter
 	}
 	return false
 }
@@ -2663,6 +2757,9 @@ func (m *LinkMutation) ClearEdge(name string) error {
 	case link.EdgeCategory:
 		m.ClearCategory()
 		return nil
+	case link.EdgeSubmitter:
+		m.ClearSubmitter()
+		return nil
 	}
 	return fmt.Errorf("unknown Link unique edge %s", name)
 }
@@ -2673,6 +2770,9 @@ func (m *LinkMutation) ResetEdge(name string) error {
 	switch name {
 	case link.EdgeCategory:
 		m.ResetCategory()
+		return nil
+	case link.EdgeSubmitter:
+		m.ResetSubmitter()
 		return nil
 	}
 	return fmt.Errorf("unknown Link edge %s", name)
@@ -8075,6 +8175,9 @@ type UserMutation struct {
 	sessions        map[uuid.UUID]struct{}
 	removedsessions map[uuid.UUID]struct{}
 	clearedsessions bool
+	links           map[uint]struct{}
+	removedlinks    map[uint]struct{}
+	clearedlinks    bool
 	done            bool
 	oldValue        func(context.Context) (*User, error)
 	predicates      []predicate.User
@@ -8642,6 +8745,60 @@ func (m *UserMutation) ResetSessions() {
 	m.removedsessions = nil
 }
 
+// AddLinkIDs adds the "links" edge to the Link entity by ids.
+func (m *UserMutation) AddLinkIDs(ids ...uint) {
+	if m.links == nil {
+		m.links = make(map[uint]struct{})
+	}
+	for i := range ids {
+		m.links[ids[i]] = struct{}{}
+	}
+}
+
+// ClearLinks clears the "links" edge to the Link entity.
+func (m *UserMutation) ClearLinks() {
+	m.clearedlinks = true
+}
+
+// LinksCleared reports if the "links" edge to the Link entity was cleared.
+func (m *UserMutation) LinksCleared() bool {
+	return m.clearedlinks
+}
+
+// RemoveLinkIDs removes the "links" edge to the Link entity by IDs.
+func (m *UserMutation) RemoveLinkIDs(ids ...uint) {
+	if m.removedlinks == nil {
+		m.removedlinks = make(map[uint]struct{})
+	}
+	for i := range ids {
+		delete(m.links, ids[i])
+		m.removedlinks[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedLinks returns the removed IDs of the "links" edge to the Link entity.
+func (m *UserMutation) RemovedLinksIDs() (ids []uint) {
+	for id := range m.removedlinks {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// LinksIDs returns the "links" edge IDs in the mutation.
+func (m *UserMutation) LinksIDs() (ids []uint) {
+	for id := range m.links {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetLinks resets all changes to the "links" edge.
+func (m *UserMutation) ResetLinks() {
+	m.links = nil
+	m.clearedlinks = false
+	m.removedlinks = nil
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -8926,12 +9083,15 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.posts != nil {
 		edges = append(edges, user.EdgePosts)
 	}
 	if m.sessions != nil {
 		edges = append(edges, user.EdgeSessions)
+	}
+	if m.links != nil {
+		edges = append(edges, user.EdgeLinks)
 	}
 	return edges
 }
@@ -8952,18 +9112,27 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeLinks:
+		ids := make([]ent.Value, 0, len(m.links))
+		for id := range m.links {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.removedposts != nil {
 		edges = append(edges, user.EdgePosts)
 	}
 	if m.removedsessions != nil {
 		edges = append(edges, user.EdgeSessions)
+	}
+	if m.removedlinks != nil {
+		edges = append(edges, user.EdgeLinks)
 	}
 	return edges
 }
@@ -8984,18 +9153,27 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeLinks:
+		ids := make([]ent.Value, 0, len(m.removedlinks))
+		for id := range m.removedlinks {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.clearedposts {
 		edges = append(edges, user.EdgePosts)
 	}
 	if m.clearedsessions {
 		edges = append(edges, user.EdgeSessions)
+	}
+	if m.clearedlinks {
+		edges = append(edges, user.EdgeLinks)
 	}
 	return edges
 }
@@ -9008,6 +9186,8 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 		return m.clearedposts
 	case user.EdgeSessions:
 		return m.clearedsessions
+	case user.EdgeLinks:
+		return m.clearedlinks
 	}
 	return false
 }
@@ -9029,6 +9209,9 @@ func (m *UserMutation) ResetEdge(name string) error {
 		return nil
 	case user.EdgeSessions:
 		m.ResetSessions()
+		return nil
+	case user.EdgeLinks:
+		m.ResetLinks()
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)

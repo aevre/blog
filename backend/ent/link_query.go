@@ -6,6 +6,7 @@ import (
 	"blog-server/ent/link"
 	"blog-server/ent/linkcategory"
 	"blog-server/ent/predicate"
+	"blog-server/ent/user"
 	"context"
 	"fmt"
 	"math"
@@ -20,12 +21,13 @@ import (
 // LinkQuery is the builder for querying Link entities.
 type LinkQuery struct {
 	config
-	ctx          *QueryContext
-	order        []link.OrderOption
-	inters       []Interceptor
-	predicates   []predicate.Link
-	withCategory *LinkCategoryQuery
-	modifiers    []func(*sql.Selector)
+	ctx           *QueryContext
+	order         []link.OrderOption
+	inters        []Interceptor
+	predicates    []predicate.Link
+	withCategory  *LinkCategoryQuery
+	withSubmitter *UserQuery
+	modifiers     []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -77,6 +79,28 @@ func (_q *LinkQuery) QueryCategory() *LinkCategoryQuery {
 			sqlgraph.From(link.Table, link.FieldID, selector),
 			sqlgraph.To(linkcategory.Table, linkcategory.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, link.CategoryTable, link.CategoryColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QuerySubmitter chains the current query on the "submitter" edge.
+func (_q *LinkQuery) QuerySubmitter() *UserQuery {
+	query := (&UserClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(link.Table, link.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, link.SubmitterTable, link.SubmitterColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -271,12 +295,13 @@ func (_q *LinkQuery) Clone() *LinkQuery {
 		return nil
 	}
 	return &LinkQuery{
-		config:       _q.config,
-		ctx:          _q.ctx.Clone(),
-		order:        append([]link.OrderOption{}, _q.order...),
-		inters:       append([]Interceptor{}, _q.inters...),
-		predicates:   append([]predicate.Link{}, _q.predicates...),
-		withCategory: _q.withCategory.Clone(),
+		config:        _q.config,
+		ctx:           _q.ctx.Clone(),
+		order:         append([]link.OrderOption{}, _q.order...),
+		inters:        append([]Interceptor{}, _q.inters...),
+		predicates:    append([]predicate.Link{}, _q.predicates...),
+		withCategory:  _q.withCategory.Clone(),
+		withSubmitter: _q.withSubmitter.Clone(),
 		// clone intermediate query.
 		sql:       _q.sql.Clone(),
 		path:      _q.path,
@@ -292,6 +317,17 @@ func (_q *LinkQuery) WithCategory(opts ...func(*LinkCategoryQuery)) *LinkQuery {
 		opt(query)
 	}
 	_q.withCategory = query
+	return _q
+}
+
+// WithSubmitter tells the query-builder to eager-load the nodes that are connected to
+// the "submitter" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *LinkQuery) WithSubmitter(opts ...func(*UserQuery)) *LinkQuery {
+	query := (&UserClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withSubmitter = query
 	return _q
 }
 
@@ -373,8 +409,9 @@ func (_q *LinkQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Link, e
 	var (
 		nodes       = []*Link{}
 		_spec       = _q.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			_q.withCategory != nil,
+			_q.withSubmitter != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -404,6 +441,12 @@ func (_q *LinkQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Link, e
 			return nil, err
 		}
 	}
+	if query := _q.withSubmitter; query != nil {
+		if err := _q.loadSubmitter(ctx, query, nodes, nil,
+			func(n *Link, e *User) { n.Edges.Submitter = e }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
@@ -429,6 +472,35 @@ func (_q *LinkQuery) loadCategory(ctx context.Context, query *LinkCategoryQuery,
 		nodes, ok := nodeids[n.ID]
 		if !ok {
 			return fmt.Errorf(`unexpected foreign-key "category_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (_q *LinkQuery) loadSubmitter(ctx context.Context, query *UserQuery, nodes []*Link, init func(*Link), assign func(*Link, *User)) error {
+	ids := make([]uint, 0, len(nodes))
+	nodeids := make(map[uint][]*Link)
+	for i := range nodes {
+		fk := nodes[i].SubmitterID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(user.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "submitter_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -467,6 +539,9 @@ func (_q *LinkQuery) querySpec() *sqlgraph.QuerySpec {
 		}
 		if _q.withCategory != nil {
 			_spec.Node.AddColumnOnce(link.FieldCategoryID)
+		}
+		if _q.withSubmitter != nil {
+			_spec.Node.AddColumnOnce(link.FieldSubmitterID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {

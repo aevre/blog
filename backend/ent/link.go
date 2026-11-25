@@ -5,6 +5,7 @@ package ent
 import (
 	"blog-server/ent/link"
 	"blog-server/ent/linkcategory"
+	"blog-server/ent/user"
 	linkmodel "blog-server/internal/link/model"
 	"fmt"
 	"strings"
@@ -37,6 +38,8 @@ type Link struct {
 	URL string `json:"url,omitempty"`
 	// Avatar holds the value of the "avatar" field.
 	Avatar string `json:"avatar,omitempty"`
+	// SubmitterID holds the value of the "submitter_id" field.
+	SubmitterID uint `json:"submitter_id,omitempty"`
 	// Status holds the value of the "status" field.
 	Status linkmodel.LinkStatus `json:"status,omitempty"`
 	// CategoryID holds the value of the "category_id" field.
@@ -51,9 +54,11 @@ type Link struct {
 type LinkEdges struct {
 	// Category holds the value of the category edge.
 	Category *LinkCategory `json:"category,omitempty"`
+	// Submitter holds the value of the submitter edge.
+	Submitter *User `json:"submitter,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // CategoryOrErr returns the Category value or an error if the edge
@@ -67,6 +72,17 @@ func (e LinkEdges) CategoryOrErr() (*LinkCategory, error) {
 	return nil, &NotLoadedError{edge: "category"}
 }
 
+// SubmitterOrErr returns the Submitter value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e LinkEdges) SubmitterOrErr() (*User, error) {
+	if e.Submitter != nil {
+		return e.Submitter, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: user.Label}
+	}
+	return nil, &NotLoadedError{edge: "submitter"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Link) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -74,7 +90,7 @@ func (*Link) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case link.FieldEnabled:
 			values[i] = new(sql.NullBool)
-		case link.FieldID, link.FieldSortOrder, link.FieldCategoryID:
+		case link.FieldID, link.FieldSortOrder, link.FieldSubmitterID, link.FieldCategoryID:
 			values[i] = new(sql.NullInt64)
 		case link.FieldDescription, link.FieldName, link.FieldURL, link.FieldAvatar, link.FieldStatus:
 			values[i] = new(sql.NullString)
@@ -156,6 +172,12 @@ func (_m *Link) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Avatar = value.String
 			}
+		case link.FieldSubmitterID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field submitter_id", values[i])
+			} else if value.Valid {
+				_m.SubmitterID = uint(value.Int64)
+			}
 		case link.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
@@ -184,6 +206,11 @@ func (_m *Link) Value(name string) (ent.Value, error) {
 // QueryCategory queries the "category" edge of the Link entity.
 func (_m *Link) QueryCategory() *LinkCategoryQuery {
 	return NewLinkClient(_m.config).QueryCategory(_m)
+}
+
+// QuerySubmitter queries the "submitter" edge of the Link entity.
+func (_m *Link) QuerySubmitter() *UserQuery {
+	return NewLinkClient(_m.config).QuerySubmitter(_m)
 }
 
 // Update returns a builder for updating this Link.
@@ -237,6 +264,9 @@ func (_m *Link) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("avatar=")
 	builder.WriteString(_m.Avatar)
+	builder.WriteString(", ")
+	builder.WriteString("submitter_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.SubmitterID))
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Status))

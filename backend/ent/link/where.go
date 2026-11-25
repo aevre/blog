@@ -101,6 +101,11 @@ func Avatar(v string) predicate.Link {
 	return predicate.Link(sql.FieldEQ(FieldAvatar, v))
 }
 
+// SubmitterID applies equality check predicate on the "submitter_id" field. It's identical to SubmitterIDEQ.
+func SubmitterID(v uint) predicate.Link {
+	return predicate.Link(sql.FieldEQ(FieldSubmitterID, v))
+}
+
 // CategoryID applies equality check predicate on the "category_id" field. It's identical to CategoryIDEQ.
 func CategoryID(v uint) predicate.Link {
 	return predicate.Link(sql.FieldEQ(FieldCategoryID, v))
@@ -566,6 +571,26 @@ func AvatarContainsFold(v string) predicate.Link {
 	return predicate.Link(sql.FieldContainsFold(FieldAvatar, v))
 }
 
+// SubmitterIDEQ applies the EQ predicate on the "submitter_id" field.
+func SubmitterIDEQ(v uint) predicate.Link {
+	return predicate.Link(sql.FieldEQ(FieldSubmitterID, v))
+}
+
+// SubmitterIDNEQ applies the NEQ predicate on the "submitter_id" field.
+func SubmitterIDNEQ(v uint) predicate.Link {
+	return predicate.Link(sql.FieldNEQ(FieldSubmitterID, v))
+}
+
+// SubmitterIDIn applies the In predicate on the "submitter_id" field.
+func SubmitterIDIn(vs ...uint) predicate.Link {
+	return predicate.Link(sql.FieldIn(FieldSubmitterID, vs...))
+}
+
+// SubmitterIDNotIn applies the NotIn predicate on the "submitter_id" field.
+func SubmitterIDNotIn(vs ...uint) predicate.Link {
+	return predicate.Link(sql.FieldNotIn(FieldSubmitterID, vs...))
+}
+
 // StatusEQ applies the EQ predicate on the "status" field.
 func StatusEQ(v linkmodel.LinkStatus) predicate.Link {
 	vc := v
@@ -641,6 +666,29 @@ func HasCategory() predicate.Link {
 func HasCategoryWith(preds ...predicate.LinkCategory) predicate.Link {
 	return predicate.Link(func(s *sql.Selector) {
 		step := newCategoryStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasSubmitter applies the HasEdge predicate on the "submitter" edge.
+func HasSubmitter() predicate.Link {
+	return predicate.Link(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, SubmitterTable, SubmitterColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasSubmitterWith applies the HasEdge predicate on the "submitter" edge with a given conditions (other predicates).
+func HasSubmitterWith(preds ...predicate.User) predicate.Link {
+	return predicate.Link(func(s *sql.Selector) {
+		step := newSubmitterStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

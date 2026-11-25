@@ -97,6 +97,7 @@ var (
 		{Name: "avatar", Type: field.TypeString, Nullable: true, Size: 255},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"normal", "abnormal"}, Default: "normal"},
 		{Name: "category_id", Type: field.TypeUint, Nullable: true},
+		{Name: "submitter_id", Type: field.TypeUint},
 	}
 	// LinksTable holds the schema information for the "links" table.
 	LinksTable = &schema.Table{
@@ -109,6 +110,12 @@ var (
 				Columns:    []*schema.Column{LinksColumns[11]},
 				RefColumns: []*schema.Column{LinkCategoriesColumns[0]},
 				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "links_users_links",
+				Columns:    []*schema.Column{LinksColumns[12]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
 			},
 		},
 	}
@@ -315,6 +322,7 @@ func init() {
 		Table: "account_sessions",
 	}
 	LinksTable.ForeignKeys[0].RefTable = LinkCategoriesTable
+	LinksTable.ForeignKeys[1].RefTable = UsersTable
 	PostsTable.ForeignKeys[0].RefTable = UsersTable
 	PostCategoryRelationsTable.ForeignKeys[0].RefTable = PostsTable
 	PostCategoryRelationsTable.ForeignKeys[1].RefTable = PostCategoriesTable

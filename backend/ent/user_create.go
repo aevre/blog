@@ -4,6 +4,7 @@ package ent
 
 import (
 	"blog-server/ent/accountsession"
+	"blog-server/ent/link"
 	"blog-server/ent/post"
 	"blog-server/ent/user"
 	accountmodel "blog-server/internal/account/model"
@@ -162,6 +163,21 @@ func (_c *UserCreate) AddSessions(v ...*AccountSession) *UserCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddSessionIDs(ids...)
+}
+
+// AddLinkIDs adds the "links" edge to the Link entity by IDs.
+func (_c *UserCreate) AddLinkIDs(ids ...uint) *UserCreate {
+	_c.mutation.AddLinkIDs(ids...)
+	return _c
+}
+
+// AddLinks adds the "links" edges to the Link entity.
+func (_c *UserCreate) AddLinks(v ...*Link) *UserCreate {
+	ids := make([]uint, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddLinkIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -359,6 +375,22 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(accountsession.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.LinksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LinksTable,
+			Columns: []string{user.LinksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(link.FieldID, field.TypeUint),
 			},
 		}
 		for _, k := range nodes {

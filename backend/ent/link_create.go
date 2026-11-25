@@ -5,6 +5,7 @@ package ent
 import (
 	"blog-server/ent/link"
 	"blog-server/ent/linkcategory"
+	"blog-server/ent/user"
 	linkmodel "blog-server/internal/link/model"
 	"context"
 	"errors"
@@ -134,6 +135,12 @@ func (_c *LinkCreate) SetNillableAvatar(v *string) *LinkCreate {
 	return _c
 }
 
+// SetSubmitterID sets the "submitter_id" field.
+func (_c *LinkCreate) SetSubmitterID(v uint) *LinkCreate {
+	_c.mutation.SetSubmitterID(v)
+	return _c
+}
+
 // SetStatus sets the "status" field.
 func (_c *LinkCreate) SetStatus(v linkmodel.LinkStatus) *LinkCreate {
 	_c.mutation.SetStatus(v)
@@ -171,6 +178,11 @@ func (_c *LinkCreate) SetID(v uint) *LinkCreate {
 // SetCategory sets the "category" edge to the LinkCategory entity.
 func (_c *LinkCreate) SetCategory(v *LinkCategory) *LinkCreate {
 	return _c.SetCategoryID(v.ID)
+}
+
+// SetSubmitter sets the "submitter" edge to the User entity.
+func (_c *LinkCreate) SetSubmitter(v *User) *LinkCreate {
+	return _c.SetSubmitterID(v.ID)
 }
 
 // Mutation returns the LinkMutation object of the builder.
@@ -270,6 +282,9 @@ func (_c *LinkCreate) check() error {
 			return &ValidationError{Name: "avatar", err: fmt.Errorf(`ent: validator failed for field "Link.avatar": %w`, err)}
 		}
 	}
+	if _, ok := _c.mutation.SubmitterID(); !ok {
+		return &ValidationError{Name: "submitter_id", err: errors.New(`ent: missing required field "Link.submitter_id"`)}
+	}
 	if _, ok := _c.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "Link.status"`)}
 	}
@@ -277,6 +292,9 @@ func (_c *LinkCreate) check() error {
 		if err := link.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Link.status": %w`, err)}
 		}
+	}
+	if len(_c.mutation.SubmitterIDs()) == 0 {
+		return &ValidationError{Name: "submitter", err: errors.New(`ent: missing required edge "Link.submitter"`)}
 	}
 	return nil
 }
@@ -366,6 +384,23 @@ func (_c *LinkCreate) createSpec() (*Link, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.CategoryID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.SubmitterIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   link.SubmitterTable,
+			Columns: []string{link.SubmitterColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUint),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.SubmitterID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
@@ -549,6 +584,18 @@ func (u *LinkUpsert) UpdateAvatar() *LinkUpsert {
 // ClearAvatar clears the value of the "avatar" field.
 func (u *LinkUpsert) ClearAvatar() *LinkUpsert {
 	u.SetNull(link.FieldAvatar)
+	return u
+}
+
+// SetSubmitterID sets the "submitter_id" field.
+func (u *LinkUpsert) SetSubmitterID(v uint) *LinkUpsert {
+	u.Set(link.FieldSubmitterID, v)
+	return u
+}
+
+// UpdateSubmitterID sets the "submitter_id" field to the value that was provided on create.
+func (u *LinkUpsert) UpdateSubmitterID() *LinkUpsert {
+	u.SetExcluded(link.FieldSubmitterID)
 	return u
 }
 
@@ -781,6 +828,20 @@ func (u *LinkUpsertOne) UpdateAvatar() *LinkUpsertOne {
 func (u *LinkUpsertOne) ClearAvatar() *LinkUpsertOne {
 	return u.Update(func(s *LinkUpsert) {
 		s.ClearAvatar()
+	})
+}
+
+// SetSubmitterID sets the "submitter_id" field.
+func (u *LinkUpsertOne) SetSubmitterID(v uint) *LinkUpsertOne {
+	return u.Update(func(s *LinkUpsert) {
+		s.SetSubmitterID(v)
+	})
+}
+
+// UpdateSubmitterID sets the "submitter_id" field to the value that was provided on create.
+func (u *LinkUpsertOne) UpdateSubmitterID() *LinkUpsertOne {
+	return u.Update(func(s *LinkUpsert) {
+		s.UpdateSubmitterID()
 	})
 }
 
@@ -1184,6 +1245,20 @@ func (u *LinkUpsertBulk) UpdateAvatar() *LinkUpsertBulk {
 func (u *LinkUpsertBulk) ClearAvatar() *LinkUpsertBulk {
 	return u.Update(func(s *LinkUpsert) {
 		s.ClearAvatar()
+	})
+}
+
+// SetSubmitterID sets the "submitter_id" field.
+func (u *LinkUpsertBulk) SetSubmitterID(v uint) *LinkUpsertBulk {
+	return u.Update(func(s *LinkUpsert) {
+		s.SetSubmitterID(v)
+	})
+}
+
+// UpdateSubmitterID sets the "submitter_id" field to the value that was provided on create.
+func (u *LinkUpsertBulk) UpdateSubmitterID() *LinkUpsertBulk {
+	return u.Update(func(s *LinkUpsert) {
+		s.UpdateSubmitterID()
 	})
 }
 

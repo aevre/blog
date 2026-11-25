@@ -6,6 +6,7 @@ import (
 	"blog-server/ent/link"
 	"blog-server/ent/linkcategory"
 	"blog-server/ent/predicate"
+	"blog-server/ent/user"
 	linkmodel "blog-server/internal/link/model"
 	"context"
 	"errors"
@@ -182,6 +183,20 @@ func (_u *LinkUpdate) ClearAvatar() *LinkUpdate {
 	return _u
 }
 
+// SetSubmitterID sets the "submitter_id" field.
+func (_u *LinkUpdate) SetSubmitterID(v uint) *LinkUpdate {
+	_u.mutation.SetSubmitterID(v)
+	return _u
+}
+
+// SetNillableSubmitterID sets the "submitter_id" field if the given value is not nil.
+func (_u *LinkUpdate) SetNillableSubmitterID(v *uint) *LinkUpdate {
+	if v != nil {
+		_u.SetSubmitterID(*v)
+	}
+	return _u
+}
+
 // SetStatus sets the "status" field.
 func (_u *LinkUpdate) SetStatus(v linkmodel.LinkStatus) *LinkUpdate {
 	_u.mutation.SetStatus(v)
@@ -221,6 +236,11 @@ func (_u *LinkUpdate) SetCategory(v *LinkCategory) *LinkUpdate {
 	return _u.SetCategoryID(v.ID)
 }
 
+// SetSubmitter sets the "submitter" edge to the User entity.
+func (_u *LinkUpdate) SetSubmitter(v *User) *LinkUpdate {
+	return _u.SetSubmitterID(v.ID)
+}
+
 // Mutation returns the LinkMutation object of the builder.
 func (_u *LinkUpdate) Mutation() *LinkMutation {
 	return _u.mutation
@@ -229,6 +249,12 @@ func (_u *LinkUpdate) Mutation() *LinkMutation {
 // ClearCategory clears the "category" edge to the LinkCategory entity.
 func (_u *LinkUpdate) ClearCategory() *LinkUpdate {
 	_u.mutation.ClearCategory()
+	return _u
+}
+
+// ClearSubmitter clears the "submitter" edge to the User entity.
+func (_u *LinkUpdate) ClearSubmitter() *LinkUpdate {
+	_u.mutation.ClearSubmitter()
 	return _u
 }
 
@@ -285,6 +311,9 @@ func (_u *LinkUpdate) check() error {
 		if err := link.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Link.status": %w`, err)}
 		}
+	}
+	if _u.mutation.SubmitterCleared() && len(_u.mutation.SubmitterIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Link.submitter"`)
 	}
 	return nil
 }
@@ -371,6 +400,35 @@ func (_u *LinkUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(linkcategory.FieldID, field.TypeUint),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SubmitterCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   link.SubmitterTable,
+			Columns: []string{link.SubmitterColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUint),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SubmitterIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   link.SubmitterTable,
+			Columns: []string{link.SubmitterColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUint),
 			},
 		}
 		for _, k := range nodes {
@@ -551,6 +609,20 @@ func (_u *LinkUpdateOne) ClearAvatar() *LinkUpdateOne {
 	return _u
 }
 
+// SetSubmitterID sets the "submitter_id" field.
+func (_u *LinkUpdateOne) SetSubmitterID(v uint) *LinkUpdateOne {
+	_u.mutation.SetSubmitterID(v)
+	return _u
+}
+
+// SetNillableSubmitterID sets the "submitter_id" field if the given value is not nil.
+func (_u *LinkUpdateOne) SetNillableSubmitterID(v *uint) *LinkUpdateOne {
+	if v != nil {
+		_u.SetSubmitterID(*v)
+	}
+	return _u
+}
+
 // SetStatus sets the "status" field.
 func (_u *LinkUpdateOne) SetStatus(v linkmodel.LinkStatus) *LinkUpdateOne {
 	_u.mutation.SetStatus(v)
@@ -590,6 +662,11 @@ func (_u *LinkUpdateOne) SetCategory(v *LinkCategory) *LinkUpdateOne {
 	return _u.SetCategoryID(v.ID)
 }
 
+// SetSubmitter sets the "submitter" edge to the User entity.
+func (_u *LinkUpdateOne) SetSubmitter(v *User) *LinkUpdateOne {
+	return _u.SetSubmitterID(v.ID)
+}
+
 // Mutation returns the LinkMutation object of the builder.
 func (_u *LinkUpdateOne) Mutation() *LinkMutation {
 	return _u.mutation
@@ -598,6 +675,12 @@ func (_u *LinkUpdateOne) Mutation() *LinkMutation {
 // ClearCategory clears the "category" edge to the LinkCategory entity.
 func (_u *LinkUpdateOne) ClearCategory() *LinkUpdateOne {
 	_u.mutation.ClearCategory()
+	return _u
+}
+
+// ClearSubmitter clears the "submitter" edge to the User entity.
+func (_u *LinkUpdateOne) ClearSubmitter() *LinkUpdateOne {
+	_u.mutation.ClearSubmitter()
 	return _u
 }
 
@@ -667,6 +750,9 @@ func (_u *LinkUpdateOne) check() error {
 		if err := link.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Link.status": %w`, err)}
 		}
+	}
+	if _u.mutation.SubmitterCleared() && len(_u.mutation.SubmitterIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Link.submitter"`)
 	}
 	return nil
 }
@@ -770,6 +856,35 @@ func (_u *LinkUpdateOne) sqlSave(ctx context.Context) (_node *Link, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(linkcategory.FieldID, field.TypeUint),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SubmitterCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   link.SubmitterTable,
+			Columns: []string{link.SubmitterColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUint),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SubmitterIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   link.SubmitterTable,
+			Columns: []string{link.SubmitterColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUint),
 			},
 		}
 		for _, k := range nodes {

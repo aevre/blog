@@ -878,6 +878,22 @@ func (c *LinkClient) QueryCategory(_m *Link) *LinkCategoryQuery {
 	return query
 }
 
+// QuerySubmitter queries the submitter edge of a Link.
+func (c *LinkClient) QuerySubmitter(_m *Link) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(link.Table, link.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, link.SubmitterTable, link.SubmitterColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *LinkClient) Hooks() []Hook {
 	return c.hooks.Link
@@ -2226,6 +2242,22 @@ func (c *UserClient) QuerySessions(_m *User) *AccountSessionQuery {
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(accountsession.Table, accountsession.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.SessionsTable, user.SessionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLinks queries the links edge of a User.
+func (c *UserClient) QueryLinks(_m *User) *LinkQuery {
+	query := (&LinkClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(link.Table, link.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.LinksTable, user.LinksColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil

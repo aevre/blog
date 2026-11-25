@@ -34,12 +34,16 @@ const (
 	FieldURL = "url"
 	// FieldAvatar holds the string denoting the avatar field in the database.
 	FieldAvatar = "avatar"
+	// FieldSubmitterID holds the string denoting the submitter_id field in the database.
+	FieldSubmitterID = "submitter_id"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
 	// FieldCategoryID holds the string denoting the category_id field in the database.
 	FieldCategoryID = "category_id"
 	// EdgeCategory holds the string denoting the category edge name in mutations.
 	EdgeCategory = "category"
+	// EdgeSubmitter holds the string denoting the submitter edge name in mutations.
+	EdgeSubmitter = "submitter"
 	// Table holds the table name of the link in the database.
 	Table = "links"
 	// CategoryTable is the table that holds the category relation/edge.
@@ -49,6 +53,13 @@ const (
 	CategoryInverseTable = "link_categories"
 	// CategoryColumn is the table column denoting the category relation/edge.
 	CategoryColumn = "category_id"
+	// SubmitterTable is the table that holds the submitter relation/edge.
+	SubmitterTable = "links"
+	// SubmitterInverseTable is the table name for the User entity.
+	// It exists in this package in order to avoid circular dependency with the "user" package.
+	SubmitterInverseTable = "users"
+	// SubmitterColumn is the table column denoting the submitter relation/edge.
+	SubmitterColumn = "submitter_id"
 )
 
 // Columns holds all SQL columns for link fields.
@@ -63,6 +74,7 @@ var Columns = []string{
 	FieldSortOrder,
 	FieldURL,
 	FieldAvatar,
+	FieldSubmitterID,
 	FieldStatus,
 	FieldCategoryID,
 }
@@ -161,6 +173,11 @@ func ByAvatar(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAvatar, opts...).ToFunc()
 }
 
+// BySubmitterID orders the results by the submitter_id field.
+func BySubmitterID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSubmitterID, opts...).ToFunc()
+}
+
 // ByStatus orders the results by the status field.
 func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStatus, opts...).ToFunc()
@@ -177,10 +194,24 @@ func ByCategoryField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newCategoryStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// BySubmitterField orders the results by submitter field.
+func BySubmitterField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newSubmitterStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newCategoryStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(CategoryInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, CategoryTable, CategoryColumn),
+	)
+}
+func newSubmitterStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(SubmitterInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, SubmitterTable, SubmitterColumn),
 	)
 }

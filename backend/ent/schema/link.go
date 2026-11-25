@@ -43,6 +43,8 @@ func (Link) Fields() []ent.Field {
 			MaxLen(255).
 			Optional(),
 
+		field.Uint("submitter_id"),
+
 		field.Enum("status").
 			GoType(linkmodel.LinkStatus("")).
 			Default(string(linkmodel.LinkStatusNormal)),
@@ -60,5 +62,11 @@ func (Link) Edges() []ent.Edge {
 			Ref("links").
 			Unique().
 			Field("category_id"),
+
+		edge.From("submitter", User.Type).
+			Ref("links").
+			Field("submitter_id").
+			Unique().
+			Required(),
 	}
 }

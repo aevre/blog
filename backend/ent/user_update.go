@@ -4,6 +4,7 @@ package ent
 
 import (
 	"blog-server/ent/accountsession"
+	"blog-server/ent/link"
 	"blog-server/ent/post"
 	"blog-server/ent/predicate"
 	"blog-server/ent/user"
@@ -201,6 +202,21 @@ func (_u *UserUpdate) AddSessions(v ...*AccountSession) *UserUpdate {
 	return _u.AddSessionIDs(ids...)
 }
 
+// AddLinkIDs adds the "links" edge to the Link entity by IDs.
+func (_u *UserUpdate) AddLinkIDs(ids ...uint) *UserUpdate {
+	_u.mutation.AddLinkIDs(ids...)
+	return _u
+}
+
+// AddLinks adds the "links" edges to the Link entity.
+func (_u *UserUpdate) AddLinks(v ...*Link) *UserUpdate {
+	ids := make([]uint, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddLinkIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdate) Mutation() *UserMutation {
 	return _u.mutation
@@ -246,6 +262,27 @@ func (_u *UserUpdate) RemoveSessions(v ...*AccountSession) *UserUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveSessionIDs(ids...)
+}
+
+// ClearLinks clears all "links" edges to the Link entity.
+func (_u *UserUpdate) ClearLinks() *UserUpdate {
+	_u.mutation.ClearLinks()
+	return _u
+}
+
+// RemoveLinkIDs removes the "links" edge to Link entities by IDs.
+func (_u *UserUpdate) RemoveLinkIDs(ids ...uint) *UserUpdate {
+	_u.mutation.RemoveLinkIDs(ids...)
+	return _u
+}
+
+// RemoveLinks removes "links" edges to Link entities.
+func (_u *UserUpdate) RemoveLinks(v ...*Link) *UserUpdate {
+	ids := make([]uint, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveLinkIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -446,6 +483,51 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.LinksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LinksTable,
+			Columns: []string{user.LinksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(link.FieldID, field.TypeUint),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedLinksIDs(); len(nodes) > 0 && !_u.mutation.LinksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LinksTable,
+			Columns: []string{user.LinksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(link.FieldID, field.TypeUint),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.LinksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LinksTable,
+			Columns: []string{user.LinksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(link.FieldID, field.TypeUint),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -636,6 +718,21 @@ func (_u *UserUpdateOne) AddSessions(v ...*AccountSession) *UserUpdateOne {
 	return _u.AddSessionIDs(ids...)
 }
 
+// AddLinkIDs adds the "links" edge to the Link entity by IDs.
+func (_u *UserUpdateOne) AddLinkIDs(ids ...uint) *UserUpdateOne {
+	_u.mutation.AddLinkIDs(ids...)
+	return _u
+}
+
+// AddLinks adds the "links" edges to the Link entity.
+func (_u *UserUpdateOne) AddLinks(v ...*Link) *UserUpdateOne {
+	ids := make([]uint, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddLinkIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdateOne) Mutation() *UserMutation {
 	return _u.mutation
@@ -681,6 +778,27 @@ func (_u *UserUpdateOne) RemoveSessions(v ...*AccountSession) *UserUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveSessionIDs(ids...)
+}
+
+// ClearLinks clears all "links" edges to the Link entity.
+func (_u *UserUpdateOne) ClearLinks() *UserUpdateOne {
+	_u.mutation.ClearLinks()
+	return _u
+}
+
+// RemoveLinkIDs removes the "links" edge to Link entities by IDs.
+func (_u *UserUpdateOne) RemoveLinkIDs(ids ...uint) *UserUpdateOne {
+	_u.mutation.RemoveLinkIDs(ids...)
+	return _u
+}
+
+// RemoveLinks removes "links" edges to Link entities.
+func (_u *UserUpdateOne) RemoveLinks(v ...*Link) *UserUpdateOne {
+	ids := make([]uint, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveLinkIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -904,6 +1022,51 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(accountsession.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.LinksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LinksTable,
+			Columns: []string{user.LinksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(link.FieldID, field.TypeUint),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedLinksIDs(); len(nodes) > 0 && !_u.mutation.LinksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LinksTable,
+			Columns: []string{user.LinksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(link.FieldID, field.TypeUint),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.LinksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LinksTable,
+			Columns: []string{user.LinksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(link.FieldID, field.TypeUint),
 			},
 		}
 		for _, k := range nodes {

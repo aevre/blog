@@ -55,7 +55,10 @@ func (User) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.
 			To("posts", Post.Type),
+
 		edge.To("sessions", AccountSession.Type).
 			Annotations(entsql.OnDelete(entsql.Cascade)),
+
+		edge.To("links", Link.Type),
 	}
 }
