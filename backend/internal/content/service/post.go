@@ -4,19 +4,20 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
 
-	accountmodel "blog-server/internal/account/model"
 	"blog-server/internal/authz"
 	contentmodel "blog-server/internal/content/model"
 	"blog-server/internal/content/repository"
 	"blog-server/internal/platform/cache"
-	"blog-server/internal/platform/logging"
+	logger "blog-server/internal/platform/logging"
 	"blog-server/internal/shared/contextx"
+	"blog-server/internal/shared/errx"
 	"blog-server/internal/shared/txmgr"
 )
 
@@ -72,7 +73,7 @@ type postService struct {
 	log   logger.Logger
 	rc    viewCounter
 	pr    repository.PostRepo
-	authz *authz.Authorizer
+	authz authz.Authorizer
 }
 
 // NewPostService creates and returns a new PostService instance.
@@ -81,7 +82,7 @@ func NewPostService(
 	log logger.Logger,
 	pr repository.PostRepo,
 	rc *cache.Client,
-	authz *authz.Authorizer,
+	authz authz.Authorizer,
 ) PostService {
 	return &postService{
 		log:   log,
@@ -90,6 +91,13 @@ func NewPostService(
 		pr:    pr,
 		authz: authz,
 	}
+}
+
+func (s *postService) requireAdmin(user contextx.User, action authz.Action) error {
+	if user.ID == 0 {
+		return errx.New(errx.CodeUnauthorized, errors.New("missing actor"))
+	}
+	return s.authz.Require(user.Role, authz.ResourcePost, action)
 }
 
 // GetPosts retrieves all published posts with pagination.
@@ -159,9 +167,10 @@ func (s *postService) GetPostByID(ctx context.Context, id uint) (*contentmodel.P
 
 // CreatePost creates a new post with tags and categories.
 func (s *postService) CreatePost(ctx context.Context, user contextx.User, input *CreatePostInput) (*contentmodel.Post, error) {
-	if err := s.authz.Authorize(ctx, user.ID, user.Role, authz.ResourcePost, authz.ActionCreate, nil); err != nil {
+	if err := s.requireAdmin(user, authz.ActionCreate); err != nil {
 		return nil, err
 	}
+
 	contentLength := utf8.RuneCountInString(input.Content)
 
 	readTime := uint(max(1, (contentLength+199)/200))
@@ -175,13 +184,13 @@ func (s *postService) CreatePost(ctx context.Context, user contextx.User, input 
 		UserID:          user.ID,
 		Status:          input.Status,
 	}
-	var err error
 
-	err = s.tx.WithTx(ctx, func(ctx context.Context) error {
-		post, err = s.pr.Create(ctx, post)
+	err := s.tx.WithTx(ctx, func(ctx context.Context) error {
+		created, err := s.pr.Create(ctx, post)
 		if err != nil {
 			return err
 		}
+		post = created
 
 		if err = s.pr.AddTags(ctx, post.ID, input.Tags); err != nil {
 			return err
@@ -191,10 +200,7 @@ func (s *postService) CreatePost(ctx context.Context, user contextx.User, input 
 		}
 
 		post, err = s.pr.GetAdminListItemByID(ctx, post.ID)
-		if err != nil {
-			return err
-		}
-		return nil
+		return err
 	})
 	if err != nil {
 		return nil, err
@@ -205,32 +211,32 @@ func (s *postService) CreatePost(ctx context.Context, user contextx.User, input 
 
 // AdminGetPosts retrieves all posts inclueing drafts for admin.
 func (s *postService) AdminGetPosts(ctx context.Context, user contextx.User, status *contentmodel.PostStatus, keyword *string, page, pageSize int) ([]*contentmodel.Post, int, error) {
-	if user.Role != accountmodel.UserRoleAdmin {
-		return nil, 0, authz.ErrForbidden()
+	if err := s.requireAdmin(user, authz.ActionRead); err != nil {
+		return nil, 0, err
 	}
 	count, err := s.pr.CountAll(ctx, status, keyword)
 	if err != nil {
 		return nil, 0, err
 	}
-	ps, err := s.pr.ListAll(ctx, status, keyword, page, pageSize)
+	posts, err := s.pr.ListAll(ctx, status, keyword, page, pageSize)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	return ps, count, nil
+	return posts, count, nil
 }
 
 // AdminGetPostByID retrieves a single post by ID for admin.
 func (s *postService) AdminGetPostByID(ctx context.Context, user contextx.User, id uint) (*contentmodel.Post, error) {
-	if user.Role != accountmodel.UserRoleAdmin {
-		return nil, authz.ErrForbidden()
+	if err := s.requireAdmin(user, authz.ActionRead); err != nil {
+		return nil, err
 	}
 	return s.pr.GetByID(ctx, id)
 }
 
 // UpdatePost updates a post with tags and categories.
 func (s *postService) UpdatePost(ctx context.Context, user contextx.User, input *UpdatePostInput) (*contentmodel.Post, error) {
-	if err := s.authz.Authorize(ctx, user.ID, user.Role, authz.ResourcePost, authz.ActionUpdate, &input.ID); err != nil {
+	if err := s.requireAdmin(user, authz.ActionUpdate); err != nil {
 		return nil, err
 	}
 
@@ -258,23 +264,23 @@ func (s *postService) UpdatePost(ctx context.Context, user contextx.User, input 
 
 	version, versionErr := s.pr.PublishedVersion(ctx, input.ID)
 	err := s.tx.WithTx(ctx, func(ctx context.Context) error {
-		var err error
-		if err = s.pr.Update(ctx, post); err != nil {
+		if err := s.pr.Update(ctx, post); err != nil {
 			return err
 		}
 
 		if input.Tags != nil {
-			if err = s.pr.SetTags(ctx, input.ID, *input.Tags); err != nil {
+			if err := s.pr.SetTags(ctx, input.ID, *input.Tags); err != nil {
 				return err
 			}
 		}
 
 		if input.CategoryIDs != nil {
-			if err = s.pr.SetCategories(ctx, input.ID, *input.CategoryIDs); err != nil {
+			if err := s.pr.SetCategories(ctx, input.ID, *input.CategoryIDs); err != nil {
 				return err
 			}
 		}
 
+		var err error
 		post, err = s.pr.GetAdminListItemByID(ctx, input.ID)
 		if err != nil {
 			return err
@@ -300,7 +306,7 @@ func (s *postService) invalidateDetail(ctx context.Context, id uint, version tim
 
 // DeletePost soft-deletes a post.
 func (s *postService) DeletePost(ctx context.Context, user contextx.User, id uint) error {
-	if err := s.authz.Authorize(ctx, user.ID, user.Role, authz.ResourcePost, authz.ActionDelete, &id); err != nil {
+	if err := s.requireAdmin(user, authz.ActionDelete); err != nil {
 		return err
 	}
 	version, err := s.pr.PublishedVersion(ctx, id)

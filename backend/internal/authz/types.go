@@ -14,6 +14,7 @@ const (
 	ActionRead   Action = "read"
 	ActionUpdate Action = "update"
 	ActionDelete Action = "delete"
+	ActionReview Action = "review"
 )
 
 type Permission struct {

@@ -14,11 +14,27 @@ var rolePermissions = map[accountmodel.UserRole][]Permission{
 		{ResourcePost, ActionDelete},
 
 		{ResourceLink, ActionCreate},
+		{ResourceLink, ActionRead},
 		{ResourceLink, ActionUpdate},
 		{ResourceLink, ActionDelete},
+		{ResourceLink, ActionReview},
 	},
 
 	accountmodel.UserRoleReader: {
 		{ResourcePost, ActionRead},
+
+		{ResourceLink, ActionCreate},
+		{ResourceLink, ActionRead},
+		{ResourceLink, ActionUpdate},
 	},
+}
+
+func can(role accountmodel.UserRole, resource Resource, action Action) bool {
+	for _, p := range rolePermissions[role] {
+		if p.Resource == resource && p.Action == action {
+			return true
+		}
+	}
+
+	return false
 }
