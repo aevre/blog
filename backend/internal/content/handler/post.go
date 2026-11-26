@@ -118,7 +118,6 @@ func (h *postHandler) CreatePost(c *echo.Context) error {
 		Summary:     req.Summary,
 		Cover:       req.Cover,
 		Content:     req.Content,
-		UserID:      u.ID,
 		Status:      req.Status,
 		Tags:        req.Tags,
 		CategoryIDs: req.CategoryIDs,

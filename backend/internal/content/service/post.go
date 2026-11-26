@@ -43,8 +43,6 @@ type CreatePostInput struct {
 	Cover   *string
 	Status  contentmodel.PostStatus
 
-	UserID uint
-
 	CategoryIDs []uint
 	Tags        []uint
 }
