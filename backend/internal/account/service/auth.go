@@ -138,6 +138,7 @@ func (s *authService) Register(ctx context.Context, input *RegisterInput) (*Auth
 		UUID:     uuid.New(),
 		Email:    input.Email,
 		Username: accountmodel.GenerateUsername(),
+		Role:     accountmodel.UserRoleReader,
 	}
 
 	var created *accountmodel.User
