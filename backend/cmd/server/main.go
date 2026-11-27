@@ -16,12 +16,14 @@ import (
 	"blog-server/internal/platform/cache"
 	"blog-server/internal/platform/config"
 	"blog-server/internal/platform/database"
+	"blog-server/internal/platform/email"
 	logger "blog-server/internal/platform/logging"
 	"blog-server/internal/platform/middleware"
 	"blog-server/internal/scheduler"
 	"blog-server/internal/shared/validatorx"
 	"blog-server/internal/summary"
 	"blog-server/migration"
+	"blog-server/templates"
 
 	"github.com/labstack/echo/v5"
 	"go.uber.org/fx"
@@ -52,10 +54,12 @@ func applicationOptions() fx.Option {
 			summary.Module(),
 			api.Module(),
 			scheduler.Module(),
+			email.Module(),
 		),
 		fx.Provide(
 			validatorx.NewValidator,
 			middleware.NewAuthMiddleware,
+			templates.NewTemplates,
 			providerEchoApp,
 		),
 		fx.Invoke(

@@ -55,6 +55,7 @@ require (
 	github.com/mfridman/interpolate v0.2.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.4.3 // indirect
+	github.com/resend/resend-go/v4 v4.15.0 // indirect
 	github.com/sagikazarmark/locafero v0.12.0 // indirect
 	github.com/sethvargo/go-retry v0.6.0 // indirect
 	github.com/spf13/afero v1.15.0 // indirect

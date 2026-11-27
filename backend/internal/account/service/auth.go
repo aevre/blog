@@ -87,12 +87,12 @@ type sessionRepo interface {
 
 // authService implements the AuthService interface.
 type authService struct {
-	ds          *database.DataStore
-	rc          cache.Store
-	sessions    sessionRepo
-	cfg         *config.Config
-	userRepo    repository.UserRepo
-	mailService MailService
+	ds           *database.DataStore
+	rc           cache.Store
+	sessions     sessionRepo
+	cfg          *config.Config
+	userRepo     repository.UserRepo
+	emailService EmailService
 }
 
 // NewAuthService creates and returns a new AuthService instance.
@@ -101,16 +101,16 @@ func NewAuthService(
 	rc *cache.Client,
 	cfg *config.Config,
 	userRepo repository.UserRepo,
-	mailService MailService,
+	mailService EmailService,
 	sessions *repository.SessionRepo,
 ) AuthService {
 	return &authService{
-		ds:          ds,
-		rc:          rc,
-		cfg:         cfg,
-		userRepo:    userRepo,
-		mailService: mailService,
-		sessions:    sessions,
+		ds:           ds,
+		rc:           rc,
+		cfg:          cfg,
+		userRepo:     userRepo,
+		emailService: mailService,
+		sessions:     sessions,
 	}
 }
 
@@ -223,11 +223,6 @@ func (s *authService) SendCaptchaMail(ctx context.Context, to string, captchaTyp
 		captchaType = Register
 	}
 
-	mailData, err := getCaptchaEmailMeta(captchaType)
-	if err != nil {
-		return err
-	}
-
 	exists, err := s.userRepo.ExistsByEmail(ctx, to)
 	if err != nil {
 		return err
@@ -241,14 +236,12 @@ func (s *authService) SendCaptchaMail(ctx context.Context, to string, captchaTyp
 	}
 
 	captcha := generateCaptcha()
-	mailData.Captcha = captcha
 
 	if err := s.rc.Set(ctx, fmt.Sprintf("%s:%s", captchaType, to), captcha, 5*time.Minute); err != nil {
 		return errx.New(errx.CodeInternalError, err)
 	}
 
-	templateName := "captcha.html"
-	if err := s.mailService.Send(to, mailData.Subject, templateName, mailData); err != nil {
+	if err := s.emailService.SendCode(ctx, to, captcha, captchaType); err != nil {
 		return err
 	}
 
@@ -352,40 +345,6 @@ func generateSessionTokens(j jwt.Jwt, id uint, role accountmodel.UserRole, sessi
 func tokenHash(token string) string {
 	hash := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(hash[:])
-}
-
-var captchaMetaMap = map[CaptchaType]*AuthMailData{
-	Register: {
-		Subject: "[Immortal's Blog] Email Verification",
-		Title:   "Verify Your Registration",
-		Type:    "Registration",
-		Content: "Please use the following verification code to complete your registration.",
-	},
-	PasswordReset: {
-		Subject: "[Immortal's Blog] Password Reset",
-		Title:   "Verify Your Password Reset Request",
-		Type:    "Password Reset",
-		Content: "You are attempting to reset your password. Please use this verification code to proceed.",
-	},
-	ChangeEmail: {
-		Subject: "[Immortal's Blog] Change Email Address",
-		Title:   "Verify Your New Email Address",
-		Type:    "Email Change",
-		Content: "You are attempting to change your email address. Please use this verification code to verify your new email.",
-	},
-}
-
-// getCaptchaEmailMeta returns email metadata based on captcha type.
-func getCaptchaEmailMeta(captchaType CaptchaType) (*AuthMailData, error) {
-	data, ok := captchaMetaMap[captchaType]
-	if !ok {
-		return nil, errx.New(
-			errx.CodeInvalidParam,
-			fmt.Errorf("unknown captcha type: %s", captchaType),
-		)
-	}
-	copyData := *data
-	return &copyData, nil
 }
 
 // generateCaptcha generates a random 6-character alphanumeric captcha.

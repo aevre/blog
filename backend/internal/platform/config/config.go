@@ -121,6 +121,7 @@ type EmailConfig struct {
 	Username string `mapstructure:"username"`
 	Password string `mapstructure:"password"`
 	From     string `mapstructure:"from"`
+	APIKey   string `mapstructure:"apiKey"`
 }
 
 // LLMConfig contains configuration for large language model integration.
