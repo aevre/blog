@@ -26,6 +26,7 @@ var rolePermissions = map[accountmodel.UserRole][]Permission{
 		{ResourceLink, ActionCreate},
 		{ResourceLink, ActionRead},
 		{ResourceLink, ActionUpdate},
+		{ResourceLink, ActionDelete},
 	},
 }
 
