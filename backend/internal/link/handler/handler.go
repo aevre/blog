@@ -5,8 +5,10 @@ import (
 	"errors"
 	"strconv"
 
+	accountmodel "blog-server/internal/account/model"
+	"blog-server/internal/authz"
+	linkmodel "blog-server/internal/link/model"
 	"blog-server/internal/link/service"
-	"blog-server/internal/platform/middleware"
 	"blog-server/internal/shared/contextx"
 	"blog-server/internal/shared/errx"
 	"blog-server/internal/shared/httpx"
@@ -19,16 +21,16 @@ import (
 type LinkHandler interface {
 	ListPublic(c *echo.Context) error
 
-	AdminList(c *echo.Context) error
-	AdminUpdate(c *echo.Context) error
-	AdminDelete(c *echo.Context) error
 	Create(c *echo.Context) error
+	GetMineByID(c *echo.Context) error
 	Update(c *echo.Context) error
 	Delete(c *echo.Context) error
-	Review(c *echo.Context) error
 
-	GetMineByID(c *echo.Context) error
+	AdminList(c *echo.Context) error
 	AdminGetByID(c *echo.Context) error
+	AdminUpdate(c *echo.Context) error
+	AdminDelete(c *echo.Context) error
+	Review(c *echo.Context) error
 }
 
 // linkHandler implements the LinkHandler interface.
@@ -58,7 +60,7 @@ func requestLinkID(c *echo.Context) (uint, error) {
 	return uint(id), nil
 }
 
-// ListPublic retrieves all enabled links.
+// ListPublic returns approved links without requiring authentication.
 func (h *linkHandler) ListPublic(c *echo.Context) error {
 	links, err := h.svc.ListPublic(c.Request().Context())
 	if err != nil {
@@ -70,6 +72,7 @@ func (h *linkHandler) ListPublic(c *echo.Context) error {
 	return httpx.OK(c, httpx.Success(linkDTOs))
 }
 
+// Create submits a link for the authenticated user.
 func (h *linkHandler) Create(c *echo.Context) error {
 	actor, err := requestActor(c)
 	if err != nil {
@@ -101,6 +104,24 @@ func (h *linkHandler) Create(c *echo.Context) error {
 	))
 }
 
+// GetMineByID returns a link submitted by the authenticated user.
+func (h *linkHandler) GetMineByID(c *echo.Context) error {
+	actor, err := requestActor(c)
+	if err != nil {
+		return err
+	}
+	id, err := requestLinkID(c)
+	if err != nil {
+		return err
+	}
+	l, err := h.svc.GetMineByID(c.Request().Context(), actor, id)
+	if err != nil {
+		return err
+	}
+	return httpx.OK(c, httpx.Success(toManagedLink(l)))
+}
+
+// Update handles both owner and admin edits; the service enforces the resource scope.
 func (h *linkHandler) Update(c *echo.Context) error {
 	actor, err := requestActor(c)
 	if err != nil {
@@ -136,6 +157,7 @@ func (h *linkHandler) Update(c *echo.Context) error {
 	))
 }
 
+// Delete handles both owner and admin deletions using the supplied version.
 func (h *linkHandler) Delete(c *echo.Context) error {
 	actor, err := requestActor(c)
 	if err != nil {
@@ -162,7 +184,22 @@ func (h *linkHandler) Delete(c *echo.Context) error {
 	return httpx.OK(c, httpx.Success[any](nil))
 }
 
-func (h *linkHandler) GetMineByID(c *echo.Context) error {
+// AdminList returns all non-deleted links for administrators.
+func (h *linkHandler) AdminList(c *echo.Context) error {
+	actor, err := requestActor(c)
+	if err != nil {
+		return err
+	}
+
+	links, err := h.svc.AdminList(c.Request().Context(), actor)
+	if err != nil {
+		return err
+	}
+	return httpx.OK(c, httpx.Success(toManagedLinks(links)))
+}
+
+// AdminGetByID returns a link regardless of its submitter.
+func (h *linkHandler) AdminGetByID(c *echo.Context) error {
 	actor, err := requestActor(c)
 	if err != nil {
 		return err
@@ -171,28 +208,64 @@ func (h *linkHandler) GetMineByID(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
-	l, err := h.svc.GetMineByID(c.Request().Context(), actor, id)
+	l, err := h.svc.AdminGetByID(c.Request().Context(), actor, id)
 	if err != nil {
 		return err
 	}
 	return httpx.OK(c, httpx.Success(toManagedLink(l)))
 }
 
-// RegisterLinkRoutes registers all link-related routes.
-func RegisterLinkRoutes(r *echo.Group, h LinkHandler, auth *middleware.AuthMiddleware) {
-	public := r.Group("/links")
-	public.GET("", h.ListPublic)
+// AdminUpdate checks the admin role before reusing Update.
+func (h *linkHandler) AdminUpdate(c *echo.Context) error {
+	actor, err := requestActor(c)
+	if err != nil {
+		return err
+	}
+	if actor.Role != accountmodel.UserRoleAdmin {
+		return authz.ErrForbidden()
+	}
+	return h.Update(c)
+}
 
-	signed := r.Group("/links", auth.Handler())
-	signed.POST("", h.Create)
-	signed.GET("/mine/:id", h.GetMineByID)
-	signed.PATCH("/mine/:id", h.Update)
-	signed.DELETE("/mine/:id", h.Delete)
+// AdminDelete checks the admin role before reusing Delete.
+func (h *linkHandler) AdminDelete(c *echo.Context) error {
+	actor, err := requestActor(c)
+	if err != nil {
+		return err
+	}
+	if actor.Role != accountmodel.UserRoleAdmin {
+		return authz.ErrForbidden()
+	}
+	return h.Delete(c)
+}
 
-	admin := r.Group("/admin/links", auth.Handler())
-	admin.GET("", h.AdminList)
-	admin.GET("/:id", h.AdminGetByID)
-	admin.PATCH("/:id", h.AdminUpdate)
-	admin.DELETE("/:id", h.AdminDelete)
-	admin.POST("/:id/review", h.Review)
+// Review submits an approval or rejection decision for a link.
+func (h *linkHandler) Review(c *echo.Context) error {
+	actor, err := requestActor(c)
+	if err != nil {
+		return err
+	}
+	id, err := requestLinkID(c)
+	if err != nil {
+		return err
+	}
+
+	req := new(ReviewLinkReq)
+	if err := c.Bind(req); err != nil {
+		return errx.New(errx.CodeInvalidParam, err)
+	}
+	if err := h.validate.Struct(req); err != nil {
+		return errx.New(errx.CodeValidationFailed, err)
+	}
+
+	err = h.svc.Review(c.Request().Context(), actor, service.ReviewInput{
+		ID:       id,
+		Version:  req.Version,
+		Decision: linkmodel.LinkReviewStatus(req.Decision),
+		Reason:   &req.Reason,
+	})
+	if err != nil {
+		return err
+	}
+	return httpx.OK(c, httpx.Success[any](nil))
 }

@@ -67,21 +67,6 @@ func (h *postHandler) GetPosts(c *echo.Context) error {
 	}))
 }
 
-// GetPost retrieves a single published post by ID.
-func (h *postHandler) GetPost(c *echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return errx.New(errx.CodeInvalidParam, err)
-	}
-
-	post, err := h.svc.GetPostByID(c.Request().Context(), uint(id))
-	if err != nil {
-		return err
-	}
-
-	return httpx.OK(c, httpx.Success(toPostRes(post)))
-}
-
 // GetPostIds retrieves metadata (id and updated_at) for all posts.
 func (h *postHandler) GetPostIds(c *echo.Context) error {
 	metas := h.svc.GetPostsMeta(c.Request().Context())
@@ -95,6 +80,21 @@ func (h *postHandler) GetPostIds(c *echo.Context) error {
 	}
 
 	return httpx.OK(c, httpx.Success(metasDTO))
+}
+
+// GetPost retrieves a single published post by ID.
+func (h *postHandler) GetPost(c *echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return errx.New(errx.CodeInvalidParam, err)
+	}
+
+	post, err := h.svc.GetPostByID(c.Request().Context(), uint(id))
+	if err != nil {
+		return err
+	}
+
+	return httpx.OK(c, httpx.Success(toPostRes(post)))
 }
 
 // CreatePost creates a new post.

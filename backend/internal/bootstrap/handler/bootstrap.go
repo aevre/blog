@@ -10,6 +10,7 @@ import (
 	"github.com/labstack/echo/v5"
 )
 
+// BootstrapHandler exposes the initial setup status and initialization endpoints.
 type BootstrapHandler interface {
 	Status(c *echo.Context) error
 	Initialize(c *echo.Context) error
@@ -20,12 +21,28 @@ type bootstrapHandler struct {
 	validate validatorx.Validator
 }
 
+// NewBootstrapHandler creates the handler for initial setup.
 func NewBootstrapHandler(svc service.BootstrapService, validate validatorx.Validator) BootstrapHandler {
 	return &bootstrapHandler{
 		svc, validate,
 	}
 }
 
+// Status reports whether initial setup has completed.
+func (h *bootstrapHandler) Status(c *echo.Context) error {
+	initialized, err := h.svc.Status(c.Request().Context())
+	if err != nil {
+		return err
+	}
+
+	return httpx.OK(c, struct {
+		Initialized bool `json:"initialized"`
+	}{
+		Initialized: initialized,
+	})
+}
+
+// Initialize submits the one-time initial setup request.
 func (h *bootstrapHandler) Initialize(c *echo.Context) error {
 	req := new(InitializeReq)
 	if err := c.Bind(req); err != nil {
@@ -59,19 +76,7 @@ func (h *bootstrapHandler) Initialize(c *echo.Context) error {
 	})
 }
 
-func (h *bootstrapHandler) Status(c *echo.Context) error {
-	initialized, err := h.svc.Status(c.Request().Context())
-	if err != nil {
-		return err
-	}
-
-	return httpx.OK(c, struct {
-		Initialized bool `json:"initialized"`
-	}{
-		Initialized: initialized,
-	})
-}
-
+// RegisterBootstrapRouter registers the setup status and initialization routes.
 func RegisterBootstrapRouter(r *echo.Group, h BootstrapHandler) {
 	group := r.Group("/bootstrap")
 	group.GET("", h.Status)

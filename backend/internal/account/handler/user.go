@@ -13,6 +13,7 @@ import (
 	"github.com/labstack/echo/v5"
 )
 
+// UserHandler exposes the authenticated user's profile endpoint.
 type UserHandler interface {
 	Me(c *echo.Context) error
 }
@@ -21,10 +22,12 @@ type userHandler struct {
 	svc service.UserService
 }
 
+// NewUserHandler creates the handler for user profile requests.
 func NewUserHandler(svc service.UserService) UserHandler {
 	return &userHandler{svc: svc}
 }
 
+// Me returns the current authenticated user's profile.
 func (h *userHandler) Me(c *echo.Context) error {
 	currentUser, ok := contextx.GetUser(c.Request().Context())
 	if !ok {
@@ -39,6 +42,7 @@ func (h *userHandler) Me(c *echo.Context) error {
 	return httpx.OK(c, httpx.Success(toUserRes(user)))
 }
 
+// RegisterUserRoutes protects and registers the current-user endpoint.
 func RegisterUserRoutes(r *echo.Group, h UserHandler, auth *middleware.AuthMiddleware) {
 	r.GET("/user/me", h.Me, auth.Handler())
 }

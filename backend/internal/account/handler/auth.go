@@ -125,24 +125,6 @@ func (h *authHandler) Logout(c *echo.Context) error {
 	return httpx.OK(c, httpx.SuccessWithMsg("logout success", "logout success"))
 }
 
-func (h *authHandler) logoutRefreshToken(c *echo.Context) error {
-	token, err := c.Cookie("refreshToken")
-	if err != nil || token.Value == "" {
-		return nil
-	}
-
-	err = h.svc.Logout(c.Request().Context(), token.Value)
-	if err == nil {
-		return nil
-	}
-
-	code := errx.ToAppError(err).Code
-	if code == errx.CodeUnauthorized || code == errx.CodeTokenExpired {
-		return nil
-	}
-	return err
-}
-
 // Refresh handles access token refresh using refresh token from cookie.
 func (h *authHandler) Refresh(c *echo.Context) error {
 	token, err := c.Cookie("refreshToken")
@@ -174,6 +156,24 @@ func RegisterAuthRoutes(r *echo.Group, h AuthHandler) {
 	group.POST("/login", h.Login)
 	group.POST("/logout", h.Logout)
 	group.POST("/refresh", h.Refresh)
+}
+
+func (h *authHandler) logoutRefreshToken(c *echo.Context) error {
+	token, err := c.Cookie("refreshToken")
+	if err != nil || token.Value == "" {
+		return nil
+	}
+
+	err = h.svc.Logout(c.Request().Context(), token.Value)
+	if err == nil {
+		return nil
+	}
+
+	code := errx.ToAppError(err).Code
+	if code == errx.CodeUnauthorized || code == errx.CodeTokenExpired {
+		return nil
+	}
+	return err
 }
 
 // toLoginRes converts an AuthResult into a LoginRes.
