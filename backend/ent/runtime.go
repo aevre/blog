@@ -52,26 +52,30 @@ func init() {
 	linkDescDescription := linkFields[0].Descriptor()
 	// link.DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
 	link.DescriptionValidator = linkDescDescription.Validators[0].(func(string) error)
-	// linkDescEnabled is the schema descriptor for enabled field.
-	linkDescEnabled := linkFields[1].Descriptor()
-	// link.DefaultEnabled holds the default value on creation for the enabled field.
-	link.DefaultEnabled = linkDescEnabled.Default.(bool)
 	// linkDescName is the schema descriptor for name field.
-	linkDescName := linkFields[2].Descriptor()
+	linkDescName := linkFields[1].Descriptor()
 	// link.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	link.NameValidator = linkDescName.Validators[0].(func(string) error)
 	// linkDescSortOrder is the schema descriptor for sort_order field.
-	linkDescSortOrder := linkFields[3].Descriptor()
+	linkDescSortOrder := linkFields[2].Descriptor()
 	// link.DefaultSortOrder holds the default value on creation for the sort_order field.
 	link.DefaultSortOrder = linkDescSortOrder.Default.(int)
 	// linkDescURL is the schema descriptor for url field.
-	linkDescURL := linkFields[4].Descriptor()
+	linkDescURL := linkFields[3].Descriptor()
 	// link.URLValidator is a validator for the "url" field. It is called by the builders before save.
 	link.URLValidator = linkDescURL.Validators[0].(func(string) error)
 	// linkDescAvatar is the schema descriptor for avatar field.
-	linkDescAvatar := linkFields[5].Descriptor()
+	linkDescAvatar := linkFields[4].Descriptor()
 	// link.AvatarValidator is a validator for the "avatar" field. It is called by the builders before save.
 	link.AvatarValidator = linkDescAvatar.Validators[0].(func(string) error)
+	// linkDescRejectionReason is the schema descriptor for rejection_reason field.
+	linkDescRejectionReason := linkFields[9].Descriptor()
+	// link.RejectionReasonValidator is a validator for the "rejection_reason" field. It is called by the builders before save.
+	link.RejectionReasonValidator = linkDescRejectionReason.Validators[0].(func(string) error)
+	// linkDescVersion is the schema descriptor for version field.
+	linkDescVersion := linkFields[10].Descriptor()
+	// link.DefaultVersion holds the default value on creation for the version field.
+	link.DefaultVersion = linkDescVersion.Default.(int64)
 	linkcategoryMixin := schema.LinkCategory{}.Mixin()
 	linkcategoryMixinFields0 := linkcategoryMixin[0].Fields()
 	_ = linkcategoryMixinFields0

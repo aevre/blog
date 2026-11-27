@@ -17,16 +17,37 @@ func (LinkStatus) Values() []string {
 	}
 }
 
+type LinkReviewStatus string
+
+const (
+	LinkReviewPending  LinkReviewStatus = "pending"
+	LinkReviewApproved LinkReviewStatus = "approved"
+	LinkReviewRejected LinkReviewStatus = "rejected"
+)
+
+func (LinkReviewStatus) Values() []string {
+	return []string{
+		string(LinkReviewPending),
+		string(LinkReviewApproved),
+		string(LinkReviewRejected),
+	}
+}
+
 type Link struct {
-	ID uint
+	ID          uint
+	SubmitterID uint
 
 	Name        string
 	URL         string
 	Description *string
 	Avatar      *string
 
-	Enabled   bool
-	Status    LinkStatus
+	Status          LinkStatus
+	ReviewStatus    LinkReviewStatus
+	ReviewedAt      *time.Time
+	RejectionReason *string
+	Version         int64
+
 	SortOrder int
 
 	CategoryID *uint

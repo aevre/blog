@@ -100,20 +100,6 @@ func (_u *LinkUpdate) ClearDescription() *LinkUpdate {
 	return _u
 }
 
-// SetEnabled sets the "enabled" field.
-func (_u *LinkUpdate) SetEnabled(v bool) *LinkUpdate {
-	_u.mutation.SetEnabled(v)
-	return _u
-}
-
-// SetNillableEnabled sets the "enabled" field if the given value is not nil.
-func (_u *LinkUpdate) SetNillableEnabled(v *bool) *LinkUpdate {
-	if v != nil {
-		_u.SetEnabled(*v)
-	}
-	return _u
-}
-
 // SetName sets the "name" field.
 func (_u *LinkUpdate) SetName(v string) *LinkUpdate {
 	_u.mutation.SetName(v)
@@ -208,6 +194,81 @@ func (_u *LinkUpdate) SetNillableStatus(v *linkmodel.LinkStatus) *LinkUpdate {
 	if v != nil {
 		_u.SetStatus(*v)
 	}
+	return _u
+}
+
+// SetReviewStatus sets the "review_status" field.
+func (_u *LinkUpdate) SetReviewStatus(v linkmodel.LinkReviewStatus) *LinkUpdate {
+	_u.mutation.SetReviewStatus(v)
+	return _u
+}
+
+// SetNillableReviewStatus sets the "review_status" field if the given value is not nil.
+func (_u *LinkUpdate) SetNillableReviewStatus(v *linkmodel.LinkReviewStatus) *LinkUpdate {
+	if v != nil {
+		_u.SetReviewStatus(*v)
+	}
+	return _u
+}
+
+// SetReviewedAt sets the "reviewed_at" field.
+func (_u *LinkUpdate) SetReviewedAt(v time.Time) *LinkUpdate {
+	_u.mutation.SetReviewedAt(v)
+	return _u
+}
+
+// SetNillableReviewedAt sets the "reviewed_at" field if the given value is not nil.
+func (_u *LinkUpdate) SetNillableReviewedAt(v *time.Time) *LinkUpdate {
+	if v != nil {
+		_u.SetReviewedAt(*v)
+	}
+	return _u
+}
+
+// ClearReviewedAt clears the value of the "reviewed_at" field.
+func (_u *LinkUpdate) ClearReviewedAt() *LinkUpdate {
+	_u.mutation.ClearReviewedAt()
+	return _u
+}
+
+// SetRejectionReason sets the "rejection_reason" field.
+func (_u *LinkUpdate) SetRejectionReason(v string) *LinkUpdate {
+	_u.mutation.SetRejectionReason(v)
+	return _u
+}
+
+// SetNillableRejectionReason sets the "rejection_reason" field if the given value is not nil.
+func (_u *LinkUpdate) SetNillableRejectionReason(v *string) *LinkUpdate {
+	if v != nil {
+		_u.SetRejectionReason(*v)
+	}
+	return _u
+}
+
+// ClearRejectionReason clears the value of the "rejection_reason" field.
+func (_u *LinkUpdate) ClearRejectionReason() *LinkUpdate {
+	_u.mutation.ClearRejectionReason()
+	return _u
+}
+
+// SetVersion sets the "version" field.
+func (_u *LinkUpdate) SetVersion(v int64) *LinkUpdate {
+	_u.mutation.ResetVersion()
+	_u.mutation.SetVersion(v)
+	return _u
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (_u *LinkUpdate) SetNillableVersion(v *int64) *LinkUpdate {
+	if v != nil {
+		_u.SetVersion(*v)
+	}
+	return _u
+}
+
+// AddVersion adds value to the "version" field.
+func (_u *LinkUpdate) AddVersion(v int64) *LinkUpdate {
+	_u.mutation.AddVersion(v)
 	return _u
 }
 
@@ -312,6 +373,16 @@ func (_u *LinkUpdate) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Link.status": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.ReviewStatus(); ok {
+		if err := link.ReviewStatusValidator(v); err != nil {
+			return &ValidationError{Name: "review_status", err: fmt.Errorf(`ent: validator failed for field "Link.review_status": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.RejectionReason(); ok {
+		if err := link.RejectionReasonValidator(v); err != nil {
+			return &ValidationError{Name: "rejection_reason", err: fmt.Errorf(`ent: validator failed for field "Link.rejection_reason": %w`, err)}
+		}
+	}
 	if _u.mutation.SubmitterCleared() && len(_u.mutation.SubmitterIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Link.submitter"`)
 	}
@@ -354,9 +425,6 @@ func (_u *LinkUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(link.FieldDescription, field.TypeString)
 	}
-	if value, ok := _u.mutation.Enabled(); ok {
-		_spec.SetField(link.FieldEnabled, field.TypeBool, value)
-	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(link.FieldName, field.TypeString, value)
 	}
@@ -377,6 +445,27 @@ func (_u *LinkUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(link.FieldStatus, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.ReviewStatus(); ok {
+		_spec.SetField(link.FieldReviewStatus, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.ReviewedAt(); ok {
+		_spec.SetField(link.FieldReviewedAt, field.TypeTime, value)
+	}
+	if _u.mutation.ReviewedAtCleared() {
+		_spec.ClearField(link.FieldReviewedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.RejectionReason(); ok {
+		_spec.SetField(link.FieldRejectionReason, field.TypeString, value)
+	}
+	if _u.mutation.RejectionReasonCleared() {
+		_spec.ClearField(link.FieldRejectionReason, field.TypeString)
+	}
+	if value, ok := _u.mutation.Version(); ok {
+		_spec.SetField(link.FieldVersion, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedVersion(); ok {
+		_spec.AddField(link.FieldVersion, field.TypeInt64, value)
 	}
 	if _u.mutation.CategoryCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -526,20 +615,6 @@ func (_u *LinkUpdateOne) ClearDescription() *LinkUpdateOne {
 	return _u
 }
 
-// SetEnabled sets the "enabled" field.
-func (_u *LinkUpdateOne) SetEnabled(v bool) *LinkUpdateOne {
-	_u.mutation.SetEnabled(v)
-	return _u
-}
-
-// SetNillableEnabled sets the "enabled" field if the given value is not nil.
-func (_u *LinkUpdateOne) SetNillableEnabled(v *bool) *LinkUpdateOne {
-	if v != nil {
-		_u.SetEnabled(*v)
-	}
-	return _u
-}
-
 // SetName sets the "name" field.
 func (_u *LinkUpdateOne) SetName(v string) *LinkUpdateOne {
 	_u.mutation.SetName(v)
@@ -634,6 +709,81 @@ func (_u *LinkUpdateOne) SetNillableStatus(v *linkmodel.LinkStatus) *LinkUpdateO
 	if v != nil {
 		_u.SetStatus(*v)
 	}
+	return _u
+}
+
+// SetReviewStatus sets the "review_status" field.
+func (_u *LinkUpdateOne) SetReviewStatus(v linkmodel.LinkReviewStatus) *LinkUpdateOne {
+	_u.mutation.SetReviewStatus(v)
+	return _u
+}
+
+// SetNillableReviewStatus sets the "review_status" field if the given value is not nil.
+func (_u *LinkUpdateOne) SetNillableReviewStatus(v *linkmodel.LinkReviewStatus) *LinkUpdateOne {
+	if v != nil {
+		_u.SetReviewStatus(*v)
+	}
+	return _u
+}
+
+// SetReviewedAt sets the "reviewed_at" field.
+func (_u *LinkUpdateOne) SetReviewedAt(v time.Time) *LinkUpdateOne {
+	_u.mutation.SetReviewedAt(v)
+	return _u
+}
+
+// SetNillableReviewedAt sets the "reviewed_at" field if the given value is not nil.
+func (_u *LinkUpdateOne) SetNillableReviewedAt(v *time.Time) *LinkUpdateOne {
+	if v != nil {
+		_u.SetReviewedAt(*v)
+	}
+	return _u
+}
+
+// ClearReviewedAt clears the value of the "reviewed_at" field.
+func (_u *LinkUpdateOne) ClearReviewedAt() *LinkUpdateOne {
+	_u.mutation.ClearReviewedAt()
+	return _u
+}
+
+// SetRejectionReason sets the "rejection_reason" field.
+func (_u *LinkUpdateOne) SetRejectionReason(v string) *LinkUpdateOne {
+	_u.mutation.SetRejectionReason(v)
+	return _u
+}
+
+// SetNillableRejectionReason sets the "rejection_reason" field if the given value is not nil.
+func (_u *LinkUpdateOne) SetNillableRejectionReason(v *string) *LinkUpdateOne {
+	if v != nil {
+		_u.SetRejectionReason(*v)
+	}
+	return _u
+}
+
+// ClearRejectionReason clears the value of the "rejection_reason" field.
+func (_u *LinkUpdateOne) ClearRejectionReason() *LinkUpdateOne {
+	_u.mutation.ClearRejectionReason()
+	return _u
+}
+
+// SetVersion sets the "version" field.
+func (_u *LinkUpdateOne) SetVersion(v int64) *LinkUpdateOne {
+	_u.mutation.ResetVersion()
+	_u.mutation.SetVersion(v)
+	return _u
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (_u *LinkUpdateOne) SetNillableVersion(v *int64) *LinkUpdateOne {
+	if v != nil {
+		_u.SetVersion(*v)
+	}
+	return _u
+}
+
+// AddVersion adds value to the "version" field.
+func (_u *LinkUpdateOne) AddVersion(v int64) *LinkUpdateOne {
+	_u.mutation.AddVersion(v)
 	return _u
 }
 
@@ -751,6 +901,16 @@ func (_u *LinkUpdateOne) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Link.status": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.ReviewStatus(); ok {
+		if err := link.ReviewStatusValidator(v); err != nil {
+			return &ValidationError{Name: "review_status", err: fmt.Errorf(`ent: validator failed for field "Link.review_status": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.RejectionReason(); ok {
+		if err := link.RejectionReasonValidator(v); err != nil {
+			return &ValidationError{Name: "rejection_reason", err: fmt.Errorf(`ent: validator failed for field "Link.rejection_reason": %w`, err)}
+		}
+	}
 	if _u.mutation.SubmitterCleared() && len(_u.mutation.SubmitterIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Link.submitter"`)
 	}
@@ -810,9 +970,6 @@ func (_u *LinkUpdateOne) sqlSave(ctx context.Context) (_node *Link, err error) {
 	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(link.FieldDescription, field.TypeString)
 	}
-	if value, ok := _u.mutation.Enabled(); ok {
-		_spec.SetField(link.FieldEnabled, field.TypeBool, value)
-	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(link.FieldName, field.TypeString, value)
 	}
@@ -833,6 +990,27 @@ func (_u *LinkUpdateOne) sqlSave(ctx context.Context) (_node *Link, err error) {
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(link.FieldStatus, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.ReviewStatus(); ok {
+		_spec.SetField(link.FieldReviewStatus, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.ReviewedAt(); ok {
+		_spec.SetField(link.FieldReviewedAt, field.TypeTime, value)
+	}
+	if _u.mutation.ReviewedAtCleared() {
+		_spec.ClearField(link.FieldReviewedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.RejectionReason(); ok {
+		_spec.SetField(link.FieldRejectionReason, field.TypeString, value)
+	}
+	if _u.mutation.RejectionReasonCleared() {
+		_spec.ClearField(link.FieldRejectionReason, field.TypeString)
+	}
+	if value, ok := _u.mutation.Version(); ok {
+		_spec.SetField(link.FieldVersion, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedVersion(); ok {
+		_spec.AddField(link.FieldVersion, field.TypeInt64, value)
 	}
 	if _u.mutation.CategoryCleared() {
 		edge := &sqlgraph.EdgeSpec{

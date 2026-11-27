@@ -28,8 +28,6 @@ type Link struct {
 	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 	// Description holds the value of the "description" field.
 	Description string `json:"description,omitempty"`
-	// Enabled holds the value of the "enabled" field.
-	Enabled bool `json:"enabled,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// SortOrder holds the value of the "sort_order" field.
@@ -42,6 +40,14 @@ type Link struct {
 	SubmitterID uint `json:"submitter_id,omitempty"`
 	// Status holds the value of the "status" field.
 	Status linkmodel.LinkStatus `json:"status,omitempty"`
+	// ReviewStatus holds the value of the "review_status" field.
+	ReviewStatus linkmodel.LinkReviewStatus `json:"review_status,omitempty"`
+	// ReviewedAt holds the value of the "reviewed_at" field.
+	ReviewedAt *time.Time `json:"reviewed_at,omitempty"`
+	// RejectionReason holds the value of the "rejection_reason" field.
+	RejectionReason *string `json:"rejection_reason,omitempty"`
+	// Version holds the value of the "version" field.
+	Version int64 `json:"version,omitempty"`
 	// CategoryID holds the value of the "category_id" field.
 	CategoryID uint `json:"category_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -88,13 +94,11 @@ func (*Link) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case link.FieldEnabled:
-			values[i] = new(sql.NullBool)
-		case link.FieldID, link.FieldSortOrder, link.FieldSubmitterID, link.FieldCategoryID:
+		case link.FieldID, link.FieldSortOrder, link.FieldSubmitterID, link.FieldVersion, link.FieldCategoryID:
 			values[i] = new(sql.NullInt64)
-		case link.FieldDescription, link.FieldName, link.FieldURL, link.FieldAvatar, link.FieldStatus:
+		case link.FieldDescription, link.FieldName, link.FieldURL, link.FieldAvatar, link.FieldStatus, link.FieldReviewStatus, link.FieldRejectionReason:
 			values[i] = new(sql.NullString)
-		case link.FieldCreatedAt, link.FieldUpdatedAt, link.FieldDeletedAt:
+		case link.FieldCreatedAt, link.FieldUpdatedAt, link.FieldDeletedAt, link.FieldReviewedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -142,12 +146,6 @@ func (_m *Link) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Description = value.String
 			}
-		case link.FieldEnabled:
-			if value, ok := values[i].(*sql.NullBool); !ok {
-				return fmt.Errorf("unexpected type %T for field enabled", values[i])
-			} else if value.Valid {
-				_m.Enabled = value.Bool
-			}
 		case link.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
@@ -183,6 +181,32 @@ func (_m *Link) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
 				_m.Status = linkmodel.LinkStatus(value.String)
+			}
+		case link.FieldReviewStatus:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field review_status", values[i])
+			} else if value.Valid {
+				_m.ReviewStatus = linkmodel.LinkReviewStatus(value.String)
+			}
+		case link.FieldReviewedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field reviewed_at", values[i])
+			} else if value.Valid {
+				_m.ReviewedAt = new(time.Time)
+				*_m.ReviewedAt = value.Time
+			}
+		case link.FieldRejectionReason:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field rejection_reason", values[i])
+			} else if value.Valid {
+				_m.RejectionReason = new(string)
+				*_m.RejectionReason = value.String
+			}
+		case link.FieldVersion:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field version", values[i])
+			} else if value.Valid {
+				_m.Version = value.Int64
 			}
 		case link.FieldCategoryID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -250,9 +274,6 @@ func (_m *Link) String() string {
 	builder.WriteString("description=")
 	builder.WriteString(_m.Description)
 	builder.WriteString(", ")
-	builder.WriteString("enabled=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Enabled))
-	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
 	builder.WriteString(", ")
@@ -270,6 +291,22 @@ func (_m *Link) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Status))
+	builder.WriteString(", ")
+	builder.WriteString("review_status=")
+	builder.WriteString(fmt.Sprintf("%v", _m.ReviewStatus))
+	builder.WriteString(", ")
+	if v := _m.ReviewedAt; v != nil {
+		builder.WriteString("reviewed_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	if v := _m.RejectionReason; v != nil {
+		builder.WriteString("rejection_reason=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	builder.WriteString("version=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Version))
 	builder.WriteString(", ")
 	builder.WriteString("category_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.CategoryID))

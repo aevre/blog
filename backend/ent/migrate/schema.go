@@ -90,12 +90,15 @@ var (
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 255},
-		{Name: "enabled", Type: field.TypeBool, Default: false},
 		{Name: "name", Type: field.TypeString, Size: 100},
 		{Name: "sort_order", Type: field.TypeInt, Default: 0},
-		{Name: "url", Type: field.TypeString, Unique: true, Size: 255},
+		{Name: "url", Type: field.TypeString, Size: 255},
 		{Name: "avatar", Type: field.TypeString, Nullable: true, Size: 255},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"normal", "abnormal"}, Default: "normal"},
+		{Name: "review_status", Type: field.TypeEnum, Enums: []string{"pending", "approved", "rejected"}, Default: "pending"},
+		{Name: "reviewed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rejection_reason", Type: field.TypeString, Nullable: true, Size: 1000},
+		{Name: "version", Type: field.TypeInt64, Default: 1},
 		{Name: "category_id", Type: field.TypeUint, Nullable: true},
 		{Name: "submitter_id", Type: field.TypeUint},
 	}
@@ -107,13 +110,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "links_link_categories_links",
-				Columns:    []*schema.Column{LinksColumns[11]},
+				Columns:    []*schema.Column{LinksColumns[14]},
 				RefColumns: []*schema.Column{LinkCategoriesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "links_users_links",
-				Columns:    []*schema.Column{LinksColumns[12]},
+				Columns:    []*schema.Column{LinksColumns[15]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

@@ -1647,13 +1647,17 @@ type LinkMutation struct {
 	updated_at       *time.Time
 	deleted_at       *time.Time
 	description      *string
-	enabled          *bool
 	name             *string
 	sort_order       *int
 	addsort_order    *int
 	url              *string
 	avatar           *string
 	status           *linkmodel.LinkStatus
+	review_status    *linkmodel.LinkReviewStatus
+	reviewed_at      *time.Time
+	rejection_reason *string
+	version          *int64
+	addversion       *int64
 	clearedFields    map[string]struct{}
 	category         *uint
 	clearedcategory  bool
@@ -1938,42 +1942,6 @@ func (m *LinkMutation) ResetDescription() {
 	delete(m.clearedFields, link.FieldDescription)
 }
 
-// SetEnabled sets the "enabled" field.
-func (m *LinkMutation) SetEnabled(b bool) {
-	m.enabled = &b
-}
-
-// Enabled returns the value of the "enabled" field in the mutation.
-func (m *LinkMutation) Enabled() (r bool, exists bool) {
-	v := m.enabled
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldEnabled returns the old "enabled" field's value of the Link entity.
-// If the Link object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *LinkMutation) OldEnabled(ctx context.Context) (v bool, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldEnabled is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldEnabled requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldEnabled: %w", err)
-	}
-	return oldValue.Enabled, nil
-}
-
-// ResetEnabled resets all changes to the "enabled" field.
-func (m *LinkMutation) ResetEnabled() {
-	m.enabled = nil
-}
-
 // SetName sets the "name" field.
 func (m *LinkMutation) SetName(s string) {
 	m.name = &s
@@ -2223,6 +2191,196 @@ func (m *LinkMutation) ResetStatus() {
 	m.status = nil
 }
 
+// SetReviewStatus sets the "review_status" field.
+func (m *LinkMutation) SetReviewStatus(lrs linkmodel.LinkReviewStatus) {
+	m.review_status = &lrs
+}
+
+// ReviewStatus returns the value of the "review_status" field in the mutation.
+func (m *LinkMutation) ReviewStatus() (r linkmodel.LinkReviewStatus, exists bool) {
+	v := m.review_status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReviewStatus returns the old "review_status" field's value of the Link entity.
+// If the Link object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LinkMutation) OldReviewStatus(ctx context.Context) (v linkmodel.LinkReviewStatus, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReviewStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReviewStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReviewStatus: %w", err)
+	}
+	return oldValue.ReviewStatus, nil
+}
+
+// ResetReviewStatus resets all changes to the "review_status" field.
+func (m *LinkMutation) ResetReviewStatus() {
+	m.review_status = nil
+}
+
+// SetReviewedAt sets the "reviewed_at" field.
+func (m *LinkMutation) SetReviewedAt(t time.Time) {
+	m.reviewed_at = &t
+}
+
+// ReviewedAt returns the value of the "reviewed_at" field in the mutation.
+func (m *LinkMutation) ReviewedAt() (r time.Time, exists bool) {
+	v := m.reviewed_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReviewedAt returns the old "reviewed_at" field's value of the Link entity.
+// If the Link object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LinkMutation) OldReviewedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReviewedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReviewedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReviewedAt: %w", err)
+	}
+	return oldValue.ReviewedAt, nil
+}
+
+// ClearReviewedAt clears the value of the "reviewed_at" field.
+func (m *LinkMutation) ClearReviewedAt() {
+	m.reviewed_at = nil
+	m.clearedFields[link.FieldReviewedAt] = struct{}{}
+}
+
+// ReviewedAtCleared returns if the "reviewed_at" field was cleared in this mutation.
+func (m *LinkMutation) ReviewedAtCleared() bool {
+	_, ok := m.clearedFields[link.FieldReviewedAt]
+	return ok
+}
+
+// ResetReviewedAt resets all changes to the "reviewed_at" field.
+func (m *LinkMutation) ResetReviewedAt() {
+	m.reviewed_at = nil
+	delete(m.clearedFields, link.FieldReviewedAt)
+}
+
+// SetRejectionReason sets the "rejection_reason" field.
+func (m *LinkMutation) SetRejectionReason(s string) {
+	m.rejection_reason = &s
+}
+
+// RejectionReason returns the value of the "rejection_reason" field in the mutation.
+func (m *LinkMutation) RejectionReason() (r string, exists bool) {
+	v := m.rejection_reason
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRejectionReason returns the old "rejection_reason" field's value of the Link entity.
+// If the Link object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LinkMutation) OldRejectionReason(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRejectionReason is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRejectionReason requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRejectionReason: %w", err)
+	}
+	return oldValue.RejectionReason, nil
+}
+
+// ClearRejectionReason clears the value of the "rejection_reason" field.
+func (m *LinkMutation) ClearRejectionReason() {
+	m.rejection_reason = nil
+	m.clearedFields[link.FieldRejectionReason] = struct{}{}
+}
+
+// RejectionReasonCleared returns if the "rejection_reason" field was cleared in this mutation.
+func (m *LinkMutation) RejectionReasonCleared() bool {
+	_, ok := m.clearedFields[link.FieldRejectionReason]
+	return ok
+}
+
+// ResetRejectionReason resets all changes to the "rejection_reason" field.
+func (m *LinkMutation) ResetRejectionReason() {
+	m.rejection_reason = nil
+	delete(m.clearedFields, link.FieldRejectionReason)
+}
+
+// SetVersion sets the "version" field.
+func (m *LinkMutation) SetVersion(i int64) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *LinkMutation) Version() (r int64, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the Link entity.
+// If the Link object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LinkMutation) OldVersion(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *LinkMutation) AddVersion(i int64) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *LinkMutation) AddedVersion() (r int64, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *LinkMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
+}
+
 // SetCategoryID sets the "category_id" field.
 func (m *LinkMutation) SetCategoryID(u uint) {
 	m.category = &u
@@ -2360,7 +2518,7 @@ func (m *LinkMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *LinkMutation) Fields() []string {
-	fields := make([]string, 0, 12)
+	fields := make([]string, 0, 15)
 	if m.created_at != nil {
 		fields = append(fields, link.FieldCreatedAt)
 	}
@@ -2372,9 +2530,6 @@ func (m *LinkMutation) Fields() []string {
 	}
 	if m.description != nil {
 		fields = append(fields, link.FieldDescription)
-	}
-	if m.enabled != nil {
-		fields = append(fields, link.FieldEnabled)
 	}
 	if m.name != nil {
 		fields = append(fields, link.FieldName)
@@ -2393,6 +2548,18 @@ func (m *LinkMutation) Fields() []string {
 	}
 	if m.status != nil {
 		fields = append(fields, link.FieldStatus)
+	}
+	if m.review_status != nil {
+		fields = append(fields, link.FieldReviewStatus)
+	}
+	if m.reviewed_at != nil {
+		fields = append(fields, link.FieldReviewedAt)
+	}
+	if m.rejection_reason != nil {
+		fields = append(fields, link.FieldRejectionReason)
+	}
+	if m.version != nil {
+		fields = append(fields, link.FieldVersion)
 	}
 	if m.category != nil {
 		fields = append(fields, link.FieldCategoryID)
@@ -2413,8 +2580,6 @@ func (m *LinkMutation) Field(name string) (ent.Value, bool) {
 		return m.DeletedAt()
 	case link.FieldDescription:
 		return m.Description()
-	case link.FieldEnabled:
-		return m.Enabled()
 	case link.FieldName:
 		return m.Name()
 	case link.FieldSortOrder:
@@ -2427,6 +2592,14 @@ func (m *LinkMutation) Field(name string) (ent.Value, bool) {
 		return m.SubmitterID()
 	case link.FieldStatus:
 		return m.Status()
+	case link.FieldReviewStatus:
+		return m.ReviewStatus()
+	case link.FieldReviewedAt:
+		return m.ReviewedAt()
+	case link.FieldRejectionReason:
+		return m.RejectionReason()
+	case link.FieldVersion:
+		return m.Version()
 	case link.FieldCategoryID:
 		return m.CategoryID()
 	}
@@ -2446,8 +2619,6 @@ func (m *LinkMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldDeletedAt(ctx)
 	case link.FieldDescription:
 		return m.OldDescription(ctx)
-	case link.FieldEnabled:
-		return m.OldEnabled(ctx)
 	case link.FieldName:
 		return m.OldName(ctx)
 	case link.FieldSortOrder:
@@ -2460,6 +2631,14 @@ func (m *LinkMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldSubmitterID(ctx)
 	case link.FieldStatus:
 		return m.OldStatus(ctx)
+	case link.FieldReviewStatus:
+		return m.OldReviewStatus(ctx)
+	case link.FieldReviewedAt:
+		return m.OldReviewedAt(ctx)
+	case link.FieldRejectionReason:
+		return m.OldRejectionReason(ctx)
+	case link.FieldVersion:
+		return m.OldVersion(ctx)
 	case link.FieldCategoryID:
 		return m.OldCategoryID(ctx)
 	}
@@ -2498,13 +2677,6 @@ func (m *LinkMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDescription(v)
-		return nil
-	case link.FieldEnabled:
-		v, ok := value.(bool)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetEnabled(v)
 		return nil
 	case link.FieldName:
 		v, ok := value.(string)
@@ -2548,6 +2720,34 @@ func (m *LinkMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetStatus(v)
 		return nil
+	case link.FieldReviewStatus:
+		v, ok := value.(linkmodel.LinkReviewStatus)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReviewStatus(v)
+		return nil
+	case link.FieldReviewedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReviewedAt(v)
+		return nil
+	case link.FieldRejectionReason:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRejectionReason(v)
+		return nil
+	case link.FieldVersion:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
+		return nil
 	case link.FieldCategoryID:
 		v, ok := value.(uint)
 		if !ok {
@@ -2566,6 +2766,9 @@ func (m *LinkMutation) AddedFields() []string {
 	if m.addsort_order != nil {
 		fields = append(fields, link.FieldSortOrder)
 	}
+	if m.addversion != nil {
+		fields = append(fields, link.FieldVersion)
+	}
 	return fields
 }
 
@@ -2576,6 +2779,8 @@ func (m *LinkMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
 	case link.FieldSortOrder:
 		return m.AddedSortOrder()
+	case link.FieldVersion:
+		return m.AddedVersion()
 	}
 	return nil, false
 }
@@ -2591,6 +2796,13 @@ func (m *LinkMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSortOrder(v)
+		return nil
+	case link.FieldVersion:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Link numeric field %s", name)
@@ -2608,6 +2820,12 @@ func (m *LinkMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(link.FieldAvatar) {
 		fields = append(fields, link.FieldAvatar)
+	}
+	if m.FieldCleared(link.FieldReviewedAt) {
+		fields = append(fields, link.FieldReviewedAt)
+	}
+	if m.FieldCleared(link.FieldRejectionReason) {
+		fields = append(fields, link.FieldRejectionReason)
 	}
 	if m.FieldCleared(link.FieldCategoryID) {
 		fields = append(fields, link.FieldCategoryID)
@@ -2635,6 +2853,12 @@ func (m *LinkMutation) ClearField(name string) error {
 	case link.FieldAvatar:
 		m.ClearAvatar()
 		return nil
+	case link.FieldReviewedAt:
+		m.ClearReviewedAt()
+		return nil
+	case link.FieldRejectionReason:
+		m.ClearRejectionReason()
+		return nil
 	case link.FieldCategoryID:
 		m.ClearCategoryID()
 		return nil
@@ -2658,9 +2882,6 @@ func (m *LinkMutation) ResetField(name string) error {
 	case link.FieldDescription:
 		m.ResetDescription()
 		return nil
-	case link.FieldEnabled:
-		m.ResetEnabled()
-		return nil
 	case link.FieldName:
 		m.ResetName()
 		return nil
@@ -2678,6 +2899,18 @@ func (m *LinkMutation) ResetField(name string) error {
 		return nil
 	case link.FieldStatus:
 		m.ResetStatus()
+		return nil
+	case link.FieldReviewStatus:
+		m.ResetReviewStatus()
+		return nil
+	case link.FieldReviewedAt:
+		m.ResetReviewedAt()
+		return nil
+	case link.FieldRejectionReason:
+		m.ResetRejectionReason()
+		return nil
+	case link.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case link.FieldCategoryID:
 		m.ResetCategoryID()

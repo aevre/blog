@@ -31,7 +31,7 @@ func RegisterRoutes(app *echo.Echo, handlers Handlers, auth *middleware.AuthMidd
 	accounthandler.RegisterAuthRoutes(v1, handlers.Auth)
 	contenthandler.RegisterPostRoutes(v1, handlers.Post, auth)
 	contenthandler.RegisterRssRoutes(v1, handlers.Rss)
-	linkhandler.RegisterLinkRoutes(v1, handlers.Link)
+	linkhandler.RegisterLinkRoutes(v1, handlers.Link, auth)
 	summaryhandler.RegisterModelRoutes(v1, handlers.Model)
 	accounthandler.RegisterUserRoutes(v1, handlers.User, auth)
 }

@@ -81,20 +81,6 @@ func (_c *LinkCreate) SetNillableDescription(v *string) *LinkCreate {
 	return _c
 }
 
-// SetEnabled sets the "enabled" field.
-func (_c *LinkCreate) SetEnabled(v bool) *LinkCreate {
-	_c.mutation.SetEnabled(v)
-	return _c
-}
-
-// SetNillableEnabled sets the "enabled" field if the given value is not nil.
-func (_c *LinkCreate) SetNillableEnabled(v *bool) *LinkCreate {
-	if v != nil {
-		_c.SetEnabled(*v)
-	}
-	return _c
-}
-
 // SetName sets the "name" field.
 func (_c *LinkCreate) SetName(v string) *LinkCreate {
 	_c.mutation.SetName(v)
@@ -151,6 +137,62 @@ func (_c *LinkCreate) SetStatus(v linkmodel.LinkStatus) *LinkCreate {
 func (_c *LinkCreate) SetNillableStatus(v *linkmodel.LinkStatus) *LinkCreate {
 	if v != nil {
 		_c.SetStatus(*v)
+	}
+	return _c
+}
+
+// SetReviewStatus sets the "review_status" field.
+func (_c *LinkCreate) SetReviewStatus(v linkmodel.LinkReviewStatus) *LinkCreate {
+	_c.mutation.SetReviewStatus(v)
+	return _c
+}
+
+// SetNillableReviewStatus sets the "review_status" field if the given value is not nil.
+func (_c *LinkCreate) SetNillableReviewStatus(v *linkmodel.LinkReviewStatus) *LinkCreate {
+	if v != nil {
+		_c.SetReviewStatus(*v)
+	}
+	return _c
+}
+
+// SetReviewedAt sets the "reviewed_at" field.
+func (_c *LinkCreate) SetReviewedAt(v time.Time) *LinkCreate {
+	_c.mutation.SetReviewedAt(v)
+	return _c
+}
+
+// SetNillableReviewedAt sets the "reviewed_at" field if the given value is not nil.
+func (_c *LinkCreate) SetNillableReviewedAt(v *time.Time) *LinkCreate {
+	if v != nil {
+		_c.SetReviewedAt(*v)
+	}
+	return _c
+}
+
+// SetRejectionReason sets the "rejection_reason" field.
+func (_c *LinkCreate) SetRejectionReason(v string) *LinkCreate {
+	_c.mutation.SetRejectionReason(v)
+	return _c
+}
+
+// SetNillableRejectionReason sets the "rejection_reason" field if the given value is not nil.
+func (_c *LinkCreate) SetNillableRejectionReason(v *string) *LinkCreate {
+	if v != nil {
+		_c.SetRejectionReason(*v)
+	}
+	return _c
+}
+
+// SetVersion sets the "version" field.
+func (_c *LinkCreate) SetVersion(v int64) *LinkCreate {
+	_c.mutation.SetVersion(v)
+	return _c
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (_c *LinkCreate) SetNillableVersion(v *int64) *LinkCreate {
+	if v != nil {
+		_c.SetVersion(*v)
 	}
 	return _c
 }
@@ -228,10 +270,6 @@ func (_c *LinkCreate) defaults() {
 		v := link.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
-	if _, ok := _c.mutation.Enabled(); !ok {
-		v := link.DefaultEnabled
-		_c.mutation.SetEnabled(v)
-	}
 	if _, ok := _c.mutation.SortOrder(); !ok {
 		v := link.DefaultSortOrder
 		_c.mutation.SetSortOrder(v)
@@ -239,6 +277,14 @@ func (_c *LinkCreate) defaults() {
 	if _, ok := _c.mutation.Status(); !ok {
 		v := link.DefaultStatus
 		_c.mutation.SetStatus(v)
+	}
+	if _, ok := _c.mutation.ReviewStatus(); !ok {
+		v := link.DefaultReviewStatus
+		_c.mutation.SetReviewStatus(v)
+	}
+	if _, ok := _c.mutation.Version(); !ok {
+		v := link.DefaultVersion
+		_c.mutation.SetVersion(v)
 	}
 }
 
@@ -254,9 +300,6 @@ func (_c *LinkCreate) check() error {
 		if err := link.DescriptionValidator(v); err != nil {
 			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "Link.description": %w`, err)}
 		}
-	}
-	if _, ok := _c.mutation.Enabled(); !ok {
-		return &ValidationError{Name: "enabled", err: errors.New(`ent: missing required field "Link.enabled"`)}
 	}
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Link.name"`)}
@@ -292,6 +335,22 @@ func (_c *LinkCreate) check() error {
 		if err := link.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Link.status": %w`, err)}
 		}
+	}
+	if _, ok := _c.mutation.ReviewStatus(); !ok {
+		return &ValidationError{Name: "review_status", err: errors.New(`ent: missing required field "Link.review_status"`)}
+	}
+	if v, ok := _c.mutation.ReviewStatus(); ok {
+		if err := link.ReviewStatusValidator(v); err != nil {
+			return &ValidationError{Name: "review_status", err: fmt.Errorf(`ent: validator failed for field "Link.review_status": %w`, err)}
+		}
+	}
+	if v, ok := _c.mutation.RejectionReason(); ok {
+		if err := link.RejectionReasonValidator(v); err != nil {
+			return &ValidationError{Name: "rejection_reason", err: fmt.Errorf(`ent: validator failed for field "Link.rejection_reason": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "Link.version"`)}
 	}
 	if len(_c.mutation.SubmitterIDs()) == 0 {
 		return &ValidationError{Name: "submitter", err: errors.New(`ent: missing required edge "Link.submitter"`)}
@@ -345,10 +404,6 @@ func (_c *LinkCreate) createSpec() (*Link, *sqlgraph.CreateSpec) {
 		_spec.SetField(link.FieldDescription, field.TypeString, value)
 		_node.Description = value
 	}
-	if value, ok := _c.mutation.Enabled(); ok {
-		_spec.SetField(link.FieldEnabled, field.TypeBool, value)
-		_node.Enabled = value
-	}
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(link.FieldName, field.TypeString, value)
 		_node.Name = value
@@ -368,6 +423,22 @@ func (_c *LinkCreate) createSpec() (*Link, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Status(); ok {
 		_spec.SetField(link.FieldStatus, field.TypeEnum, value)
 		_node.Status = value
+	}
+	if value, ok := _c.mutation.ReviewStatus(); ok {
+		_spec.SetField(link.FieldReviewStatus, field.TypeEnum, value)
+		_node.ReviewStatus = value
+	}
+	if value, ok := _c.mutation.ReviewedAt(); ok {
+		_spec.SetField(link.FieldReviewedAt, field.TypeTime, value)
+		_node.ReviewedAt = &value
+	}
+	if value, ok := _c.mutation.RejectionReason(); ok {
+		_spec.SetField(link.FieldRejectionReason, field.TypeString, value)
+		_node.RejectionReason = &value
+	}
+	if value, ok := _c.mutation.Version(); ok {
+		_spec.SetField(link.FieldVersion, field.TypeInt64, value)
+		_node.Version = value
 	}
 	if nodes := _c.mutation.CategoryIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -515,18 +586,6 @@ func (u *LinkUpsert) ClearDescription() *LinkUpsert {
 	return u
 }
 
-// SetEnabled sets the "enabled" field.
-func (u *LinkUpsert) SetEnabled(v bool) *LinkUpsert {
-	u.Set(link.FieldEnabled, v)
-	return u
-}
-
-// UpdateEnabled sets the "enabled" field to the value that was provided on create.
-func (u *LinkUpsert) UpdateEnabled() *LinkUpsert {
-	u.SetExcluded(link.FieldEnabled)
-	return u
-}
-
 // SetName sets the "name" field.
 func (u *LinkUpsert) SetName(v string) *LinkUpsert {
 	u.Set(link.FieldName, v)
@@ -608,6 +667,72 @@ func (u *LinkUpsert) SetStatus(v linkmodel.LinkStatus) *LinkUpsert {
 // UpdateStatus sets the "status" field to the value that was provided on create.
 func (u *LinkUpsert) UpdateStatus() *LinkUpsert {
 	u.SetExcluded(link.FieldStatus)
+	return u
+}
+
+// SetReviewStatus sets the "review_status" field.
+func (u *LinkUpsert) SetReviewStatus(v linkmodel.LinkReviewStatus) *LinkUpsert {
+	u.Set(link.FieldReviewStatus, v)
+	return u
+}
+
+// UpdateReviewStatus sets the "review_status" field to the value that was provided on create.
+func (u *LinkUpsert) UpdateReviewStatus() *LinkUpsert {
+	u.SetExcluded(link.FieldReviewStatus)
+	return u
+}
+
+// SetReviewedAt sets the "reviewed_at" field.
+func (u *LinkUpsert) SetReviewedAt(v time.Time) *LinkUpsert {
+	u.Set(link.FieldReviewedAt, v)
+	return u
+}
+
+// UpdateReviewedAt sets the "reviewed_at" field to the value that was provided on create.
+func (u *LinkUpsert) UpdateReviewedAt() *LinkUpsert {
+	u.SetExcluded(link.FieldReviewedAt)
+	return u
+}
+
+// ClearReviewedAt clears the value of the "reviewed_at" field.
+func (u *LinkUpsert) ClearReviewedAt() *LinkUpsert {
+	u.SetNull(link.FieldReviewedAt)
+	return u
+}
+
+// SetRejectionReason sets the "rejection_reason" field.
+func (u *LinkUpsert) SetRejectionReason(v string) *LinkUpsert {
+	u.Set(link.FieldRejectionReason, v)
+	return u
+}
+
+// UpdateRejectionReason sets the "rejection_reason" field to the value that was provided on create.
+func (u *LinkUpsert) UpdateRejectionReason() *LinkUpsert {
+	u.SetExcluded(link.FieldRejectionReason)
+	return u
+}
+
+// ClearRejectionReason clears the value of the "rejection_reason" field.
+func (u *LinkUpsert) ClearRejectionReason() *LinkUpsert {
+	u.SetNull(link.FieldRejectionReason)
+	return u
+}
+
+// SetVersion sets the "version" field.
+func (u *LinkUpsert) SetVersion(v int64) *LinkUpsert {
+	u.Set(link.FieldVersion, v)
+	return u
+}
+
+// UpdateVersion sets the "version" field to the value that was provided on create.
+func (u *LinkUpsert) UpdateVersion() *LinkUpsert {
+	u.SetExcluded(link.FieldVersion)
+	return u
+}
+
+// AddVersion adds v to the "version" field.
+func (u *LinkUpsert) AddVersion(v int64) *LinkUpsert {
+	u.Add(link.FieldVersion, v)
 	return u
 }
 
@@ -747,20 +872,6 @@ func (u *LinkUpsertOne) ClearDescription() *LinkUpsertOne {
 	})
 }
 
-// SetEnabled sets the "enabled" field.
-func (u *LinkUpsertOne) SetEnabled(v bool) *LinkUpsertOne {
-	return u.Update(func(s *LinkUpsert) {
-		s.SetEnabled(v)
-	})
-}
-
-// UpdateEnabled sets the "enabled" field to the value that was provided on create.
-func (u *LinkUpsertOne) UpdateEnabled() *LinkUpsertOne {
-	return u.Update(func(s *LinkUpsert) {
-		s.UpdateEnabled()
-	})
-}
-
 // SetName sets the "name" field.
 func (u *LinkUpsertOne) SetName(v string) *LinkUpsertOne {
 	return u.Update(func(s *LinkUpsert) {
@@ -856,6 +967,83 @@ func (u *LinkUpsertOne) SetStatus(v linkmodel.LinkStatus) *LinkUpsertOne {
 func (u *LinkUpsertOne) UpdateStatus() *LinkUpsertOne {
 	return u.Update(func(s *LinkUpsert) {
 		s.UpdateStatus()
+	})
+}
+
+// SetReviewStatus sets the "review_status" field.
+func (u *LinkUpsertOne) SetReviewStatus(v linkmodel.LinkReviewStatus) *LinkUpsertOne {
+	return u.Update(func(s *LinkUpsert) {
+		s.SetReviewStatus(v)
+	})
+}
+
+// UpdateReviewStatus sets the "review_status" field to the value that was provided on create.
+func (u *LinkUpsertOne) UpdateReviewStatus() *LinkUpsertOne {
+	return u.Update(func(s *LinkUpsert) {
+		s.UpdateReviewStatus()
+	})
+}
+
+// SetReviewedAt sets the "reviewed_at" field.
+func (u *LinkUpsertOne) SetReviewedAt(v time.Time) *LinkUpsertOne {
+	return u.Update(func(s *LinkUpsert) {
+		s.SetReviewedAt(v)
+	})
+}
+
+// UpdateReviewedAt sets the "reviewed_at" field to the value that was provided on create.
+func (u *LinkUpsertOne) UpdateReviewedAt() *LinkUpsertOne {
+	return u.Update(func(s *LinkUpsert) {
+		s.UpdateReviewedAt()
+	})
+}
+
+// ClearReviewedAt clears the value of the "reviewed_at" field.
+func (u *LinkUpsertOne) ClearReviewedAt() *LinkUpsertOne {
+	return u.Update(func(s *LinkUpsert) {
+		s.ClearReviewedAt()
+	})
+}
+
+// SetRejectionReason sets the "rejection_reason" field.
+func (u *LinkUpsertOne) SetRejectionReason(v string) *LinkUpsertOne {
+	return u.Update(func(s *LinkUpsert) {
+		s.SetRejectionReason(v)
+	})
+}
+
+// UpdateRejectionReason sets the "rejection_reason" field to the value that was provided on create.
+func (u *LinkUpsertOne) UpdateRejectionReason() *LinkUpsertOne {
+	return u.Update(func(s *LinkUpsert) {
+		s.UpdateRejectionReason()
+	})
+}
+
+// ClearRejectionReason clears the value of the "rejection_reason" field.
+func (u *LinkUpsertOne) ClearRejectionReason() *LinkUpsertOne {
+	return u.Update(func(s *LinkUpsert) {
+		s.ClearRejectionReason()
+	})
+}
+
+// SetVersion sets the "version" field.
+func (u *LinkUpsertOne) SetVersion(v int64) *LinkUpsertOne {
+	return u.Update(func(s *LinkUpsert) {
+		s.SetVersion(v)
+	})
+}
+
+// AddVersion adds v to the "version" field.
+func (u *LinkUpsertOne) AddVersion(v int64) *LinkUpsertOne {
+	return u.Update(func(s *LinkUpsert) {
+		s.AddVersion(v)
+	})
+}
+
+// UpdateVersion sets the "version" field to the value that was provided on create.
+func (u *LinkUpsertOne) UpdateVersion() *LinkUpsertOne {
+	return u.Update(func(s *LinkUpsert) {
+		s.UpdateVersion()
 	})
 }
 
@@ -1164,20 +1352,6 @@ func (u *LinkUpsertBulk) ClearDescription() *LinkUpsertBulk {
 	})
 }
 
-// SetEnabled sets the "enabled" field.
-func (u *LinkUpsertBulk) SetEnabled(v bool) *LinkUpsertBulk {
-	return u.Update(func(s *LinkUpsert) {
-		s.SetEnabled(v)
-	})
-}
-
-// UpdateEnabled sets the "enabled" field to the value that was provided on create.
-func (u *LinkUpsertBulk) UpdateEnabled() *LinkUpsertBulk {
-	return u.Update(func(s *LinkUpsert) {
-		s.UpdateEnabled()
-	})
-}
-
 // SetName sets the "name" field.
 func (u *LinkUpsertBulk) SetName(v string) *LinkUpsertBulk {
 	return u.Update(func(s *LinkUpsert) {
@@ -1273,6 +1447,83 @@ func (u *LinkUpsertBulk) SetStatus(v linkmodel.LinkStatus) *LinkUpsertBulk {
 func (u *LinkUpsertBulk) UpdateStatus() *LinkUpsertBulk {
 	return u.Update(func(s *LinkUpsert) {
 		s.UpdateStatus()
+	})
+}
+
+// SetReviewStatus sets the "review_status" field.
+func (u *LinkUpsertBulk) SetReviewStatus(v linkmodel.LinkReviewStatus) *LinkUpsertBulk {
+	return u.Update(func(s *LinkUpsert) {
+		s.SetReviewStatus(v)
+	})
+}
+
+// UpdateReviewStatus sets the "review_status" field to the value that was provided on create.
+func (u *LinkUpsertBulk) UpdateReviewStatus() *LinkUpsertBulk {
+	return u.Update(func(s *LinkUpsert) {
+		s.UpdateReviewStatus()
+	})
+}
+
+// SetReviewedAt sets the "reviewed_at" field.
+func (u *LinkUpsertBulk) SetReviewedAt(v time.Time) *LinkUpsertBulk {
+	return u.Update(func(s *LinkUpsert) {
+		s.SetReviewedAt(v)
+	})
+}
+
+// UpdateReviewedAt sets the "reviewed_at" field to the value that was provided on create.
+func (u *LinkUpsertBulk) UpdateReviewedAt() *LinkUpsertBulk {
+	return u.Update(func(s *LinkUpsert) {
+		s.UpdateReviewedAt()
+	})
+}
+
+// ClearReviewedAt clears the value of the "reviewed_at" field.
+func (u *LinkUpsertBulk) ClearReviewedAt() *LinkUpsertBulk {
+	return u.Update(func(s *LinkUpsert) {
+		s.ClearReviewedAt()
+	})
+}
+
+// SetRejectionReason sets the "rejection_reason" field.
+func (u *LinkUpsertBulk) SetRejectionReason(v string) *LinkUpsertBulk {
+	return u.Update(func(s *LinkUpsert) {
+		s.SetRejectionReason(v)
+	})
+}
+
+// UpdateRejectionReason sets the "rejection_reason" field to the value that was provided on create.
+func (u *LinkUpsertBulk) UpdateRejectionReason() *LinkUpsertBulk {
+	return u.Update(func(s *LinkUpsert) {
+		s.UpdateRejectionReason()
+	})
+}
+
+// ClearRejectionReason clears the value of the "rejection_reason" field.
+func (u *LinkUpsertBulk) ClearRejectionReason() *LinkUpsertBulk {
+	return u.Update(func(s *LinkUpsert) {
+		s.ClearRejectionReason()
+	})
+}
+
+// SetVersion sets the "version" field.
+func (u *LinkUpsertBulk) SetVersion(v int64) *LinkUpsertBulk {
+	return u.Update(func(s *LinkUpsert) {
+		s.SetVersion(v)
+	})
+}
+
+// AddVersion adds v to the "version" field.
+func (u *LinkUpsertBulk) AddVersion(v int64) *LinkUpsertBulk {
+	return u.Update(func(s *LinkUpsert) {
+		s.AddVersion(v)
+	})
+}
+
+// UpdateVersion sets the "version" field to the value that was provided on create.
+func (u *LinkUpsertBulk) UpdateVersion() *LinkUpsertBulk {
+	return u.Update(func(s *LinkUpsert) {
+		s.UpdateVersion()
 	})
 }
 

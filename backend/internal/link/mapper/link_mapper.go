@@ -12,16 +12,20 @@ func ToLink(l *ent.Link) *linkmodel.Link {
 		return &linkmodel.Link{}
 	}
 	link := &linkmodel.Link{
-		ID:          l.ID,
-		Name:        l.Name,
-		URL:         l.URL,
-		Enabled:     l.Enabled,
-		Description: &l.Description,
-		Avatar:      &l.Avatar,
-		Status:      l.Status,
-		SortOrder:   l.SortOrder,
-		CreatedAt:   l.CreatedAt,
-		UpdatedAt:   l.UpdatedAt,
+		ID:              l.ID,
+		SubmitterID:     l.SubmitterID,
+		Name:            l.Name,
+		URL:             l.URL,
+		Description:     &l.Description,
+		Avatar:          &l.Avatar,
+		Status:          l.Status,
+		ReviewStatus:    l.ReviewStatus,
+		ReviewedAt:      l.ReviewedAt,
+		RejectionReason: l.RejectionReason,
+		Version:         l.Version,
+		SortOrder:       l.SortOrder,
+		CreatedAt:       l.CreatedAt,
+		UpdatedAt:       l.UpdatedAt,
 	}
 
 	// CategoryID is 0 when not set in the database (ent uses plain uint).

@@ -26,9 +26,6 @@ func (Link) Fields() []ent.Field {
 			MaxLen(255).
 			Optional(),
 
-		field.Bool("enabled").
-			Default(false),
-
 		field.String("name").
 			MaxLen(100),
 
@@ -36,8 +33,7 @@ func (Link) Fields() []ent.Field {
 			Default(0),
 
 		field.String("url").
-			MaxLen(255).
-			Unique(),
+			MaxLen(255),
 
 		field.String("avatar").
 			MaxLen(255).
@@ -48,6 +44,22 @@ func (Link) Fields() []ent.Field {
 		field.Enum("status").
 			GoType(linkmodel.LinkStatus("")).
 			Default(string(linkmodel.LinkStatusNormal)),
+
+		field.Enum("review_status").
+			GoType(linkmodel.LinkReviewStatus("")).
+			Default(string(linkmodel.LinkReviewPending)),
+
+		field.Time("reviewed_at").
+			Optional().
+			Nillable(),
+
+		field.String("rejection_reason").
+			MaxLen(1000).
+			Optional().
+			Nillable(),
+
+		field.Int64("version").
+			Default(1),
 
 		field.Uint("category_id").
 			Optional(),

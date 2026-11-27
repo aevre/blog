@@ -24,8 +24,6 @@ const (
 	FieldDeletedAt = "deleted_at"
 	// FieldDescription holds the string denoting the description field in the database.
 	FieldDescription = "description"
-	// FieldEnabled holds the string denoting the enabled field in the database.
-	FieldEnabled = "enabled"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
 	// FieldSortOrder holds the string denoting the sort_order field in the database.
@@ -38,6 +36,14 @@ const (
 	FieldSubmitterID = "submitter_id"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
+	// FieldReviewStatus holds the string denoting the review_status field in the database.
+	FieldReviewStatus = "review_status"
+	// FieldReviewedAt holds the string denoting the reviewed_at field in the database.
+	FieldReviewedAt = "reviewed_at"
+	// FieldRejectionReason holds the string denoting the rejection_reason field in the database.
+	FieldRejectionReason = "rejection_reason"
+	// FieldVersion holds the string denoting the version field in the database.
+	FieldVersion = "version"
 	// FieldCategoryID holds the string denoting the category_id field in the database.
 	FieldCategoryID = "category_id"
 	// EdgeCategory holds the string denoting the category edge name in mutations.
@@ -69,13 +75,16 @@ var Columns = []string{
 	FieldUpdatedAt,
 	FieldDeletedAt,
 	FieldDescription,
-	FieldEnabled,
 	FieldName,
 	FieldSortOrder,
 	FieldURL,
 	FieldAvatar,
 	FieldSubmitterID,
 	FieldStatus,
+	FieldReviewStatus,
+	FieldReviewedAt,
+	FieldRejectionReason,
+	FieldVersion,
 	FieldCategoryID,
 }
 
@@ -96,8 +105,6 @@ var (
 	DefaultUpdatedAt func() time.Time
 	// DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
 	DescriptionValidator func(string) error
-	// DefaultEnabled holds the default value on creation for the "enabled" field.
-	DefaultEnabled bool
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
 	// DefaultSortOrder holds the default value on creation for the "sort_order" field.
@@ -106,6 +113,10 @@ var (
 	URLValidator func(string) error
 	// AvatarValidator is a validator for the "avatar" field. It is called by the builders before save.
 	AvatarValidator func(string) error
+	// RejectionReasonValidator is a validator for the "rejection_reason" field. It is called by the builders before save.
+	RejectionReasonValidator func(string) error
+	// DefaultVersion holds the default value on creation for the "version" field.
+	DefaultVersion int64
 )
 
 const DefaultStatus linkmodel.LinkStatus = "normal"
@@ -117,6 +128,18 @@ func StatusValidator(s linkmodel.LinkStatus) error {
 		return nil
 	default:
 		return fmt.Errorf("link: invalid enum value for status field: %q", s)
+	}
+}
+
+const DefaultReviewStatus linkmodel.LinkReviewStatus = "pending"
+
+// ReviewStatusValidator is a validator for the "review_status" field enum values. It is called by the builders before save.
+func ReviewStatusValidator(rs linkmodel.LinkReviewStatus) error {
+	switch rs {
+	case "pending", "approved", "rejected":
+		return nil
+	default:
+		return fmt.Errorf("link: invalid enum value for review_status field: %q", rs)
 	}
 }
 
@@ -148,11 +171,6 @@ func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDescription, opts...).ToFunc()
 }
 
-// ByEnabled orders the results by the enabled field.
-func ByEnabled(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldEnabled, opts...).ToFunc()
-}
-
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
@@ -181,6 +199,26 @@ func BySubmitterID(opts ...sql.OrderTermOption) OrderOption {
 // ByStatus orders the results by the status field.
 func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStatus, opts...).ToFunc()
+}
+
+// ByReviewStatus orders the results by the review_status field.
+func ByReviewStatus(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldReviewStatus, opts...).ToFunc()
+}
+
+// ByReviewedAt orders the results by the reviewed_at field.
+func ByReviewedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldReviewedAt, opts...).ToFunc()
+}
+
+// ByRejectionReason orders the results by the rejection_reason field.
+func ByRejectionReason(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRejectionReason, opts...).ToFunc()
+}
+
+// ByVersion orders the results by the version field.
+func ByVersion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldVersion, opts...).ToFunc()
 }
 
 // ByCategoryID orders the results by the category_id field.

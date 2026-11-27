@@ -58,11 +58,8 @@ max_age = 30
 compress = true
 
 [email]
-host = "${EMAIL_HOST}"
-port = "${EMAIL_PORT}"
-username = "${EMAIL_USERNAME}"
-password = "${EMAIL_PASSWORD}"
 from = "${EMAIL_FROM}"
+apiKey = "${EMAIL_API_KEY}"
 
 [llm]
 apikey = "${MODEL_API_KEY}"

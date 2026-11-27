@@ -76,11 +76,6 @@ func Description(v string) predicate.Link {
 	return predicate.Link(sql.FieldEQ(FieldDescription, v))
 }
 
-// Enabled applies equality check predicate on the "enabled" field. It's identical to EnabledEQ.
-func Enabled(v bool) predicate.Link {
-	return predicate.Link(sql.FieldEQ(FieldEnabled, v))
-}
-
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.Link {
 	return predicate.Link(sql.FieldEQ(FieldName, v))
@@ -104,6 +99,21 @@ func Avatar(v string) predicate.Link {
 // SubmitterID applies equality check predicate on the "submitter_id" field. It's identical to SubmitterIDEQ.
 func SubmitterID(v uint) predicate.Link {
 	return predicate.Link(sql.FieldEQ(FieldSubmitterID, v))
+}
+
+// ReviewedAt applies equality check predicate on the "reviewed_at" field. It's identical to ReviewedAtEQ.
+func ReviewedAt(v time.Time) predicate.Link {
+	return predicate.Link(sql.FieldEQ(FieldReviewedAt, v))
+}
+
+// RejectionReason applies equality check predicate on the "rejection_reason" field. It's identical to RejectionReasonEQ.
+func RejectionReason(v string) predicate.Link {
+	return predicate.Link(sql.FieldEQ(FieldRejectionReason, v))
+}
+
+// Version applies equality check predicate on the "version" field. It's identical to VersionEQ.
+func Version(v int64) predicate.Link {
+	return predicate.Link(sql.FieldEQ(FieldVersion, v))
 }
 
 // CategoryID applies equality check predicate on the "category_id" field. It's identical to CategoryIDEQ.
@@ -314,16 +324,6 @@ func DescriptionEqualFold(v string) predicate.Link {
 // DescriptionContainsFold applies the ContainsFold predicate on the "description" field.
 func DescriptionContainsFold(v string) predicate.Link {
 	return predicate.Link(sql.FieldContainsFold(FieldDescription, v))
-}
-
-// EnabledEQ applies the EQ predicate on the "enabled" field.
-func EnabledEQ(v bool) predicate.Link {
-	return predicate.Link(sql.FieldEQ(FieldEnabled, v))
-}
-
-// EnabledNEQ applies the NEQ predicate on the "enabled" field.
-func EnabledNEQ(v bool) predicate.Link {
-	return predicate.Link(sql.FieldNEQ(FieldEnabled, v))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
@@ -619,6 +619,201 @@ func StatusNotIn(vs ...linkmodel.LinkStatus) predicate.Link {
 		v[i] = vs[i]
 	}
 	return predicate.Link(sql.FieldNotIn(FieldStatus, v...))
+}
+
+// ReviewStatusEQ applies the EQ predicate on the "review_status" field.
+func ReviewStatusEQ(v linkmodel.LinkReviewStatus) predicate.Link {
+	vc := v
+	return predicate.Link(sql.FieldEQ(FieldReviewStatus, vc))
+}
+
+// ReviewStatusNEQ applies the NEQ predicate on the "review_status" field.
+func ReviewStatusNEQ(v linkmodel.LinkReviewStatus) predicate.Link {
+	vc := v
+	return predicate.Link(sql.FieldNEQ(FieldReviewStatus, vc))
+}
+
+// ReviewStatusIn applies the In predicate on the "review_status" field.
+func ReviewStatusIn(vs ...linkmodel.LinkReviewStatus) predicate.Link {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Link(sql.FieldIn(FieldReviewStatus, v...))
+}
+
+// ReviewStatusNotIn applies the NotIn predicate on the "review_status" field.
+func ReviewStatusNotIn(vs ...linkmodel.LinkReviewStatus) predicate.Link {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Link(sql.FieldNotIn(FieldReviewStatus, v...))
+}
+
+// ReviewedAtEQ applies the EQ predicate on the "reviewed_at" field.
+func ReviewedAtEQ(v time.Time) predicate.Link {
+	return predicate.Link(sql.FieldEQ(FieldReviewedAt, v))
+}
+
+// ReviewedAtNEQ applies the NEQ predicate on the "reviewed_at" field.
+func ReviewedAtNEQ(v time.Time) predicate.Link {
+	return predicate.Link(sql.FieldNEQ(FieldReviewedAt, v))
+}
+
+// ReviewedAtIn applies the In predicate on the "reviewed_at" field.
+func ReviewedAtIn(vs ...time.Time) predicate.Link {
+	return predicate.Link(sql.FieldIn(FieldReviewedAt, vs...))
+}
+
+// ReviewedAtNotIn applies the NotIn predicate on the "reviewed_at" field.
+func ReviewedAtNotIn(vs ...time.Time) predicate.Link {
+	return predicate.Link(sql.FieldNotIn(FieldReviewedAt, vs...))
+}
+
+// ReviewedAtGT applies the GT predicate on the "reviewed_at" field.
+func ReviewedAtGT(v time.Time) predicate.Link {
+	return predicate.Link(sql.FieldGT(FieldReviewedAt, v))
+}
+
+// ReviewedAtGTE applies the GTE predicate on the "reviewed_at" field.
+func ReviewedAtGTE(v time.Time) predicate.Link {
+	return predicate.Link(sql.FieldGTE(FieldReviewedAt, v))
+}
+
+// ReviewedAtLT applies the LT predicate on the "reviewed_at" field.
+func ReviewedAtLT(v time.Time) predicate.Link {
+	return predicate.Link(sql.FieldLT(FieldReviewedAt, v))
+}
+
+// ReviewedAtLTE applies the LTE predicate on the "reviewed_at" field.
+func ReviewedAtLTE(v time.Time) predicate.Link {
+	return predicate.Link(sql.FieldLTE(FieldReviewedAt, v))
+}
+
+// ReviewedAtIsNil applies the IsNil predicate on the "reviewed_at" field.
+func ReviewedAtIsNil() predicate.Link {
+	return predicate.Link(sql.FieldIsNull(FieldReviewedAt))
+}
+
+// ReviewedAtNotNil applies the NotNil predicate on the "reviewed_at" field.
+func ReviewedAtNotNil() predicate.Link {
+	return predicate.Link(sql.FieldNotNull(FieldReviewedAt))
+}
+
+// RejectionReasonEQ applies the EQ predicate on the "rejection_reason" field.
+func RejectionReasonEQ(v string) predicate.Link {
+	return predicate.Link(sql.FieldEQ(FieldRejectionReason, v))
+}
+
+// RejectionReasonNEQ applies the NEQ predicate on the "rejection_reason" field.
+func RejectionReasonNEQ(v string) predicate.Link {
+	return predicate.Link(sql.FieldNEQ(FieldRejectionReason, v))
+}
+
+// RejectionReasonIn applies the In predicate on the "rejection_reason" field.
+func RejectionReasonIn(vs ...string) predicate.Link {
+	return predicate.Link(sql.FieldIn(FieldRejectionReason, vs...))
+}
+
+// RejectionReasonNotIn applies the NotIn predicate on the "rejection_reason" field.
+func RejectionReasonNotIn(vs ...string) predicate.Link {
+	return predicate.Link(sql.FieldNotIn(FieldRejectionReason, vs...))
+}
+
+// RejectionReasonGT applies the GT predicate on the "rejection_reason" field.
+func RejectionReasonGT(v string) predicate.Link {
+	return predicate.Link(sql.FieldGT(FieldRejectionReason, v))
+}
+
+// RejectionReasonGTE applies the GTE predicate on the "rejection_reason" field.
+func RejectionReasonGTE(v string) predicate.Link {
+	return predicate.Link(sql.FieldGTE(FieldRejectionReason, v))
+}
+
+// RejectionReasonLT applies the LT predicate on the "rejection_reason" field.
+func RejectionReasonLT(v string) predicate.Link {
+	return predicate.Link(sql.FieldLT(FieldRejectionReason, v))
+}
+
+// RejectionReasonLTE applies the LTE predicate on the "rejection_reason" field.
+func RejectionReasonLTE(v string) predicate.Link {
+	return predicate.Link(sql.FieldLTE(FieldRejectionReason, v))
+}
+
+// RejectionReasonContains applies the Contains predicate on the "rejection_reason" field.
+func RejectionReasonContains(v string) predicate.Link {
+	return predicate.Link(sql.FieldContains(FieldRejectionReason, v))
+}
+
+// RejectionReasonHasPrefix applies the HasPrefix predicate on the "rejection_reason" field.
+func RejectionReasonHasPrefix(v string) predicate.Link {
+	return predicate.Link(sql.FieldHasPrefix(FieldRejectionReason, v))
+}
+
+// RejectionReasonHasSuffix applies the HasSuffix predicate on the "rejection_reason" field.
+func RejectionReasonHasSuffix(v string) predicate.Link {
+	return predicate.Link(sql.FieldHasSuffix(FieldRejectionReason, v))
+}
+
+// RejectionReasonIsNil applies the IsNil predicate on the "rejection_reason" field.
+func RejectionReasonIsNil() predicate.Link {
+	return predicate.Link(sql.FieldIsNull(FieldRejectionReason))
+}
+
+// RejectionReasonNotNil applies the NotNil predicate on the "rejection_reason" field.
+func RejectionReasonNotNil() predicate.Link {
+	return predicate.Link(sql.FieldNotNull(FieldRejectionReason))
+}
+
+// RejectionReasonEqualFold applies the EqualFold predicate on the "rejection_reason" field.
+func RejectionReasonEqualFold(v string) predicate.Link {
+	return predicate.Link(sql.FieldEqualFold(FieldRejectionReason, v))
+}
+
+// RejectionReasonContainsFold applies the ContainsFold predicate on the "rejection_reason" field.
+func RejectionReasonContainsFold(v string) predicate.Link {
+	return predicate.Link(sql.FieldContainsFold(FieldRejectionReason, v))
+}
+
+// VersionEQ applies the EQ predicate on the "version" field.
+func VersionEQ(v int64) predicate.Link {
+	return predicate.Link(sql.FieldEQ(FieldVersion, v))
+}
+
+// VersionNEQ applies the NEQ predicate on the "version" field.
+func VersionNEQ(v int64) predicate.Link {
+	return predicate.Link(sql.FieldNEQ(FieldVersion, v))
+}
+
+// VersionIn applies the In predicate on the "version" field.
+func VersionIn(vs ...int64) predicate.Link {
+	return predicate.Link(sql.FieldIn(FieldVersion, vs...))
+}
+
+// VersionNotIn applies the NotIn predicate on the "version" field.
+func VersionNotIn(vs ...int64) predicate.Link {
+	return predicate.Link(sql.FieldNotIn(FieldVersion, vs...))
+}
+
+// VersionGT applies the GT predicate on the "version" field.
+func VersionGT(v int64) predicate.Link {
+	return predicate.Link(sql.FieldGT(FieldVersion, v))
+}
+
+// VersionGTE applies the GTE predicate on the "version" field.
+func VersionGTE(v int64) predicate.Link {
+	return predicate.Link(sql.FieldGTE(FieldVersion, v))
+}
+
+// VersionLT applies the LT predicate on the "version" field.
+func VersionLT(v int64) predicate.Link {
+	return predicate.Link(sql.FieldLT(FieldVersion, v))
+}
+
+// VersionLTE applies the LTE predicate on the "version" field.
+func VersionLTE(v int64) predicate.Link {
+	return predicate.Link(sql.FieldLTE(FieldVersion, v))
 }
 
 // CategoryIDEQ applies the EQ predicate on the "category_id" field.
