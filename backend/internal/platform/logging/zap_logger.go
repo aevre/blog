@@ -147,19 +147,19 @@ func buildEncoder(cfg *config.Config) (zapcore.Encoder, zapcore.Level) {
 	}
 
 	ec := zapcore.EncoderConfig{
-		TimeKey:       "time",
-		LevelKey:      "level",
-		CallerKey:     "caller",
-		MessageKey:    "msg",
-		StacktraceKey: "stack",
+		TimeKey:          "time",
+		LevelKey:         "level",
+		CallerKey:        "caller",
+		MessageKey:       "msg",
+		StacktraceKey:    "stack",
+		ConsoleSeparator: " ",
 
 		EncodeTime: func(t time.Time, pae zapcore.PrimitiveArrayEncoder) {
-			pae.AppendString(t.Format("2006-01-02 15:04:05"))
+			pae.AppendString(t.Format("2006-01-02 15:04:05.000"))
 		},
 
-		// EncodeLevel:    zapcore.CapitalColorLevelEncoder,
 		EncodeLevel: func(l zapcore.Level, pae zapcore.PrimitiveArrayEncoder) {
-			pae.AppendString("[" + l.CapitalString() + "]")
+			zapcore.CapitalColorLevelEncoder(l, pae)
 		},
 		EncodeCaller:   zapcore.ShortCallerEncoder,
 		EncodeDuration: zapcore.StringDurationEncoder,
